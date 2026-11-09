@@ -1,0 +1,68 @@
+{
+  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  "appId": "org.bridgeaac.app",
+  "productName": "BridgeAAC",
+  "copyright": "Copyright © BridgeAAC Contributors (bridgeaac.org)",
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "dist/**/*",
+    "electron/**/*"
+  ],
+  "fileAssociations": [
+    {
+      "ext": "ce",
+      "name": "TouchChat Vocabulary File",
+      "description": "TouchChat Vocabulary Export (.ce)",
+      "role": "Editor"
+    },
+    {
+      "ext": "bridge",
+      "name": "BridgeAAC Vocabulary File",
+      "description": "BridgeAAC Vocabulary Backup (.bridge)",
+      "role": "Editor"
+    },
+    {
+      "ext": "obz",
+      "name": "Open Board Format Archive",
+      "description": "Open Board Format Package (.obz)",
+      "role": "Editor"
+    },
+    {
+      "ext": "obf",
+      "name": "Open Board Format File",
+      "description": "Open Board Format Board (.obf)",
+      "role": "Editor"
+    }
+  ],
+  "win": {
+    "target": [
+      "nsis",
+      "portable"
+    ],
+    "icon": "public/icon-512.png"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true
+  },
+  "linux": {
+    "target": [
+      "AppImage",
+      "deb"
+    ],
+    "category": "Education;Accessibility;AudioVideo;",
+    "icon": "public/icon-512.png",
+    "synopsis": "Free, offline-first AAC voice communication app compatible with TouchChat (.ce) files"
+  },
+  "mac": {
+    "target": [
+      "dmg"
+    ],
+    "category": "public.app-category.education",
+    "icon": "public/icon-512.png"
+  }
+}

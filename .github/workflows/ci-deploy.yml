@@ -1,0 +1,69 @@
+name: CI & Deploy Web PWA
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-and-build:
+    name: Typecheck, Test & Build Offline PWA
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript typecheck
+        run: npm run typecheck
+
+      - name: Run unit & round-trip tests
+        run: npm test
+
+      - name: Build production offline PWA
+        run: npm run build
+
+      - name: Upload Web PWA bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BridgeAAC-web-pwa
+          path: dist/
+          retention-days: 14
+
+      - name: Upload GitHub Pages artifact
+        if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/
+
+  deploy-pages:
+    name: Deploy to bridgeaac.org (GitHub Pages)
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    needs: verify-and-build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

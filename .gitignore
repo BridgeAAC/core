@@ -1,0 +1,13 @@
+node_modules/
+dist/
+dev-dist/
+release/
+android/
+ios/
+coverage/
+fixtures/
+.DS_Store
+*.log
+*.local
+.env
+.env.*
