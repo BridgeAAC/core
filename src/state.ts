@@ -40,6 +40,7 @@ export type Panel =
   | 'settings'
   | 'pages'
   | 'messages'
+  | 'tools'
   | 'help'
   | 'pageSettings';
 

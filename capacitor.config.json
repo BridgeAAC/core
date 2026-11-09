@@ -2,7 +2,6 @@
   "appId": "org.bridgeaac.app",
   "appName": "BridgeAAC",
   "webDir": "dist",
-  "bundledWebRuntime": false,
   "server": {
     "androidScheme": "https"
   },

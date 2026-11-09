@@ -137,16 +137,40 @@ export async function deleteAsset(id: string): Promise<void> {
   await txDone(tx);
 }
 
+const memKv = new Map<string, unknown>();
+
 export async function kvGet<T>(key: string): Promise<T | undefined> {
-  const db = await openDb();
-  return wrap(db.transaction('kv').objectStore('kv').get(key)) as Promise<T | undefined>;
+  try {
+    if (typeof indexedDB !== 'undefined') {
+      const db = await openDb();
+      const val = (await wrap(db.transaction('kv').objectStore('kv').get(key))) as T | undefined;
+      if (val !== undefined) return val;
+    }
+  } catch {}
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const raw = localStorage.getItem(`bridgeaac.kv.${key}`);
+      if (raw !== null) return JSON.parse(raw) as T;
+    }
+  } catch {}
+  return memKv.get(key) as T | undefined;
 }
 
 export async function kvSet<T>(key: string, value: T): Promise<void> {
-  const db = await openDb();
-  const tx = db.transaction('kv', 'readwrite');
-  tx.objectStore('kv').put(value, key);
-  await txDone(tx);
+  memKv.set(key, value);
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(`bridgeaac.kv.${key}`, JSON.stringify(value));
+    }
+  } catch {}
+  try {
+    if (typeof indexedDB !== 'undefined') {
+      const db = await openDb();
+      const tx = db.transaction('kv', 'readwrite');
+      tx.objectStore('kv').put(value, key);
+      await txDone(tx);
+    }
+  } catch {}
 }
 
 export async function requestPersistentStorage(): Promise<boolean> {

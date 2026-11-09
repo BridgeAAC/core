@@ -19,6 +19,7 @@ import {
   previousWord,
   replaceCurrentWord,
 } from '../engine/message';
+import { Icon } from './Icon';
 
 const LATIN_ROWS = [
   ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
@@ -138,6 +139,15 @@ export function KeyboardModal() {
             <button type="button" class="btn primary" onClick={() => speakMessage()}>
               {t.speak}
             </button>
+            <button
+              type="button"
+              class="btn secondary"
+              onClick={() => backspaceMessage()}
+              title="Backspace"
+              aria-label="Backspace"
+            >
+              <Icon name="backspace" size={18} /> ⌫
+            </button>
             <button type="button" class="btn secondary" onClick={() => deleteWordFromMessage()}>
               {t.word}
             </button>
@@ -172,6 +182,17 @@ export function KeyboardModal() {
                     {key.toUpperCase()}
                   </button>
                 ))}
+                {ri === 0 && (
+                  <button
+                    type="button"
+                    class="kb-key kb-wide"
+                    onClick={() => backspaceMessage()}
+                    aria-label="Backspace"
+                    title="Backspace"
+                  >
+                    ⌫
+                  </button>
+                )}
               </div>
             ))}
             <div class="kb-row">
@@ -188,8 +209,17 @@ export function KeyboardModal() {
                 type="button"
                 class="kb-key kb-wide"
                 onClick={() => backspaceMessage()}
+                aria-label="Backspace"
               >
-                {t.letter}
+                ⌫ {t.letter}
+              </button>
+              <button
+                type="button"
+                class="kb-key kb-wide"
+                onClick={() => deleteWordFromMessage()}
+                aria-label="Delete word"
+              >
+                {t.word}
               </button>
               <button
                 type="button"

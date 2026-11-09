@@ -7,7 +7,9 @@ import {
   type ThemeSetting,
 } from '../settings';
 import {
+  BUILTIN_VOICES,
   downloadNeuralVoice,
+  getCachedDownloadedNeuralVoices,
   getDownloadedNeuralVoices,
   listVoices,
   NEURAL_OFFLINE_MODELS,
@@ -22,13 +24,15 @@ import { getLanguageInfo, SUPPORTED_LANGUAGES } from '../i18n';
 export function SettingsModal() {
   const s = settings.value;
   const v = vocab.value;
-  const [voices, setVoices] = useState<VoiceInfo[]>([]);
+  const [voices, setVoices] = useState<VoiceInfo[]>(BUILTIN_VOICES);
   const [tab, setTab] = useState<'speech' | 'access' | 'display' | 'pin'>('speech');
   const [cachedPhrases, setCachedPhrases] = useState<number>(0);
   const [precacheProgress, setPrecacheProgress] = useState<{ done: number; total: number } | null>(
     null,
   );
-  const [storedModels, setStoredModels] = useState<string[]>([]);
+  const [storedModels, setStoredModels] = useState<string[]>(() =>
+    getCachedDownloadedNeuralVoices(),
+  );
   const [downloadingModel, setDownloadingModel] = useState<{ id: string; pct: number } | null>(
     null,
   );
@@ -67,12 +71,17 @@ export function SettingsModal() {
   async function handleDownloadNeural(modelId: string, voiceURI: string, label: string) {
     if (downloadingModel) return;
     setDownloadingModel({ id: modelId, pct: 1 });
-    const ok = await downloadNeuralVoice(modelId, (pct) => {
-      setDownloadingModel({ id: modelId, pct });
-    });
+    const ok = await downloadNeuralVoice(
+      modelId,
+      (pct) => {
+        setDownloadingModel({ id: modelId, pct });
+      },
+      v,
+    );
     setDownloadingModel(null);
-    const updated = await getDownloadedNeuralVoices();
+    const [updated, count] = await Promise.all([getDownloadedNeuralVoices(), ttsCacheCount()]);
     setStoredModels(updated);
+    setCachedPhrases(count);
     if (ok) {
       updateSettings({ voiceURI });
       toast(`Downloaded ${label}`, 'success');
@@ -154,7 +163,9 @@ export function SettingsModal() {
                   {voices.map((voice) => {
                     const isPiper = voice.uri.startsWith('bridge:piper-');
                     const piperModelId = isPiper ? voice.uri.slice('bridge:piper-'.length) : '';
-                    const isPiperInstalled = isPiper ? storedModels.includes(piperModelId) : true;
+                    const isPiperInstalled = isPiper
+                      ? storedModels.includes(piperModelId) || s.voiceURI === voice.uri
+                      : true;
                     return (
                       <option
                         key={voice.uri}
@@ -661,8 +672,9 @@ export function SettingsModal() {
                     }
                   >
                     <option value="auto">System Default</option>
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
+                    <option value="light">Light Mode</option>
+                    <option value="dark">Dark Mode</option>
+                    <option value="calm">Calm Mode (Low Visual Overload)</option>
                     <option value="contrast">High Contrast</option>
                   </select>
                 </label>

@@ -49,6 +49,15 @@ BridgeAAC is engineered so speech **always works offline**, even on devices with
 - **Find Word Pathfinder**: Search for any word in the vocabulary to see the exact step-by-step folder sequence from the Home page.
 - **PIN Lock**: Optional PIN protection for Edit Mode, Vocabularies, and Settings so users don't accidentally exit their board.
 
+### 5. Life, Sensory & Learning Hub
+- **Color Modes (Light, Dark, Calm & High Contrast)**: Includes a sensory-friendly **Calm Mode** with warm low-glare sage/oatmeal tones and softened pastel button saturation to reduce visual overload.
+- **Customizable Phrases & Soundboard**: Express wants, needs, feelings, and quick responses with one-tap color-coded soundboard tiles, plus custom soundboard button creation.
+- **Interactive Daily Planner**: Drag-and-drop visual schedule with Morning/Afternoon/Evening routines, spoken task announcements, and gamified Star & Badge rewards.
+- **Mood Tracking & Analytics**: Log emotions and environmental triggers, receive immediate supportive coping tips with one-tap spoken requests, and view mood distribution charts.
+- **Gamified Learning Games**: Interactive **Sentence Builder** and **Emotion Match** games that speak every tapped tile and reward streaks with stars.
+- **"About Me" Communication Passport**: Share likes, dislikes, sensory triggers, allergies/medical needs, calming strategies, and emergency contacts with caregivers, nurses, or teachers — with one-tap speech on every card.
+- **Secure Caregiver Notes**: Passcode-protected observation log for parents, teachers, and SLPs with category filtering and `.txt` report export.
+
 ---
 
 ## Supported Languages
@@ -118,9 +127,9 @@ npm test
 npm run build
 ```
 
-### Automated GitHub Actions Workflows
-- **`.github/workflows/ci-deploy.yml`**: Runs typechecking, unit tests, and production PWA builds on every push, and automatically deploys `dist/` (with `CNAME` for `bridgeaac.org`) to GitHub Pages.
-- **`.github/workflows/build-apps.yml`**: Builds native desktop installers (Windows `.exe`, Linux `.AppImage`/`.deb`, macOS `.dmg`) and Android `.apk` packages, attaching them to GitHub Releases on version tags (`v*`).
+### Automated GitHub Actions & Cloudflare Pages Workflows
+- **`.github/workflows/ci-deploy.yml`**: Runs typechecking, unit tests, and production PWA builds on every push, and supports Cloudflare Pages deployment (`bridgeaac.org`).
+- **`.github/workflows/build-apps.yml`**: Builds native desktop installers (Windows `.exe`, Linux `.AppImage`/`.deb`, macOS `.dmg`) and Android `.apk` packages, and automatically publishes/updates the downloadable installers on **GitHub Releases** on every push to `main` as well as on version tags (`v*`).
 
 ---
 
