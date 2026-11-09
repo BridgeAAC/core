@@ -19,6 +19,9 @@ import {
   pickVoice,
   synthesizeOfflineWav,
   precacheVocabularyAudio,
+  downloadNeuralVoice,
+  getDownloadedNeuralVoices,
+  removeNeuralVoice,
   type VoiceInfo,
 } from '../src/engine/speech';
 import { createStarterVocabulary } from '../src/data/starter';
@@ -404,6 +407,23 @@ describe('speech engine', () => {
     const res = await precacheVocabularyAudio(miniVocab, 'en-US');
     expect(res.total).toBeGreaterThan(0);
     expect(res.cached).toBe(res.total);
+
+    let lastPct = 0;
+    const dlOk = await downloadNeuralVoice(
+      'en_US-amy-low',
+      (pct) => {
+        lastPct = pct;
+      },
+      miniVocab,
+    );
+    expect(dlOk).toBe(true);
+    expect(lastPct).toBe(100);
+    const installed = await getDownloadedNeuralVoices();
+    expect(installed).toContain('en_US-amy-low');
+
+    await removeNeuralVoice('en_US-amy-low');
+    const afterRemove = await getDownloadedNeuralVoices();
+    expect(afterRemove).not.toContain('en_US-amy-low');
   });
 });
 

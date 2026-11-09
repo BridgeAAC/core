@@ -1,4 +1,5 @@
 import { computed } from '@preact/signals';
+import { useEffect, useState } from 'preact/hooks';
 import {
   canGoBack,
   clearMessage,
@@ -37,6 +38,7 @@ import {
 import { FORM_DEFAULT } from '../model';
 import { resolveActiveLang, ui } from '../i18n';
 import { Icon } from './Icon';
+import { isRunningStandalone } from './InstallModal';
 
 const suggestions = computed<string[]>(() => {
   const msg = message.value;
@@ -55,6 +57,18 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
   const msgScale = settings.value.messageFontScale || 1;
   const isSpeaking = speaking.value;
   const t = ui(resolveActiveLang(v?.locale));
+  const [standalone, setStandalone] = useState<boolean>(isRunningStandalone);
+
+  useEffect(() => {
+    const update = () => setStandalone(isRunningStandalone());
+    const mq = window.matchMedia?.('(display-mode: standalone)');
+    mq?.addEventListener?.('change', update);
+    window.addEventListener('appinstalled', update);
+    return () => {
+      mq?.removeEventListener?.('change', update);
+      window.removeEventListener('appinstalled', update);
+    };
+  }, []);
 
   function applySuggestion(word: string) {
     message.value = replaceCurrentWord(message.value, word);
@@ -126,10 +140,20 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             type="button"
             class="nav-btn"
             onClick={() => (panel.value = 'messages')}
-            title="Saved phrases and recent messages"
+            title="Soundboard, saved phrases, and recent messages"
           >
             <Icon name="chat" />
             <span class="nav-label">{t.phrases}</span>
+          </button>
+          <button
+            type="button"
+            class="nav-btn"
+            onClick={() => (panel.value = 'tools')}
+            title="Daily Planner, Mood Tracker, Games, About Me & Caregiver Notes"
+            aria-label="Daily Planner, Mood Tracker, Games, About Me, and Caregiver Notes"
+          >
+            <Icon name="star" />
+            <span class="nav-label">Hub</span>
           </button>
           <button
             type="button"
@@ -140,15 +164,17 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             <Icon name={isEdit ? 'check' : 'pencil'} />
             <span class="nav-label">{isEdit ? t.done : t.edit}</span>
           </button>
-          <button
-            type="button"
-            class="nav-btn"
-            onClick={() => (panel.value = 'help')}
-            title="Install the app and set up offline voices"
-          >
-            <Icon name="download" />
-            <span class="nav-label">{t.install}</span>
-          </button>
+          {!standalone && (
+            <button
+              type="button"
+              class="nav-btn"
+              onClick={() => (panel.value = 'help')}
+              title="Install the app and set up offline voices"
+            >
+              <Icon name="download" />
+              <span class="nav-label">{t.install}</span>
+            </button>
+          )}
           <button
             type="button"
             class="nav-btn"

@@ -30,6 +30,7 @@ import { SettingsModal } from './SettingsModal';
 import { MessagesModal } from './MessagesModal';
 import { KeyboardModal } from './KeyboardModal';
 import { InstallModal } from './InstallModal';
+import { ToolsModal } from './ToolsModal';
 
 function PinModal() {
   const req = pinRequest.value;
@@ -240,6 +241,7 @@ export function App() {
       {panel.value === 'pageSettings' && <PageSettingsModal />}
       {panel.value === 'settings' && <SettingsModal />}
       {panel.value === 'messages' && <MessagesModal />}
+      {panel.value === 'tools' && <ToolsModal />}
       {panel.value === 'help' && <InstallModal />}
       <KeyboardModal />
       {editTarget.value && <ButtonEditorModal />}

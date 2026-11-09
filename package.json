@@ -5,7 +5,7 @@
   "type": "module",
   "homepage": "https://bridgeaac.org",
   "main": "electron/main.cjs",
-  "author": "BridgeAAC (https://bridgeaac.org)",
+  "author": "BridgeAAC <support@bridgeaac.org>",
   "license": "GPL-3.0-or-later",
   "description": "Free, open-source, offline AAC communication app compatible with TouchChat .ce and Open Board Format files.",
   "scripts": {

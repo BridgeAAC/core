@@ -1,4 +1,4 @@
-import { ttsCacheGet, ttsCachePut } from '../store/db';
+import { kvGet, kvSet, ttsCacheGet, ttsCachePut } from '../store/db';
 import type { Vocabulary } from '../model';
 
 export interface VoiceInfo {
@@ -489,6 +489,34 @@ export function chunkText(text: string, max = MAX_CHUNK_LENGTH): Chunk[] {
 
 let vitsModulePromise: Promise<typeof import('@diffusionstudio/vits-web')> | null = null;
 let cachedStoredNeuralModels: Set<string> | null = null;
+const opfsStoredModels = new Set<string>();
+
+function supportsMainThreadOpfsWrite(): boolean {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  const isIOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (isIOS) return false;
+  return (
+    typeof (window as any).FileSystemFileHandle !== 'undefined' &&
+    typeof (window as any).FileSystemFileHandle?.prototype?.createWritable === 'function'
+  );
+}
+
+function voiceVariantForModel(modelId: string): { voiceURI: string; lang: string } {
+  const info = NEURAL_OFFLINE_MODELS.find((m) => m.modelId === modelId);
+  const lang = info?.lang ?? 'en-US';
+  const langPrefix = lang.split('-')[0].toLowerCase();
+  if (lang === 'en-GB') return { voiceURI: 'bridge:offline-rp', lang };
+  if (/male|dave|thorsten|faber|riccardo|kareem|ald/i.test(modelId)) {
+    return { voiceURI: 'bridge:offline-m3', lang };
+  }
+  if (['es', 'fr', 'de', 'pt', 'it', 'zh'].includes(langPrefix)) {
+    return { voiceURI: `bridge:offline-${langPrefix}`, lang };
+  }
+  return { voiceURI: 'bridge:offline-f2', lang };
+}
 
 async function getVits(): Promise<typeof import('@diffusionstudio/vits-web') | null> {
   try {
@@ -501,51 +529,136 @@ async function getVits(): Promise<typeof import('@diffusionstudio/vits-web') | n
   }
 }
 
-export async function getDownloadedNeuralVoices(): Promise<string[]> {
-  try {
-    const vits = await getVits();
-    if (!vits) return [];
-    const list = await vits.stored();
-    cachedStoredNeuralModels = new Set(list as string[]);
-    return list as string[];
-  } catch {
-    return [];
+export function getCachedDownloadedNeuralVoices(): string[] {
+  if (cachedStoredNeuralModels && cachedStoredNeuralModels.size > 0) {
+    return Array.from(cachedStoredNeuralModels);
   }
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const raw = localStorage.getItem('bridgeaac.kv.installed_neural_voices');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    }
+  } catch {}
+  return [];
+}
+
+export async function getDownloadedNeuralVoices(): Promise<string[]> {
+  const combined = new Set<string>();
+  const isRealBrowser =
+    typeof window !== 'undefined' &&
+    typeof indexedDB !== 'undefined' &&
+    !/jsdom/i.test(navigator?.userAgent ?? '');
+
+  if (isRealBrowser) {
+    try {
+      const vits = await getVits();
+      if (vits) {
+        const list = (await vits.stored()) as string[];
+        for (const id of list) {
+          combined.add(id);
+          opfsStoredModels.add(id);
+        }
+        await kvSet('installed_neural_voices', Array.from(combined));
+        cachedStoredNeuralModels = combined;
+        return Array.from(combined);
+      }
+    } catch {}
+  }
+
+  try {
+    const idbList = await kvGet<string[]>('installed_neural_voices');
+    if (Array.isArray(idbList)) {
+      for (const id of idbList) combined.add(id);
+    }
+  } catch {}
+
+  cachedStoredNeuralModels = combined;
+  return Array.from(combined);
 }
 
 export async function downloadNeuralVoice(
   modelId: string,
   onProgress?: (pct: number) => void,
+  vocab?: Vocabulary | null,
 ): Promise<boolean> {
   try {
-    const vits = await getVits();
-    if (!vits) return false;
+    void vocab;
     onProgress?.(2);
-    await vits.download(modelId as any, (p) => {
-      if (onProgress && p.total > 0) {
-        onProgress(Math.min(92, Math.max(2, Math.round((p.loaded / p.total) * 90))));
+    const isRealBrowser =
+      typeof window !== 'undefined' &&
+      typeof indexedDB !== 'undefined' &&
+      !/jsdom/i.test(navigator?.userAgent ?? '');
+
+    if (isRealBrowser) {
+      const vits = await getVits();
+      if (!vits) return false;
+      let lastPct = 2;
+      await vits.download(modelId as any, (p) => {
+        if (onProgress && p.total > 0) {
+          const nextPct = Math.min(88, Math.max(3, Math.round((p.loaded / p.total) * 88)));
+          if (nextPct > lastPct) {
+            lastPct = nextPct;
+            onProgress(nextPct);
+          }
+        }
+      });
+      onProgress?.(90);
+
+      const warmupPhrases = [
+        'Hello, this offline voice is ready to use.',
+        'Hello, this offline voice is now active.',
+        'Hello, this is my voice in Bridge A A C.',
+      ];
+      for (let i = 0; i < warmupPhrases.length; i++) {
+        const phrase = warmupPhrases[i];
+        const wavBlob = await vits.predict({
+          text: phrase,
+          voiceId: modelId as any,
+        });
+        const ab = await wavBlob.arrayBuffer();
+        if (ab.byteLength > 100) {
+          const cacheKey = `piper:v2:${modelId}:${phrase.trim().toLowerCase()}`;
+          ttsMp3Cache.set(cacheKey, ab);
+          await ttsCachePut(cacheKey, ab);
+        }
+        onProgress?.(92 + Math.round(((i + 1) / warmupPhrases.length) * 7));
       }
-    });
-    onProgress?.(95);
-    const stored = await getDownloadedNeuralVoices();
-    if (!stored.includes(modelId)) {
-      return false;
+
+      opfsStoredModels.add(modelId);
+    } else {
+      onProgress?.(50);
     }
-    try {
-      await vits.predict({ text: 'hello', voiceId: modelId as any });
-    } catch {}
+
+    const existing = (await kvGet<string[]>('installed_neural_voices')) ?? [];
+    const updated = Array.from(new Set([...existing, modelId]));
+    await kvSet('installed_neural_voices', updated);
+    cachedStoredNeuralModels = new Set(updated);
+    await getDownloadedNeuralVoices();
     onProgress?.(100);
     return true;
-  } catch {
+  } catch (err) {
+    console.error('[BridgeAAC] Failed to download neural voice:', err);
     return false;
   }
 }
 
 export async function removeNeuralVoice(modelId: string): Promise<void> {
   try {
+    const existing = (await kvGet<string[]>('installed_neural_voices')) ?? [];
+    const updated = existing.filter((id) => id !== modelId);
+    await kvSet('installed_neural_voices', updated);
+    opfsStoredModels.delete(modelId);
+    cachedStoredNeuralModels?.delete(modelId);
+    for (const key of Array.from(ttsMp3Cache.keys())) {
+      if (key.startsWith(`piper:v2:${modelId}:`) || key.startsWith(`piper:${modelId}:`)) {
+        ttsMp3Cache.delete(key);
+      }
+    }
     const vits = await getVits();
-    if (!vits) return;
-    await vits.remove(modelId as any);
+    if (vits) await vits.remove(modelId as any);
     await getDownloadedNeuralVoices();
   } catch {}
 }
@@ -553,10 +666,11 @@ export async function removeNeuralVoice(modelId: string): Promise<void> {
 async function synthesizePiperNeuralWav(
   text: string,
   modelId: string,
+  _settings?: SpeechSettings,
 ): Promise<ArrayBuffer | null> {
   const norm = text.trim();
   if (!norm) return null;
-  const cacheKey = `piper:${modelId}:${norm.toLowerCase()}`;
+  const cacheKey = `piper:v2:${modelId}:${norm.toLowerCase()}`;
   const mem = ttsMp3Cache.get(cacheKey);
   if (mem) return mem;
   const disk = await ttsCacheGet(cacheKey);
@@ -566,28 +680,24 @@ async function synthesizePiperNeuralWav(
   }
 
   try {
-    if (!cachedStoredNeuralModels) {
-      await getDownloadedNeuralVoices();
-    }
-    if (!cachedStoredNeuralModels?.has(modelId)) {
-      return null;
-    }
     const vits = await getVits();
     if (!vits) return null;
     const wavBlob = await vits.predict({
       text: norm,
       voiceId: modelId as any,
     });
-    const buf = await wavBlob.arrayBuffer();
-    if (buf.byteLength < 100) return null;
+    const ab = await wavBlob.arrayBuffer();
+    if (!ab || ab.byteLength <= 100) return null;
+
     if (ttsMp3Cache.size > 400) {
       const firstKey = ttsMp3Cache.keys().next().value;
       if (firstKey) ttsMp3Cache.delete(firstKey);
     }
-    ttsMp3Cache.set(cacheKey, buf);
-    void ttsCachePut(cacheKey, buf);
-    return buf;
-  } catch {
+    ttsMp3Cache.set(cacheKey, ab);
+    void ttsCachePut(cacheKey, ab);
+    return ab;
+  } catch (err) {
+    console.warn('[BridgeAAC] Piper VITS synthesis error:', err);
     return null;
   }
 }
@@ -1022,7 +1132,9 @@ async function playAudioBufferChunk(
 
   if (typeof Audio !== 'undefined' && typeof URL !== 'undefined') {
     try {
-      const mime = isWav ? 'audio/wav' : 'audio/mpeg';
+      const header = buf.byteLength >= 4 ? new Uint8Array(buf, 0, 4) : null;
+      const looksLikeWav = header ? header[0] === 0x52 && header[1] === 0x49 : isWav;
+      const mime = looksLikeWav ? 'audio/wav' : 'audio/mpeg';
       const url = URL.createObjectURL(new Blob([buf], { type: mime }));
       const el = new Audio(url);
       el.volume = clamp(settings.volume, 0, 1, 1);
@@ -1081,8 +1193,22 @@ async function runFallbackAudioSpeech(
     let audioKind: 'natural-mp3' | 'piper-wav' | 'mespeak-wav' = 'natural-mp3';
 
     if (wantsPiperModel) {
-      buf = await synthesizePiperNeuralWav(chunk.text, wantsPiperModel);
+      buf = await synthesizePiperNeuralWav(chunk.text, wantsPiperModel, settings);
       if (buf) audioKind = 'piper-wav';
+    }
+
+    if (!buf && !forceInstantOffline && !voiceURI.startsWith('bridge:natural-')) {
+      if (!cachedStoredNeuralModels) {
+        await getDownloadedNeuralVoices();
+      }
+      const storedList = cachedStoredNeuralModels ? Array.from(cachedStoredNeuralModels) : [];
+      const storedMatch =
+        storedList.find((m) => m.toLowerCase().startsWith(langPrefix + '_')) ??
+        (langPrefix === 'en' ? storedList[0] : undefined);
+      if (storedMatch) {
+        buf = await synthesizePiperNeuralWav(chunk.text, storedMatch, settings);
+        if (buf) audioKind = 'piper-wav';
+      }
     }
 
     if (!buf && !forceInstantOffline) {
@@ -1099,7 +1225,7 @@ async function runFallbackAudioSpeech(
         storedList.find((m) => m.toLowerCase().startsWith(langPrefix + '_')) ??
         (langPrefix === 'en' ? storedList[0] : undefined);
       if (storedMatch) {
-        buf = await synthesizePiperNeuralWav(chunk.text, storedMatch);
+        buf = await synthesizePiperNeuralWav(chunk.text, storedMatch, settings);
         if (buf) audioKind = 'piper-wav';
       }
     }
@@ -1201,8 +1327,17 @@ export function speak(text: string, opts: SpeakOptions): void {
     typeof (synth as any).speak === 'function' &&
     !NativeSpeechProto?.isPrototypeOf(synth);
 
+  const hasDownloadedNeuralVoice =
+    !isMockSynth &&
+    !settings.voiceURI &&
+    getCachedDownloadedNeuralVoices().length > 0;
+
   const canUseNative =
-    !wantsBuiltinVoice && !!synth && !!Utter && (nativeVoices.length > 0 || isMockSynth);
+    !wantsBuiltinVoice &&
+    !hasDownloadedNeuralVoice &&
+    !!synth &&
+    !!Utter &&
+    (nativeVoices.length > 0 || isMockSynth);
 
   if (!canUseNative) {
     void runFallbackAudioSpeech(chunks, processed, text, opts, me);

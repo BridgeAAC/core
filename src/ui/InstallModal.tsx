@@ -30,7 +30,11 @@ export function isRunningStandalone(): boolean {
   if (typeof window === 'undefined') return false;
   return (
     window.matchMedia?.('(display-mode: standalone)').matches === true ||
-    (window.navigator as any)?.standalone === true
+    window.matchMedia?.('(display-mode: fullscreen)').matches === true ||
+    window.matchMedia?.('(display-mode: window-controls-overlay)').matches === true ||
+    (window.navigator as any)?.standalone === true ||
+    Boolean((window as any).bridgeDesktop) ||
+    Boolean((window as any).Capacitor?.isNativePlatform?.())
   );
 }
 

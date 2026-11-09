@@ -1,6 +1,6 @@
 import { signal, effect } from '@preact/signals';
 
-export type ThemeSetting = 'auto' | 'light' | 'dark' | 'contrast';
+export type ThemeSetting = 'auto' | 'light' | 'dark' | 'calm' | 'contrast';
 export type ScanPatternSetting = 'linear' | 'row-column' | 'column-row';
 
 export interface Settings {
