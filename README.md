@@ -126,4 +126,4 @@ npm run build
 
 ## License
 
-BridgeAAC is free and open-source software licensed under the **[GNU General Public License v3.0 (GPL-3.0)](LICENSE)**.
+BridgeAAC is free and open-source software licensed under the **[MIT License](LICENSE)**.
