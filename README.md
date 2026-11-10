@@ -21,7 +21,7 @@
 
 I’m 15 years old. I built BridgeAAC because my 16-year-old sister has to have an iPad for an AAC device to communicate. An iPad alone costs hundreds of dollars — and that doesn’t even include the AAC app itself, which also costs hundreds of dollars more.
 
-I love my sister, and I wanted every person and family to have access to a real AAC communication board without having to pay hundreds of dollars just to speak. BridgeAAC is **100% free, open-source (GPL-3.0), and works completely offline** on whatever tablet, phone, Chromebook, or computer a family already has.
+I love my sister, and I wanted every person and family to have access to a real AAC communication board without having to pay hundreds of dollars just to speak. BridgeAAC is **100% free, open-source (MIT License), and works completely offline** on whatever tablet, phone, Chromebook, or computer a family already has.
 
 ---
 
