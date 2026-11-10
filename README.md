@@ -9,7 +9,7 @@
   </p>
   <p>
     <a href="https://bridgeaac.org"><strong>Website (bridgeaac.org)</strong></a> &bull;
-    <a href="wiki"><strong>Documentation Wiki</strong></a> &bull;
+    <a href="https://github.com/BridgeAAC/core/wiki"><strong>Documentation Wiki</strong></a> &bull;
     <a href="#installation"><strong>Installation</strong></a> &bull;
     <a href="#supported-languages"><strong>10 Languages</strong></a> &bull;
     <a href="#development--cicd"><strong>Development</strong></a>
