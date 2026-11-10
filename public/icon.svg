@@ -1,4 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#2563eb"/>
-  <text x="32" y="32" dy="0.35em" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="32" font-weight="600" fill="#ffffff">B</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1e40af"/>
+      <stop offset="52%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#0ea5e9"/>
+    </linearGradient>
+  </defs>
+  <rect width="240" height="240" rx="52" fill="url(#bg)"/>
+  <path d="M36 38C36 25.85 45.85 16 58 16H182C194.15 16 204 25.85 204 38V148C204 160.15 194.15 170 182 170H108L66 208V170H58C45.85 170 36 160.15 36 148V38Z" fill="#FFFFFF"/>
+  <rect x="54" y="34" width="60" height="52" rx="12" fill="#FEF08A" stroke="#EAB308" stroke-width="3.5"/>
+  <rect x="126" y="34" width="60" height="52" rx="12" fill="#BBF7D0" stroke="#22C55E" stroke-width="3.5"/>
+  <rect x="54" y="98" width="60" height="52" rx="12" fill="#BFDBFE" stroke="#3B82F6" stroke-width="3.5"/>
+  <rect x="126" y="98" width="60" height="52" rx="12" fill="#FED7AA" stroke="#F97316" stroke-width="3.5"/>
+  <circle cx="84" cy="52" r="8" fill="#854D0E"/>
+  <path d="M70 76C70 68 76 64 84 64C92 64 98 68 98 76" stroke="#854D0E" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M142 54V66H150L159 74V46L150 54H142Z" fill="#166534"/>
+  <path d="M166 52C171 56 171 64 166 68" stroke="#166534" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+  <path d="M173 46C181 53 181 67 173 74" stroke="#166534" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+  <path d="M84 138C84 138 69 128 69 117C69 111.5 73.5 108 78 108C81 108 83 109.8 84 112C85 109.8 87 108 90 108C94.5 108 99 111.5 99 117C99 128 84 138 84 138Z" fill="#1D4ED8"/>
+  <path d="M156 107L160.9 117.2L172 118.8L164 126.6L165.9 137.7L156 132.4L146.1 137.7L148 126.6L140 118.8L151.1 117.2L156 107Z" fill="#C2410C"/>
 </svg>

@@ -1,5 +1,3 @@
-// Cloudflare Pages Function: /api/tts
-// Proxies natural speech audio so BridgeAAC Natural voices work on Cloudflare Pages (bridgeaac.org)
 export const onRequestGet = async (context: { request: Request }) => {
   try {
     const u = new URL(context.request.url);

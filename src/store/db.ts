@@ -232,3 +232,30 @@ export async function ttsCacheClear(): Promise<void> {
     await txDone(tx);
   } catch {}
 }
+
+export async function resetAllLocalData(): Promise<void> {
+  memKv.clear();
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('bridgeaac.')) keysToRemove.push(k);
+      }
+      for (const k of keysToRemove) localStorage.removeItem(k);
+    }
+  } catch {}
+  try {
+    if (typeof indexedDB !== 'undefined') {
+      const db = await openDb();
+      for (const storeName of ['vocabs', 'assets', 'kv', 'tts_cache']) {
+        if (db.objectStoreNames.contains(storeName)) {
+          const tx = db.transaction(storeName, 'readwrite');
+          tx.objectStore(storeName).clear();
+          await txDone(tx);
+        }
+      }
+    }
+  } catch {}
+}
+

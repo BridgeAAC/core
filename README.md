@@ -9,6 +9,7 @@
   </p>
   <p>
     <a href="https://bridgeaac.org"><strong>Website (bridgeaac.org)</strong></a> &bull;
+    <a href="wiki/Home.md"><strong>Documentation Wiki</strong></a> &bull;
     <a href="#installation"><strong>Installation</strong></a> &bull;
     <a href="#supported-languages"><strong>10 Languages</strong></a> &bull;
     <a href="#development--cicd"><strong>Development</strong></a>
@@ -90,13 +91,13 @@ BridgeAAC includes **10 complete offline starter vocabularies** (11 pages each: 
 
 ### Android Tablets & Phones
 - **From Chrome**: Open **[https://bridgeaac.org](https://bridgeaac.org)** in Chrome and select **Install app** from the browser menu.
-- **Native APK**: Download `BridgeAAC-android.apk` from GitHub Releases or build locally with:
+- **Native APK**: Download `BridgeAAC-android.apk` from [GitHub Releases](https://github.com/bridgeaac/core/releases) or build locally with:
   ```bash
   npm run android:init && npm run android:build
   ```
 
 ### Windows, macOS & Linux
-- **Prebuilt Releases**: Download the installer for your platform (`.exe` NSIS installer / portable executable for Windows, `.dmg` for macOS, `.AppImage` / `.deb` for Linux) from GitHub Releases.
+- **Prebuilt Releases**: Download the installer for your platform (`.exe` NSIS installer / portable executable for Windows, `.dmg` for macOS, `.AppImage` / `.deb` for Linux) from [GitHub Releases](https://github.com/bridgeaac/core/releases).
 - **Build Locally**:
   ```bash
   # Windows (.exe)

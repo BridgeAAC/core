@@ -52,7 +52,7 @@ function bridgeTtsPlugin(): Plugin {
     async buildStart() {
       try {
         const modPath = './scripts/patch-deps.mjs';
-        await import(/* @vite-ignore */ modPath);
+        await import(modPath);
       } catch {}
     },
     configureServer(server) {

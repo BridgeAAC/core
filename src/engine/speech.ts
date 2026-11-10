@@ -314,15 +314,32 @@ export function sortVoices(voices: VoiceInfo[]): VoiceInfo[] {
   );
 }
 
+function getSwiftHandler(): { postMessage(msg: any): void } | undefined {
+  const w = env();
+  return w?.webkit?.messageHandlers?.bridgeSwift;
+}
+
 export async function listVoices(timeoutMs = 800): Promise<VoiceInfo[]> {
   const synth = getSynth();
   let native: VoiceInfo[] = [];
+  const swiftVoices = env().__bridgeSwiftVoices;
+  if (Array.isArray(swiftVoices) && swiftVoices.length > 0) {
+    native = sortVoices(
+      swiftVoices.map((v: any) => ({
+        uri: `swift:${v.identifier || v.uri}`,
+        name: `${v.name} (Apple Native)`,
+        lang: v.lang || 'en-US',
+        local: true,
+        default: !!v.default,
+      })),
+    );
+  }
   if (synth) {
     const now = synth.getVoices();
     if (now.length > 0) {
-      native = sortVoices(now.map(toInfo));
+      native = [...native, ...sortVoices(now.map(toInfo))];
     } else {
-      native = await new Promise<VoiceInfo[]>((resolve) => {
+      const webVoices = await new Promise<VoiceInfo[]>((resolve) => {
         let finished = false;
         const finish = () => {
           if (finished) return;
@@ -337,6 +354,7 @@ export async function listVoices(timeoutMs = 800): Promise<VoiceInfo[]> {
         const timer = setTimeout(finish, timeoutMs);
         synth.addEventListener?.('voiceschanged', onChange);
       });
+      native = [...native, ...webVoices];
     }
   }
   return [...BUILTIN_VOICES, ...native];
@@ -1355,6 +1373,8 @@ export function speak(text: string, opts: SpeakOptions): void {
   session = me;
 
   const wantsBuiltinVoice = settings.voiceURI?.startsWith('bridge:');
+  const wantsSwiftVoice = settings.voiceURI?.startsWith('swift:');
+  const swiftHandler = getSwiftHandler();
   const nativeVoices = synth ? synth.getVoices() : [];
   const isMockSynth =
     !!synth &&
@@ -1365,6 +1385,51 @@ export function speak(text: string, opts: SpeakOptions): void {
     !isMockSynth &&
     !settings.voiceURI &&
     getCachedDownloadedNeuralVoices().length > 0;
+
+  if (
+    swiftHandler &&
+    (wantsSwiftVoice || (!wantsBuiltinVoice && !hasDownloadedNeuralVoice && !settings.voiceURI))
+  ) {
+    const reqId = me.id;
+    const w = env();
+    w.__bridgeOnSwiftSpeechEvent = (ev: {
+      id: number;
+      type: 'start' | 'boundary' | 'end' | 'error';
+      charIndex?: number;
+      charLength?: number;
+    }) => {
+      if (ev.id !== reqId || me.cancelled || session !== me) return;
+      if (ev.type === 'start') {
+        opts.onStart?.();
+      } else if (ev.type === 'boundary' && typeof ev.charIndex === 'number') {
+        const start = mapStart(processed, ev.charIndex);
+        const end = mapEnd(processed, ev.charIndex + (ev.charLength || 1));
+        opts.onBoundary?.(start, Math.max(1, end - start));
+      } else if (ev.type === 'end') {
+        me.finish(true);
+      } else if (ev.type === 'error') {
+        void runFallbackAudioSpeech(chunks, processed, text, opts, me);
+      }
+    };
+    me.stopCleanup = () => {
+      try {
+        swiftHandler.postMessage({ action: 'stop' });
+      } catch {}
+    };
+    try {
+      swiftHandler.postMessage({
+        action: 'speak',
+        id: reqId,
+        text: processed.text,
+        voiceIdentifier: wantsSwiftVoice ? settings.voiceURI!.slice('swift:'.length) : undefined,
+        lang: opts.lang || 'en-US',
+        rate: clamp(settings.rate, 0.4, 2.0, 1),
+        pitch: clamp(settings.pitch, 0.5, 2.0, 1),
+        volume: clamp(settings.volume, 0, 1, 1),
+      });
+      return;
+    } catch {}
+  }
 
   const canUseNative =
     !wantsBuiltinVoice &&

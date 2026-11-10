@@ -1,6 +1,3 @@
-// Small stroke icons for the app chrome (toolbar, message bar, dialogs).
-// Drawn on a 24x24 grid so they line up with text at any size.
-
 const PATHS = {
   home: 'M3 11.5 12 4l9 7.5M5.5 9.5V20h4.5v-6h4v6h4.5V9.5',
   back: 'M10 6 4 12l6 6M4 12h16',

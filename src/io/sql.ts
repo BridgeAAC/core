@@ -38,9 +38,9 @@ async function load(): Promise<SqlJsStatic> {
     const fsName = 'node:fs';
     const pathName = 'node:path';
     const urlName = 'node:url';
-    const fs = (await import(/* @vite-ignore */ fsName)) as NodeFs;
-    const path = (await import(/* @vite-ignore */ pathName)) as NodePath;
-    const url = (await import(/* @vite-ignore */ urlName)) as NodeUrl;
+    const fs = (await import(fsName)) as NodeFs;
+    const path = (await import(pathName)) as NodePath;
+    const url = (await import(urlName)) as NodeUrl;
     const cwd = (globalThis as unknown as { process: { cwd(): string } }).process.cwd();
     const here =
       typeof import.meta.url === 'string' && import.meta.url.startsWith('file:')

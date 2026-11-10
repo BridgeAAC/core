@@ -21,7 +21,7 @@ import {
   unlockAudio,
   type VoiceInfo,
 } from '../engine/speech';
-import { ttsCacheClear, ttsCacheCount } from '../store/db';
+import { resetAllLocalData, ttsCacheClear, ttsCacheCount } from '../store/db';
 import { commit, panel, speakText, toast, vocab } from '../state';
 import { getLanguageInfo, SUPPORTED_LANGUAGES } from '../i18n';
 
@@ -1071,21 +1071,72 @@ export function SettingsModal() {
 
           {tab === 'pin' && (
             <div class="settings-section">
-              <p class="hint">
-                Require a PIN before opening Edit Mode, Vocabularies, or Settings. Leave blank to
-                disable.
-              </p>
-              <label class="field" style={{ maxWidth: '280px' }}>
-                <span>PIN Code</span>
-                <input
-                  type="text"
-                  value={s.pin}
-                  placeholder="None"
-                  onInput={(e) =>
-                    updateSettings({ pin: (e.target as HTMLInputElement).value.trim() })
-                  }
-                />
-              </label>
+              <div class="section-box">
+                <strong>Caregiver & Editor PIN Lock</strong>
+                <p class="hint" style={{ margin: '4px 0 10px' }}>
+                  Require a PIN before opening Edit Mode, Vocabularies, or Settings. Leave blank to
+                  disable.
+                </p>
+                <label class="field" style={{ maxWidth: '280px' }}>
+                  <span>PIN Code</span>
+                  <input
+                    type="text"
+                    value={s.pin}
+                    placeholder="None"
+                    onInput={(e) =>
+                      updateSettings({ pin: (e.target as HTMLInputElement).value.trim() })
+                    }
+                  />
+                </label>
+              </div>
+
+              <div class="section-box">
+                <strong>Privacy & Local Data Guarantee</strong>
+                <p class="hint" style={{ margin: '4px 0 8px', lineHeight: 1.5 }}>
+                  BridgeAAC operates <strong>100% locally on your device</strong>. No accounts,
+                  analytics, trackers, or telemetry are ever collected or transmitted. Your custom
+                  vocabularies, photos, mood logs, planner tasks, and caregiver notes never leave
+                  this device unless you explicitly export a backup file.
+                </p>
+                <div class="inline-row" style={{ gap: '8px', flexWrap: 'wrap' }}>
+                  <a
+                    href="https://bridgeaac.org"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn secondary sm"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    Website (bridgeaac.org)
+                  </a>
+                  <a
+                    href="https://github.com/bridgeaac/core"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn secondary sm"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    Open Source License (MIT)
+                  </a>
+                  <button
+                    type="button"
+                    class="btn danger sm"
+                    onClick={async () => {
+                      if (
+                        typeof window !== 'undefined' &&
+                        window.confirm(
+                          'Erase all locally saved custom boards, cached voices, and settings on this device?',
+                        )
+                      ) {
+                        await resetAllLocalData();
+                        resetSettings();
+                        window.location.reload();
+                      }
+                    }}
+                  >
+                    Erase All Local Data
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
