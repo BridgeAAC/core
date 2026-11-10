@@ -3,6 +3,9 @@ import {
   resetSettings,
   settings,
   updateSettings,
+  type ColorCodingSetting,
+  type FontFamilySetting,
+  type LabelPositionSetting,
   type ScanPatternSetting,
   type ThemeSetting,
 } from '../settings';
@@ -15,6 +18,7 @@ import {
   NEURAL_OFFLINE_MODELS,
   precacheVocabularyAudio,
   removeNeuralVoice,
+  unlockAudio,
   type VoiceInfo,
 } from '../engine/speech';
 import { ttsCacheClear, ttsCacheCount } from '../store/db';
@@ -70,6 +74,7 @@ export function SettingsModal() {
 
   async function handleDownloadNeural(modelId: string, voiceURI: string, label: string) {
     if (downloadingModel) return;
+    unlockAudio();
     setDownloadingModel({ id: modelId, pct: 1 });
     const ok = await downloadNeuralVoice(
       modelId,
@@ -111,7 +116,27 @@ export function SettingsModal() {
         onClick={(e) => e.stopPropagation()}
       >
         <div class="modal-header">
-          <h2>Settings</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <h2>Settings</h2>
+            <a
+              href="https://github.com/bridgeaac/core"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn secondary sm"
+              style={{
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+              }}
+              aria-label="BridgeAAC on GitHub"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+              </svg>
+              GitHub
+            </a>
+          </div>
           <button type="button" class="icon-close" onClick={close} aria-label="Close">
             ×
           </button>
@@ -652,9 +677,67 @@ export function SettingsModal() {
                         }
                       />
                     </label>
+                    <label class="field" style={{ flex: 1 }}>
+                      <span>Scan Highlight Color</span>
+                      <input
+                        type="color"
+                        value={s.scanColor || '#f59e0b'}
+                        onInput={(e) =>
+                          updateSettings({
+                            scanColor: (e.target as HTMLInputElement).value,
+                          })
+                        }
+                        style={{ height: '38px', width: '100%', padding: '2px', cursor: 'pointer' }}
+                      />
+                    </label>
                   </div>
+                  <label class="check-label" style={{ marginTop: '8px' }}>
+                    <input
+                      type="checkbox"
+                      checked={s.auditoryScanning}
+                      onChange={(e) =>
+                        updateSettings({
+                          auditoryScanning: (e.target as HTMLInputElement).checked,
+                        })
+                      }
+                    />
+                    Auditory scanning (announce each button aloud when highlighted)
+                  </label>
                 </div>
               )}
+              <div class="section-box" style={{ marginTop: '8px' }}>
+                <strong>Keyboard & Visual Focus Accessibility</strong>
+                <p class="hint" style={{ margin: '2px 0 8px' }}>
+                  Use Tab and Arrow Keys (Up, Down, Left, Right) to navigate between board buttons,
+                  and Enter or Space to activate.
+                </p>
+                <div class="check-grid">
+                  <label class="check-label">
+                    <input
+                      type="checkbox"
+                      checked={s.highContrastFocus}
+                      onChange={(e) =>
+                        updateSettings({
+                          highContrastFocus: (e.target as HTMLInputElement).checked,
+                        })
+                      }
+                    />
+                    High-visibility focus ring for keyboard & switch navigation
+                  </label>
+                  <label class="check-label">
+                    <input
+                      type="checkbox"
+                      checked={s.reducedMotion}
+                      onChange={(e) =>
+                        updateSettings({
+                          reducedMotion: (e.target as HTMLInputElement).checked,
+                        })
+                      }
+                    />
+                    Reduce motion & button animations
+                  </label>
+                </div>
+              </div>
             </div>
           )}
 
@@ -720,6 +803,59 @@ export function SettingsModal() {
 
               <div class="inline-row">
                 <label class="field" style={{ flex: 1 }}>
+                  <span>Font Style</span>
+                  <select
+                    value={s.fontFamily || 'system'}
+                    onChange={(e) =>
+                      updateSettings({
+                        fontFamily: (e.target as HTMLSelectElement).value as FontFamilySetting,
+                      })
+                    }
+                  >
+                    <option value="system">System Sans-Serif (Default)</option>
+                    <option value="rounded">Friendly Rounded</option>
+                    <option value="dyslexic">Accessible / Dyslexia-Friendly</option>
+                    <option value="serif">Classic Serif</option>
+                    <option value="mono">Monospace</option>
+                  </select>
+                </label>
+
+                <label class="field" style={{ flex: 1 }}>
+                  <span>Button Color Palette</span>
+                  <select
+                    value={s.colorCoding || 'default'}
+                    onChange={(e) =>
+                      updateSettings({
+                        colorCoding: (e.target as HTMLSelectElement).value as ColorCodingSetting,
+                      })
+                    }
+                  >
+                    <option value="default">Standard Fitzgerald Key</option>
+                    <option value="pastel">Soft Pastel (Low Sensory)</option>
+                    <option value="vivid">Vivid High-Saturation</option>
+                    <option value="monochrome">Uniform Monochrome</option>
+                  </select>
+                </label>
+
+                <label class="field" style={{ flex: 1 }}>
+                  <span>Label Position</span>
+                  <select
+                    value={s.labelPosition || 'auto'}
+                    onChange={(e) =>
+                      updateSettings({
+                        labelPosition: (e.target as HTMLSelectElement).value as LabelPositionSetting,
+                      })
+                    }
+                  >
+                    <option value="auto">Per-Button Default</option>
+                    <option value="top">Always Above Symbol</option>
+                    <option value="bottom">Always Below Symbol</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="inline-row">
+                <label class="field" style={{ flex: 1 }}>
                   <span>Button Text Size ({Math.round(s.labelScale * 100)}%)</span>
                   <input
                     type="range"
@@ -729,6 +865,19 @@ export function SettingsModal() {
                     value={s.labelScale}
                     onInput={(e) =>
                       updateSettings({ labelScale: Number((e.target as HTMLInputElement).value) })
+                    }
+                  />
+                </label>
+                <label class="field" style={{ flex: 1 }}>
+                  <span>Symbol Size ({Math.round((s.iconScale ?? 1) * 100)}%)</span>
+                  <input
+                    type="range"
+                    min={0.6}
+                    max={1.4}
+                    step={0.05}
+                    value={s.iconScale ?? 1}
+                    onInput={(e) =>
+                      updateSettings({ iconScale: Number((e.target as HTMLInputElement).value) })
                     }
                   />
                 </label>
@@ -747,6 +896,9 @@ export function SettingsModal() {
                     }
                   />
                 </label>
+              </div>
+
+              <div class="inline-row">
                 <label class="field" style={{ flex: 1 }}>
                   <span>Button Spacing ({s.buttonGap} px)</span>
                   <input
@@ -759,6 +911,49 @@ export function SettingsModal() {
                       updateSettings({ buttonGap: Number((e.target as HTMLInputElement).value) })
                     }
                   />
+                </label>
+                <label class="field" style={{ flex: 1 }}>
+                  <span>Corner Roundness ({s.buttonRadius ?? 10} px)</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={28}
+                    step={2}
+                    value={s.buttonRadius ?? 10}
+                    onInput={(e) =>
+                      updateSettings({ buttonRadius: Number((e.target as HTMLInputElement).value) })
+                    }
+                  />
+                </label>
+                <label class="field" style={{ flex: 1 }}>
+                  <span>Accent Color</span>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <input
+                      type="color"
+                      value={s.accentColor || '#2563eb'}
+                      onInput={(e) =>
+                        updateSettings({ accentColor: (e.target as HTMLInputElement).value })
+                      }
+                      style={{ height: '34px', width: '44px', padding: '2px', cursor: 'pointer' }}
+                    />
+                    {['#2563eb', '#0d9488', '#7c3aed', '#db2777', '#ea580c'].map((hex) => (
+                      <button
+                        key={hex}
+                        type="button"
+                        onClick={() => updateSettings({ accentColor: hex })}
+                        aria-label={`Accent color ${hex}`}
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '999px',
+                          background: hex,
+                          border:
+                            s.accentColor === hex ? '2px solid var(--card-fg)' : '1px solid #94a3b8',
+                          cursor: 'pointer',
+                        }}
+                      />
+                    ))}
+                  </div>
                 </label>
               </div>
 
@@ -793,6 +988,83 @@ export function SettingsModal() {
                   />
                   Play click sound on press
                 </label>
+                <label class="check-label">
+                  <input
+                    type="checkbox"
+                    checked={s.reducedMotion}
+                    onChange={(e) =>
+                      updateSettings({ reducedMotion: (e.target as HTMLInputElement).checked })
+                    }
+                  />
+                  Reduce motion & animations
+                </label>
+              </div>
+
+              <div class="section-box" style={{ marginTop: '10px' }}>
+                <strong>Settings Backup & Open Source</strong>
+                <p class="hint" style={{ margin: '2px 0 8px' }}>
+                  Export or restore your custom settings, or view the BridgeAAC source code and
+                  releases on GitHub.
+                </p>
+                <div class="inline-row" style={{ gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    class="btn secondary sm"
+                    onClick={() => {
+                      const blob = new Blob([JSON.stringify(s, null, 2)], {
+                        type: 'application/json',
+                      });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = 'bridgeaac-settings.json';
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      toast('Exported settings backup', 'success');
+                    }}
+                  >
+                    Export Settings JSON
+                  </button>
+                  <label class="btn secondary sm" style={{ cursor: 'pointer' }}>
+                    Import Settings JSON
+                    <input
+                      type="file"
+                      accept=".json,application/json"
+                      style={{ display: 'none' }}
+                      onChange={async (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0];
+                        if (!file) return;
+                        try {
+                          const parsed = JSON.parse(await file.text());
+                          if (parsed && typeof parsed === 'object') {
+                            updateSettings(parsed);
+                            toast('Restored settings from backup', 'success');
+                          }
+                        } catch {
+                          toast('Invalid settings JSON file', 'error');
+                        }
+                      }}
+                    />
+                  </label>
+                  <a
+                    href="https://github.com/bridgeaac/core"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn secondary sm"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    View on GitHub
+                  </a>
+                  <a
+                    href="https://github.com/bridgeaac/core/releases/latest"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn secondary sm"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    GitHub Releases
+                  </a>
+                </div>
               </div>
             </div>
           )}

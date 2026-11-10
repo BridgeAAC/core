@@ -14,7 +14,27 @@ if (typeof window !== 'undefined') {
   });
 }
 
-function detectPlatform(): 'ios' | 'android' | 'windows' | 'linux' {
+type PlatformTab = 'ios' | 'android' | 'windows' | 'mac' | 'linux';
+
+const GITHUB_REPO: string =
+  (import.meta as any).env?.VITE_GITHUB_REPO || 'bridgeaac/core';
+const RELEASES_PAGE_URL = `https://github.com/${GITHUB_REPO}/releases/latest`;
+
+function releaseAssetUrl(filename: string): string {
+  return `https://github.com/${GITHUB_REPO}/releases/latest/download/${filename}`;
+}
+
+export const LATEST_RELEASE_DOWNLOADS = {
+  androidApk: releaseAssetUrl('BridgeAAC-android.apk'),
+  windowsSetup: releaseAssetUrl('BridgeAAC-Windows-Setup.exe'),
+  windowsPortable: releaseAssetUrl('BridgeAAC-Windows-Portable.exe'),
+  macDmg: releaseAssetUrl('BridgeAAC-macOS.dmg'),
+  macZip: releaseAssetUrl('BridgeAAC-macOS.zip'),
+  linuxAppImage: releaseAssetUrl('BridgeAAC-Linux.AppImage'),
+  linuxDeb: releaseAssetUrl('BridgeAAC-Linux.deb'),
+};
+
+function detectPlatform(): PlatformTab {
   if (typeof navigator === 'undefined') return 'windows';
   const ua = navigator.userAgent || '';
   const isIOS =
@@ -22,6 +42,7 @@ function detectPlatform(): 'ios' | 'android' | 'windows' | 'linux' {
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   if (isIOS) return 'ios';
   if (/Android/i.test(ua)) return 'android';
+  if (/Mac/i.test(ua)) return 'mac';
   if (/Linux/i.test(ua)) return 'linux';
   return 'windows';
 }
@@ -39,9 +60,7 @@ export function isRunningStandalone(): boolean {
 }
 
 export function InstallModal() {
-  const [platformTab, setPlatformTab] = useState<'ios' | 'android' | 'windows' | 'linux'>(
-    detectPlatform,
-  );
+  const [platformTab, setPlatformTab] = useState<PlatformTab>(detectPlatform);
   const [canPromptInstall, setCanPromptInstall] = useState<boolean>(() => !!deferredInstallPrompt);
   const [standalone] = useState<boolean>(isRunningStandalone);
   const [cachedCount, setCachedCount] = useState<number>(0);
@@ -191,6 +210,13 @@ export function InstallModal() {
             </button>
             <button
               type="button"
+              class={`tab-btn ${platformTab === 'mac' ? 'active' : ''}`}
+              onClick={() => setPlatformTab('mac')}
+            >
+              macOS
+            </button>
+            <button
+              type="button"
               class={`tab-btn ${platformTab === 'linux' ? 'active' : ''}`}
               onClick={() => setPlatformTab('linux')}
             >
@@ -226,8 +252,11 @@ export function InstallModal() {
                 <strong>Downloading Higher Quality iPad Voices</strong>
                 <p class="hint" style={{ margin: '4px 0 0' }}>
                   To use Apple's higher quality offline voices on iPad, open{' '}
-                  <strong>Settings &gt; Accessibility &gt; Spoken Content &gt; Voices &gt; English</strong>{' '}
-                  and download an Enhanced or Premium voice.
+                  <strong>
+                    Settings &gt; Accessibility &gt; Spoken Content &gt; Voices &gt; English
+                  </strong>{' '}
+                  and download an Enhanced or Premium voice, or download a Piper Neural voice in
+                  BridgeAAC Settings.
                 </p>
               </div>
 
@@ -245,28 +274,52 @@ export function InstallModal() {
           {platformTab === 'android' && (
             <div class="settings-section">
               <div class="section-box">
-                <strong>Installing on Android</strong>
-                <ol style={{ margin: '8px 0 10px 18px', lineHeight: 1.65 }}>
+                <strong>Direct Download — Latest Android Release</strong>
+                <p class="hint" style={{ margin: '4px 0 10px' }}>
+                  Download the standalone Android APK directly from the latest GitHub Release or
+                  install right from Chrome:
+                </p>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                  <a
+                    class="btn primary sm"
+                    href={LATEST_RELEASE_DOWNLOADS.androidApk}
+                    download="BridgeAAC-android.apk"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    ⬇ Download Android APK (BridgeAAC-android.apk)
+                  </a>
+                  {canPromptInstall && (
+                    <button
+                      type="button"
+                      class="btn secondary sm"
+                      onClick={() => void triggerNativeInstallPrompt()}
+                    >
+                      Install Web App on This Device
+                    </button>
+                  )}
+                  <a
+                    class="btn secondary sm"
+                    href={RELEASES_PAGE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    View Latest GitHub Release
+                  </a>
+                </div>
+                <ol style={{ margin: '4px 0 0 18px', lineHeight: 1.65 }}>
+                  <li>
+                    <strong>APK Installer:</strong> Tap{' '}
+                    <strong>Download Android APK</strong> above and open{' '}
+                    <code>BridgeAAC-android.apk</code> on your Android tablet or phone.
+                  </li>
                   <li>
                     <strong>From Chrome:</strong> Open <strong>https://bridgeaac.org</strong> in
-                    Chrome and tap <strong>Install App</strong> from the browser menu to add it to
-                    your app drawer.
-                  </li>
-                  <li>
-                    <strong>APK Installer:</strong> Download <code>BridgeAAC-android.apk</code> from
-                    the project releases page (or build it with <code>npm run android:build</code>)
-                    to sideload directly on any Android tablet or phone.
+                    Chrome and tap <strong>Install App</strong> from the browser menu.
                   </li>
                 </ol>
-                {canPromptInstall && (
-                  <button
-                    type="button"
-                    class="btn primary sm"
-                    onClick={() => void triggerNativeInstallPrompt()}
-                  >
-                    Install on This Device
-                  </button>
-                )}
               </div>
             </div>
           )}
@@ -274,29 +327,115 @@ export function InstallModal() {
           {platformTab === 'windows' && (
             <div class="settings-section">
               <div class="section-box">
-                <strong>Installing on Windows</strong>
-                <ol style={{ margin: '8px 0 10px 18px', lineHeight: 1.65 }}>
+                <strong>Direct Download — Latest Windows Release</strong>
+                <p class="hint" style={{ margin: '4px 0 10px' }}>
+                  Download the standalone Windows desktop installer or portable app from the latest
+                  GitHub Release:
+                </p>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                  <a
+                    class="btn primary sm"
+                    href={LATEST_RELEASE_DOWNLOADS.windowsSetup}
+                    download="BridgeAAC-Windows-Setup.exe"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    ⬇ Download Windows Installer (.exe)
+                  </a>
+                  <a
+                    class="btn secondary sm"
+                    href={LATEST_RELEASE_DOWNLOADS.windowsPortable}
+                    download="BridgeAAC-Windows-Portable.exe"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    ⬇ Download Portable (.exe)
+                  </a>
+                  {canPromptInstall && (
+                    <button
+                      type="button"
+                      class="btn secondary sm"
+                      onClick={() => void triggerNativeInstallPrompt()}
+                    >
+                      Install via Browser
+                    </button>
+                  )}
+                  <a
+                    class="btn secondary sm"
+                    href={RELEASES_PAGE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    View Latest GitHub Release
+                  </a>
+                </div>
+                <ol style={{ margin: '4px 0 0 18px', lineHeight: 1.65 }}>
                   <li>
-                    <strong>Windows Installer (.exe):</strong> Download{' '}
-                    <code>BridgeAAC-Setup.exe</code> from Releases (or build locally with{' '}
-                    <code>npm run desktop:build:win</code>). Associates <code>.ce</code> and{' '}
-                    <code>.bridge</code> files with BridgeAAC.
+                    <strong>Windows Installer (.exe):</strong> Runs offline and associates{' '}
+                    <code>.ce</code>, <code>.obz</code>, and <code>.bridge</code> vocabulary files
+                    with BridgeAAC.
                   </li>
                   <li>
-                    <strong>Edge or Chrome App:</strong> Click the install icon in the address bar
-                    on <strong>bridgeaac.org</strong> to pin BridgeAAC to the Start Menu and
-                    Taskbar.
+                    <strong>Windows Portable (.exe):</strong> Runs directly without installation
+                    (ideal for school or clinic computers).
                   </li>
                 </ol>
-                {canPromptInstall && (
-                  <button
-                    type="button"
+              </div>
+            </div>
+          )}
+
+          {platformTab === 'mac' && (
+            <div class="settings-section">
+              <div class="section-box">
+                <strong>Direct Download — Latest macOS Release</strong>
+                <p class="hint" style={{ margin: '4px 0 10px' }}>
+                  Download the standalone macOS desktop app from the latest GitHub Release:
+                </p>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                  <a
                     class="btn primary sm"
-                    onClick={() => void triggerNativeInstallPrompt()}
+                    href={LATEST_RELEASE_DOWNLOADS.macDmg}
+                    download="BridgeAAC-macOS.dmg"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: 'none' }}
                   >
-                    Install Desktop App
-                  </button>
-                )}
+                    ⬇ Download macOS Installer (.dmg)
+                  </a>
+                  <a
+                    class="btn secondary sm"
+                    href={LATEST_RELEASE_DOWNLOADS.macZip}
+                    download="BridgeAAC-macOS.zip"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    ⬇ Download macOS Archive (.zip)
+                  </a>
+                  <a
+                    class="btn secondary sm"
+                    href={RELEASES_PAGE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    View Latest GitHub Release
+                  </a>
+                </div>
+                <ol style={{ margin: '4px 0 0 18px', lineHeight: 1.65 }}>
+                  <li>
+                    <strong>macOS Disk Image (.dmg):</strong> Open{' '}
+                    <code>BridgeAAC-macOS.dmg</code> and drag <strong>BridgeAAC</strong> to your
+                    Applications folder.
+                  </li>
+                  <li>
+                    <strong>Safari / Chrome Web App:</strong> In Safari on macOS Sonoma+, click{' '}
+                    <strong>File &gt; Add to Dock</strong>.
+                  </li>
+                </ol>
               </div>
             </div>
           )}
@@ -304,31 +443,143 @@ export function InstallModal() {
           {platformTab === 'linux' && (
             <div class="settings-section">
               <div class="section-box">
-                <strong>Installing on Linux & Chromebook</strong>
-                <ol style={{ margin: '8px 0 10px 18px', lineHeight: 1.65 }}>
+                <strong>Direct Download — Latest Linux Release</strong>
+                <p class="hint" style={{ margin: '4px 0 10px' }}>
+                  Download the universal Linux AppImage or Debian/Ubuntu package from the latest
+                  GitHub Release:
+                </p>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                  <a
+                    class="btn primary sm"
+                    href={LATEST_RELEASE_DOWNLOADS.linuxAppImage}
+                    download="BridgeAAC-Linux.AppImage"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    ⬇ Download Linux AppImage
+                  </a>
+                  <a
+                    class="btn secondary sm"
+                    href={LATEST_RELEASE_DOWNLOADS.linuxDeb}
+                    download="BridgeAAC-Linux.deb"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    ⬇ Download Ubuntu / Debian (.deb)
+                  </a>
+                  {canPromptInstall && (
+                    <button
+                      type="button"
+                      class="btn secondary sm"
+                      onClick={() => void triggerNativeInstallPrompt()}
+                    >
+                      Install Web App
+                    </button>
+                  )}
+                  <a
+                    class="btn secondary sm"
+                    href={RELEASES_PAGE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    View Latest GitHub Release
+                  </a>
+                </div>
+                <ol style={{ margin: '4px 0 0 18px', lineHeight: 1.65 }}>
                   <li>
-                    <strong>AppImage / Debian Package:</strong> Build or download{' '}
-                    <code>BridgeAAC.AppImage</code> or <code>bridgeaac_amd64.deb</code>. Includes
-                    built-in offline voices so speech works even without{' '}
-                    <code>speech-dispatcher</code> installed.
+                    <strong>AppImage / Debian Package:</strong> Includes built-in offline voices so
+                    speech works even without <code>speech-dispatcher</code> installed.
                   </li>
                   <li>
                     <strong>Chromebook / Chromium:</strong> Open <strong>https://bridgeaac.org</strong>{' '}
                     and click <strong>Install</strong> in the address bar.
                   </li>
                 </ol>
-                {canPromptInstall && (
-                  <button
-                    type="button"
-                    class="btn primary sm"
-                    onClick={() => void triggerNativeInstallPrompt()}
-                  >
-                    Install App
-                  </button>
-                )}
               </div>
             </div>
           )}
+
+          <div class="section-box" style={{ marginTop: '12px' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '8px',
+                flexWrap: 'wrap',
+                marginBottom: '8px',
+              }}
+            >
+              <strong>All Direct Downloads (Latest GitHub Release)</strong>
+              <a
+                href={RELEASES_PAGE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: '0.82rem', fontWeight: 600 }}
+              >
+                All Release Notes & Checksums ↗
+              </a>
+            </div>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              <a
+                class="btn secondary sm"
+                href={LATEST_RELEASE_DOWNLOADS.androidApk}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none' }}
+              >
+                🤖 Android (.apk)
+              </a>
+              <a
+                class="btn secondary sm"
+                href={LATEST_RELEASE_DOWNLOADS.windowsSetup}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none' }}
+              >
+                🪟 Windows Setup (.exe)
+              </a>
+              <a
+                class="btn secondary sm"
+                href={LATEST_RELEASE_DOWNLOADS.windowsPortable}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none' }}
+              >
+                🪟 Windows Portable (.exe)
+              </a>
+              <a
+                class="btn secondary sm"
+                href={LATEST_RELEASE_DOWNLOADS.macDmg}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none' }}
+              >
+                🍎 macOS (.dmg)
+              </a>
+              <a
+                class="btn secondary sm"
+                href={LATEST_RELEASE_DOWNLOADS.linuxAppImage}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none' }}
+              >
+                🐧 Linux (.AppImage)
+              </a>
+              <a
+                class="btn secondary sm"
+                href={LATEST_RELEASE_DOWNLOADS.linuxDeb}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none' }}
+              >
+                🐧 Ubuntu / Debian (.deb)
+              </a>
+            </div>
+          </div>
 
           <div class="modal-footer" style={{ marginTop: '16px' }}>
             <button

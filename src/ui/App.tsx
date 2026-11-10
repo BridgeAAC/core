@@ -98,8 +98,20 @@ function PinModal() {
   );
 }
 
+const FONT_STACKS: Record<string, string> = {
+  system:
+    "system-ui, -apple-system, 'Segoe UI', Roboto, Ubuntu, sans-serif, 'Apple Color Emoji', 'Noto Color Emoji'",
+  rounded:
+    "ui-rounded, 'SF Pro Rounded', 'Nunito', 'Quicksand', 'Varela Round', system-ui, sans-serif, 'Apple Color Emoji'",
+  dyslexic:
+    "'OpenDyslexic', 'Atkinson Hyperlegible', 'Comic Sans MS', 'Trebuchet MS', Verdana, sans-serif, 'Apple Color Emoji'",
+  serif: "Georgia, 'Iowan Old Style', 'Palatino Linotype', Cambria, serif, 'Apple Color Emoji'",
+  mono: "ui-monospace, 'SFMono-Regular', 'JetBrains Mono', Menlo, Consolas, monospace, 'Apple Color Emoji'",
+};
+
 export function App() {
-  const theme = settings.value.theme;
+  const s = settings.value;
+  const theme = s.theme;
   const lang = resolveActiveLang(vocab.value?.locale);
   const dir = getLanguageInfo(lang).dir;
 
@@ -108,8 +120,36 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
+    const root = document.documentElement;
+    root.setAttribute('data-theme', theme);
+    root.setAttribute('data-color-coding', s.colorCoding || 'default');
+    root.setAttribute('data-reduced-motion', s.reducedMotion ? 'true' : 'false');
+    root.setAttribute('data-high-focus', s.highContrastFocus ? 'true' : 'false');
+    root.setAttribute('data-font', s.fontFamily || 'system');
+    root.style.setProperty('--app-font', FONT_STACKS[s.fontFamily] || FONT_STACKS.system);
+    if (s.accentColor && theme !== 'contrast') {
+      root.style.setProperty('--accent', s.accentColor);
+    } else {
+      root.style.removeProperty('--accent');
+    }
+    if (s.scanColor && theme !== 'contrast') {
+      root.style.setProperty('--scan-outline', s.scanColor);
+    } else {
+      root.style.removeProperty('--scan-outline');
+    }
+    root.style.setProperty('--btn-radius', `${s.buttonRadius ?? 10}px`);
+    root.style.setProperty('--icon-scale', String(s.iconScale ?? 1));
+  }, [
+    theme,
+    s.colorCoding,
+    s.reducedMotion,
+    s.highContrastFocus,
+    s.fontFamily,
+    s.accentColor,
+    s.scanColor,
+    s.buttonRadius,
+    s.iconScale,
+  ]);
 
   useEffect(() => {
     document.documentElement.setAttribute('lang', lang);
