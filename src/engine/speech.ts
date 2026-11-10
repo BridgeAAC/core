@@ -233,6 +233,19 @@ function getSynth(): SpeechSynthesis | undefined {
 }
 
 let sharedAudioCtx: AudioContext | null = null;
+let gestureListenersBound = false;
+
+function bindGestureAudioUnlock(): void {
+  if (gestureListenersBound || typeof window === 'undefined') return;
+  gestureListenersBound = true;
+  const onGesture = () => {
+    unlockAudio();
+  };
+  window.addEventListener('pointerdown', onGesture, { capture: true, passive: true });
+  window.addEventListener('touchstart', onGesture, { capture: true, passive: true });
+  window.addEventListener('keydown', onGesture, { capture: true, passive: true });
+}
+bindGestureAudioUnlock();
 
 export function getAudioContext(): AudioContext | null {
   const e = env();
@@ -252,6 +265,7 @@ export function getAudioContext(): AudioContext | null {
 }
 
 export function unlockAudio(): void {
+  bindGestureAudioUnlock();
   const ctx = getAudioContext();
   if (!ctx) return;
   if (ctx.state === 'suspended') {
@@ -579,6 +593,8 @@ export async function getDownloadedNeuralVoices(): Promise<string[]> {
   return Array.from(combined);
 }
 
+const inFlightPiper = new Map<string, Promise<ArrayBuffer | null>>();
+
 export async function downloadNeuralVoice(
   modelId: string,
   onProgress?: (pct: number) => void,
@@ -586,6 +602,7 @@ export async function downloadNeuralVoice(
 ): Promise<boolean> {
   try {
     void vocab;
+    unlockAudio();
     onProgress?.(2);
     const isRealBrowser =
       typeof window !== 'undefined' &&
@@ -679,27 +696,37 @@ async function synthesizePiperNeuralWav(
     return disk;
   }
 
-  try {
-    const vits = await getVits();
-    if (!vits) return null;
-    const wavBlob = await vits.predict({
-      text: norm,
-      voiceId: modelId as any,
-    });
-    const ab = await wavBlob.arrayBuffer();
-    if (!ab || ab.byteLength <= 100) return null;
+  const existingTask = inFlightPiper.get(cacheKey);
+  if (existingTask) return await existingTask;
 
-    if (ttsMp3Cache.size > 400) {
-      const firstKey = ttsMp3Cache.keys().next().value;
-      if (firstKey) ttsMp3Cache.delete(firstKey);
+  const task = (async (): Promise<ArrayBuffer | null> => {
+    try {
+      const vits = await getVits();
+      if (!vits) return null;
+      const wavBlob = await vits.predict({
+        text: norm,
+        voiceId: modelId as any,
+      });
+      const ab = await wavBlob.arrayBuffer();
+      if (!ab || ab.byteLength <= 100) return null;
+
+      if (ttsMp3Cache.size > 400) {
+        const firstKey = ttsMp3Cache.keys().next().value;
+        if (firstKey) ttsMp3Cache.delete(firstKey);
+      }
+      ttsMp3Cache.set(cacheKey, ab);
+      void ttsCachePut(cacheKey, ab);
+      return ab;
+    } catch (err) {
+      console.warn('[BridgeAAC] Piper VITS synthesis error:', err);
+      return null;
+    } finally {
+      inFlightPiper.delete(cacheKey);
     }
-    ttsMp3Cache.set(cacheKey, ab);
-    void ttsCachePut(cacheKey, ab);
-    return ab;
-  } catch (err) {
-    console.warn('[BridgeAAC] Piper VITS synthesis error:', err);
-    return null;
-  }
+  })();
+
+  inFlightPiper.set(cacheKey, task);
+  return await task;
 }
 
 let meSpeakPromise: Promise<any> | null = null;
@@ -1084,49 +1111,56 @@ async function playAudioBufferChunk(
   const ctx = getAudioContext();
   if (ctx) {
     try {
-      if (ctx.state === 'suspended') await ctx.resume();
-      const copy = buf.slice(0);
-      const audioBuffer = await ctx.decodeAudioData(copy);
-      const source = ctx.createBufferSource();
-      source.buffer = audioBuffer;
-      const rate = isMespeak ? 1 : clamp(settings.rate, 0.5, 2.0, 1);
-      source.playbackRate.value = rate;
-      if (!isMespeak && settings.pitch !== 1 && 'detune' in source) {
-        source.detune.value = (clamp(settings.pitch, 0.5, 1.5, 1) - 1) * 500;
+      if (ctx.state === 'suspended') {
+        await Promise.race([
+          ctx.resume().catch(() => {}),
+          new Promise<void>((r) => setTimeout(r, 150)),
+        ]);
       }
-      const gain = ctx.createGain();
-      gain.gain.value = clamp(settings.volume, 0, 1, 1);
+      if (ctx.state === 'running') {
+        const copy = buf.slice(0);
+        const audioBuffer = await ctx.decodeAudioData(copy);
+        const source = ctx.createBufferSource();
+        source.buffer = audioBuffer;
+        const rate = isMespeak ? 1 : clamp(settings.rate, 0.5, 2.0, 1);
+        source.playbackRate.value = rate;
+        if (!isMespeak && settings.pitch !== 1 && 'detune' in source) {
+          source.detune.value = (clamp(settings.pitch, 0.5, 1.5, 1) - 1) * 500;
+        }
+        const gain = ctx.createGain();
+        gain.gain.value = clamp(settings.volume, 0, 1, 1);
 
-      if (isMespeak && typeof ctx.createBiquadFilter === 'function') {
-        const warmth = ctx.createBiquadFilter();
-        warmth.type = 'lowshelf';
-        warmth.frequency.value = 240;
-        warmth.gain.value = 2.5;
+        if (isMespeak && typeof ctx.createBiquadFilter === 'function') {
+          const warmth = ctx.createBiquadFilter();
+          warmth.type = 'lowshelf';
+          warmth.frequency.value = 240;
+          warmth.gain.value = 2.5;
 
-        const deBuzz = ctx.createBiquadFilter();
-        deBuzz.type = 'lowpass';
-        deBuzz.frequency.value = 6200;
-        deBuzz.Q.value = 0.7;
+          const deBuzz = ctx.createBiquadFilter();
+          deBuzz.type = 'lowpass';
+          deBuzz.frequency.value = 6200;
+          deBuzz.Q.value = 0.7;
 
-        source.connect(warmth);
-        warmth.connect(deBuzz);
-        deBuzz.connect(gain);
-      } else {
-        source.connect(gain);
+          source.connect(warmth);
+          warmth.connect(deBuzz);
+          deBuzz.connect(gain);
+        } else {
+          source.connect(gain);
+        }
+        gain.connect(ctx.destination);
+
+        const donePromise = new Promise<boolean>((resolve) => {
+          source.onended = () => resolve(true);
+        });
+        onCleanupRegister(() => {
+          try {
+            source.stop();
+            source.disconnect();
+          } catch {}
+        });
+        source.start(0);
+        return { durationSec: audioBuffer.duration / rate, donePromise };
       }
-      gain.connect(ctx.destination);
-
-      const donePromise = new Promise<boolean>((resolve) => {
-        source.onended = () => resolve(true);
-      });
-      onCleanupRegister(() => {
-        try {
-          source.stop();
-          source.disconnect();
-        } catch {}
-      });
-      source.start(0);
-      return { durationSec: audioBuffer.duration / rate, donePromise };
     } catch {}
   }
 

@@ -9,6 +9,7 @@ import {
   form,
   mode,
   resolveButton,
+  speakText,
   toast,
 } from '../state';
 import { settings } from '../settings';
@@ -64,6 +65,15 @@ export function Board() {
         onHighlight: (ids, level) => {
           setScanHighlightIds(new Set(ids));
           setScanLevel(level);
+          if (settings.value.auditoryScanning && ids.length === 1) {
+            const cur = currentPage.value;
+            const btn = cur?.buttons.find((b) => b.id === ids[0]);
+            if (btn) {
+              const r = resolveButton(btn, form.value);
+              const cue = (r.label || r.message || '').trim();
+              if (cue) speakText(cue);
+            }
+          }
         },
         onSelect: (id) => {
           const cur = currentPage.value;
@@ -294,7 +304,12 @@ export function Board() {
           const borderWidth = cfg.showButtonBorders ? (st.borderWidth ?? 2) : 0;
           const borderColor = st.border || 'var(--btn-default-border)';
           const fontScale = (st.fontScale ?? 1) * cfg.labelScale;
-          const labelOnTop = st.labelOnTop ?? true;
+          const labelOnTop =
+            cfg.labelPosition === 'top'
+              ? true
+              : cfg.labelPosition === 'bottom'
+                ? false
+                : (st.labelOnTop ?? true);
           const isScanned = scanHighlightIds.has(b.id);
           const isGuided = nextGuided?.buttonId === b.id;
           const showImg = cfg.showImages && !!resolved.image;
@@ -303,6 +318,9 @@ export function Board() {
             <button
               key={b.id}
               type="button"
+              data-btn-id={b.id}
+              data-row={b.row}
+              data-col={b.col}
               draggable={isEdit}
               onDragStart={() => setDragSourceId(b.id)}
               onDragOver={(e) => {
@@ -328,6 +346,40 @@ export function Board() {
                   } else {
                     handleTriggerButton(b);
                   }
+                  return;
+                }
+                if (
+                  e.key === 'ArrowRight' ||
+                  e.key === 'ArrowLeft' ||
+                  e.key === 'ArrowDown' ||
+                  e.key === 'ArrowUp'
+                ) {
+                  e.preventDefault();
+                  const grid = (e.currentTarget as HTMLElement).closest('.board-grid');
+                  if (!grid) return;
+                  const all = Array.from(grid.querySelectorAll<HTMLButtonElement>('button.aac-btn'));
+                  if (all.length === 0) return;
+                  const dr = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0;
+                  const dc = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+                  let best: HTMLButtonElement | null = null;
+                  let bestScore = Infinity;
+                  for (const cand of all) {
+                    if (cand === e.currentTarget) continue;
+                    const cr = Number(cand.dataset.row ?? 0);
+                    const cc = Number(cand.dataset.col ?? 0);
+                    const dRow = cr - b.row;
+                    const dCol = cc - b.col;
+                    if (dr !== 0 && Math.sign(dRow) !== dr) continue;
+                    if (dc !== 0 && Math.sign(dCol) !== dc) continue;
+                    const primary = dr !== 0 ? Math.abs(dRow) : Math.abs(dCol);
+                    const secondary = dr !== 0 ? Math.abs(dCol) : Math.abs(dRow);
+                    const score = primary * 10 + secondary * 25;
+                    if (score < bestScore) {
+                      bestScore = score;
+                      best = cand;
+                    }
+                  }
+                  if (best) best.focus();
                 }
               }}
               class={[

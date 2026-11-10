@@ -47,12 +47,17 @@
     "icon": "public/icon-512.png"
   },
   "nsis": {
+    "artifactName": "BridgeAAC-Windows-Setup.${ext}",
     "oneClick": false,
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true
   },
+  "portable": {
+    "artifactName": "BridgeAAC-Windows-Portable.${ext}"
+  },
   "linux": {
+    "artifactName": "BridgeAAC-Linux.${ext}",
     "target": [
       "AppImage",
       "deb"
@@ -63,6 +68,7 @@
     "synopsis": "Free, offline-first AAC voice communication app compatible with TouchChat (.ce) files"
   },
   "mac": {
+    "artifactName": "BridgeAAC-macOS.${ext}",
     "target": [
       "dmg",
       "zip"

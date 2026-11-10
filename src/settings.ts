@@ -2,6 +2,9 @@ import { signal, effect } from '@preact/signals';
 
 export type ThemeSetting = 'auto' | 'light' | 'dark' | 'calm' | 'contrast';
 export type ScanPatternSetting = 'linear' | 'row-column' | 'column-row';
+export type FontFamilySetting = 'system' | 'rounded' | 'dyslexic' | 'serif' | 'mono';
+export type LabelPositionSetting = 'auto' | 'top' | 'bottom';
+export type ColorCodingSetting = 'default' | 'pastel' | 'vivid' | 'monochrome';
 
 export interface Settings {
   voiceURI: string;
@@ -26,9 +29,19 @@ export interface Settings {
   scanIntervalMs: number;
   scanFirstDelayMs: number;
   scanLoops: number;
+  scanColor: string;
+  auditoryScanning: boolean;
   switchSelectKeys: string[];
   switchNextKeys: string[];
   theme: ThemeSetting;
+  fontFamily: FontFamilySetting;
+  accentColor: string;
+  buttonRadius: number;
+  iconScale: number;
+  labelPosition: LabelPositionSetting;
+  colorCoding: ColorCodingSetting;
+  reducedMotion: boolean;
+  highContrastFocus: boolean;
   labelScale: number;
   buttonGap: number;
   showImages: boolean;
@@ -63,9 +76,19 @@ export const DEFAULT_SETTINGS: Settings = {
   scanIntervalMs: 1200,
   scanFirstDelayMs: 1500,
   scanLoops: 3,
+  scanColor: '#f59e0b',
+  auditoryScanning: false,
   switchSelectKeys: ['Space'],
   switchNextKeys: ['Enter'],
   theme: 'auto',
+  fontFamily: 'system',
+  accentColor: '#2563eb',
+  buttonRadius: 10,
+  iconScale: 1,
+  labelPosition: 'auto',
+  colorCoding: 'default',
+  reducedMotion: false,
+  highContrastFocus: true,
   labelScale: 1,
   buttonGap: 4,
   showImages: true,

@@ -66,6 +66,11 @@ function bridgeTtsPlugin(): Plugin {
 
 export default defineConfig({
   base,
+  define: {
+    'import.meta.env.VITE_GITHUB_REPO': JSON.stringify(
+      process.env.VITE_GITHUB_REPO || process.env.GITHUB_REPOSITORY || 'bridgeaac/core',
+    ),
+  },
   plugins: [
     bridgeTtsPlugin(),
     preact(),

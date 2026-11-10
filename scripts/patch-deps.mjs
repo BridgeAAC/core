@@ -239,6 +239,7 @@ function b(e, m, n) {
 
 let h, _, wasmBytes, dataBytes, wasmBlobUrl, dataBlobUrl, ortBlobUrl;
 const sessionCache = new Map();
+let predictQueue = Promise.resolve();
 
 async function ensureRuntimeBlobs() {
   if (!wasmBytes || !wasmBlobUrl) {
@@ -258,10 +259,16 @@ async function ensureRuntimeBlobs() {
   }
 }
 
-async function N(e, m) {
+async function runPredictOnce(e, m) {
   h = h ?? await import("./piper-DeOu3H9E.js"), _ = _ ?? await import("onnxruntime-web");
   await ensureRuntimeBlobs();
-  const n = c[e.voiceId], o = JSON.stringify([{ text: e.text.trim() }]);
+  const n = c[e.voiceId];
+  if (!n) throw new Error(\`Unknown Piper voiceId: \${e.voiceId}\`);
+  const cleanText = String(e.text ?? "").trim();
+  if (!cleanText) {
+    return new Blob([b(new Float32Array(1600), 1, 16000)], { type: "audio/x-wav" });
+  }
+  const o = JSON.stringify([{ text: cleanText }]);
   _.env.allowLocalModels = !1, _.env.wasm.numThreads = 1, _.env.wasm.wasmPaths = {
     "ort-wasm-simd.wasm": ortBlobUrl,
     "ort-wasm.wasm": ortBlobUrl,
@@ -277,7 +284,7 @@ async function N(e, m) {
         print: (l) => {
           try {
             const parsed = JSON.parse(l);
-            if (parsed && parsed.phoneme_ids) {
+            if (parsed && Array.isArray(parsed.phoneme_ids)) {
               resolved = true;
               v(parsed.phoneme_ids);
             }
@@ -305,7 +312,10 @@ async function N(e, m) {
     } catch (err) {
       if (!resolved) rej(err);
     }
-  }), r = 0, s = i.audio.sample_rate, d = i.inference.noise_scale, g = i.inference.length_scale, U = i.inference.noise_w;
+  }), r = 0, s = i.audio.sample_rate || 16000, d = i.inference.noise_scale, g = i.inference.length_scale, U = i.inference.noise_w;
+  if (!t || !t.length) {
+    return new Blob([b(new Float32Array(Math.round(s * 0.1)), 1, s)], { type: "audio/x-wav" });
+  }
   let y = sessionCache.get(e.voiceId);
   if (!y) {
     const k = await f(\`\${u}/\${n}\`, m);
@@ -322,6 +332,12 @@ async function N(e, m) {
     output: { data: E }
   } = await y.run(w);
   return new Blob([b(E, 1, s)], { type: "audio/x-wav" });
+}
+
+function N(e, m) {
+  const next = predictQueue.then(() => runPredictOnce(e, m));
+  predictQueue = next.catch(() => {});
+  return next;
 }
 
 async function f(e, m) {
