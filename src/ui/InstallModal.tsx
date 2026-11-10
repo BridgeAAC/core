@@ -26,6 +26,7 @@ function releaseAssetUrl(filename: string): string {
 
 export const LATEST_RELEASE_DOWNLOADS = {
   androidApk: releaseAssetUrl('BridgeAAC-android.apk'),
+  androidAab: releaseAssetUrl('BridgeAAC-android.aab'),
   windowsSetup: releaseAssetUrl('BridgeAAC-Windows-Setup.exe'),
   windowsPortable: releaseAssetUrl('BridgeAAC-Windows-Portable.exe'),
   macDmg: releaseAssetUrl('BridgeAAC-macOS.dmg'),
@@ -55,7 +56,10 @@ export function isRunningStandalone(): boolean {
     window.matchMedia?.('(display-mode: window-controls-overlay)').matches === true ||
     (window.navigator as any)?.standalone === true ||
     Boolean((window as any).bridgeDesktop) ||
-    Boolean((window as any).Capacitor?.isNativePlatform?.())
+    Boolean((window as any).bridgeSwift) ||
+    Boolean((window as any).webkit?.messageHandlers?.bridgeSwift) ||
+    Boolean((window as any).Capacitor?.isNativePlatform?.()) ||
+    window.location?.protocol === 'bridgeaac:'
   );
 }
 
@@ -289,6 +293,16 @@ export function InstallModal() {
                     style={{ textDecoration: 'none' }}
                   >
                     ⬇ Download Android APK (BridgeAAC-android.apk)
+                  </a>
+                  <a
+                    class="btn secondary sm"
+                    href={LATEST_RELEASE_DOWNLOADS.androidAab}
+                    download="BridgeAAC-android.aab"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    ⬇ Google Play Bundle (.aab)
                   </a>
                   {canPromptInstall && (
                     <button

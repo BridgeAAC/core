@@ -4,6 +4,11 @@ dev-dist/
 release/
 android/
 ios/
+.build/
+.swiftpm/
+xtool/
+*.xcodeproj/
+Sources/BridgeAAC/Resources/WebBundle/
 coverage/
 fixtures/
 .DS_Store

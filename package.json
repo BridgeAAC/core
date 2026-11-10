@@ -6,7 +6,7 @@
   "homepage": "https://bridgeaac.org",
   "main": "electron/main.cjs",
   "author": "BridgeAAC <support@bridgeaac.org>",
-  "license": "GPL-3.0-or-later",
+  "license": "MIT",
   "description": "Free, open-source, offline AAC communication app compatible with TouchChat .ce and Open Board Format files.",
   "scripts": {
     "postinstall": "node scripts/patch-deps.mjs",
@@ -20,7 +20,13 @@
     "desktop:build:win": "vite build && electron-builder --win --config electron-builder.json",
     "desktop:build:mac": "vite build && electron-builder --mac --config electron-builder.json",
     "android:init": "vite build && cap add android && cap sync android",
-    "android:build": "vite build && cap sync android && cd android && ./gradlew assembleDebug"
+    "android:build": "vite build && cap sync android && cd android && ./gradlew assembleDebug",
+    "android:bundle": "vite build && cap sync android && cd android && ./gradlew bundleRelease",
+    "ios:sync": "npm run build && node scripts/sync-swift-bundle.mjs",
+    "ios:build": "npm run ios:sync && xtool dev build",
+    "ios:ipa": "npm run ios:sync && xtool dev build -c release --ipa",
+    "ios:run": "npm run ios:sync && xtool dev run",
+    "store:assets": "node scripts/generate-store-assets.mjs"
   },
   "dependencies": {
     "@diffusionstudio/vits-web": "^1.0.3",
@@ -36,5 +42,8 @@
     "vite": "^8.3.5",
     "vite-plugin-pwa": "^2.0.0",
     "vitest": "^5.0.5"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.65.0"
   }
 }

@@ -252,7 +252,6 @@ interface CaregiverNote {
 export function ToolsModal() {
   const [tab, setTab] = useState<ToolsTab>('planner');
 
-  // --- Planner State ---
   const [tasks, setTasks] = useState<PlannerTask[]>(DEFAULT_PLANNER_TASKS);
   const [stars, setStars] = useState<number>(0);
   const [rewardGoal, setRewardGoal] = useState<string>('5 Stars = 15 mins of favorite activity!');
@@ -261,12 +260,10 @@ export function ToolsModal() {
   const [newTaskEmoji, setNewTaskEmoji] = useState('⭐');
   const [newTaskPeriod, setNewTaskPeriod] = useState<PlannerTask['period']>('Morning');
 
-  // --- Mood State ---
   const [moodLogs, setMoodLogs] = useState<MoodLogEntry[]>([]);
   const [selectedTrigger, setSelectedTrigger] = useState<string>('With Family');
   const [activeMoodTip, setActiveMoodTip] = useState<MoodDefinition | null>(null);
 
-  // --- Games State ---
   const [gameMode, setGameMode] = useState<'sentence' | 'emotion'>('sentence');
   const [sentenceIdx, setSentenceIdx] = useState(0);
   const [builtWords, setBuiltWords] = useState<string[]>([]);
@@ -274,11 +271,9 @@ export function ToolsModal() {
   const [emotionFeedback, setEmotionFeedback] = useState<string | null>(null);
   const [gameStreak, setGameStreak] = useState(0);
 
-  // --- About Me State ---
   const [aboutMe, setAboutMe] = useState<AboutMeProfile>(DEFAULT_ABOUT_ME);
   const [editingAbout, setEditingAbout] = useState(false);
 
-  // --- Caregiver Notes State ---
   const [notes, setNotes] = useState<CaregiverNote[]>([]);
   const [savedPasscode, setSavedPasscode] = useState<string>('');
   const [notesUnlocked, setNotesUnlocked] = useState<boolean>(false);
@@ -323,7 +318,6 @@ export function ToolsModal() {
     await kvSet('gamified_stars', next);
   }
 
-  // --- Planner Handlers ---
   async function toggleTask(idx: number) {
     const next = tasks.map((t, i) => (i === idx ? { ...t, done: !t.done } : t));
     const item = next[idx];
@@ -378,7 +372,6 @@ export function ToolsModal() {
     toast('Reset schedule for a fresh day!', 'info');
   }
 
-  // --- Mood Handlers ---
   async function handleLogMood(m: MoodDefinition) {
     speakText(m.spoken);
     setActiveMoodTip(m);
@@ -394,11 +387,9 @@ export function ToolsModal() {
     toast(`Logged mood: ${m.label}`, 'success');
   }
 
-  // --- Game Handlers ---
   const currentChallenge = SENTENCE_CHALLENGES[sentenceIdx % SENTENCE_CHALLENGES.length];
   const challengeWordPool = (() => {
     const all = [...currentChallenge.target, ...currentChallenge.distractors];
-    // Deterministic shuffle per sentenceIdx
     return all
       .map((w, i) => ({ w, sort: ((i * 7 + sentenceIdx * 3) % 13) }))
       .sort((a, b) => a.sort - b.sort)
@@ -448,7 +439,6 @@ export function ToolsModal() {
     }
   }
 
-  // --- About Me Handlers ---
   async function saveAboutMeProfile(e: Event) {
     e.preventDefault();
     await kvSet('about_me_profile', aboutMe);
@@ -471,7 +461,6 @@ export function ToolsModal() {
     speakText(intro);
   }
 
-  // --- Caregiver Notes Handlers ---
   async function handleSetPasscode(e: Event) {
     e.preventDefault();
     const clean = newPasscode.trim();

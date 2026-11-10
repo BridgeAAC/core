@@ -104,23 +104,46 @@ jobs:
           npx cap sync android
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 
-      - name: Build Android APK with Gradle
+      - name: Build Android APK & Google Play App Bundle (AAB) with Gradle
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug bundleRelease --no-daemon
           cp app/build/outputs/apk/debug/app-debug.apk ../BridgeAAC-android.apk
+          cp app/build/outputs/bundle/release/app-release.aab ../BridgeAAC-android.aab || true
 
-      - name: Upload Android APK
+      - name: Upload Android APK & AAB
         uses: actions/upload-artifact@v4
         with:
           name: BridgeAAC-Android
-          path: BridgeAAC-android.apk
+          path: |
+            BridgeAAC-android.apk
+            BridgeAAC-android.aab
           if-no-files-found: warn
+
+  build-ios-swift:
+    name: Build Swift Package (iOS & macOS)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install project dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Sync Web Bundle & Verify Swift Package
+        run: |
+          npm run ios:sync
+          swift build
 
   publish-release:
     name: Publish GitHub Release Downloads
-    needs: [build-desktop, build-android]
+    needs: [build-desktop, build-android, build-ios-swift]
     runs-on: ubuntu-latest
     steps:
       - name: Download all built app artifacts
@@ -143,3 +166,4 @@ jobs:
             release-assets/*.dmg
             release-assets/*.zip
             release-assets/*.apk
+            release-assets/*.aab

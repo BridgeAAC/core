@@ -26,7 +26,6 @@ export interface SoundboardItem {
 }
 
 const DEFAULT_SOUNDBOARD: SoundboardItem[] = [
-  // Wants
   { id: 'sb-w1', label: 'I want water', speech: 'I want water please.', emoji: '💧', category: 'wants', bg: '#dcfce7' },
   { id: 'sb-w2', label: 'I want something to eat', speech: 'I would like something to eat please.', emoji: '🍎', category: 'wants', bg: '#dcfce7' },
   { id: 'sb-w3', label: 'I want to play', speech: 'I want to play.', emoji: '🎮', category: 'wants', bg: '#dcfce7' },
@@ -34,7 +33,6 @@ const DEFAULT_SOUNDBOARD: SoundboardItem[] = [
   { id: 'sb-w5', label: 'I want to go outside', speech: 'I want to go outside.', emoji: '🌳', category: 'wants', bg: '#dcfce7' },
   { id: 'sb-w6', label: 'More please', speech: 'More please.', emoji: '➕', category: 'wants', bg: '#dcfce7' },
 
-  // Needs
   { id: 'sb-n1', label: 'I need the bathroom', speech: 'I need to use the bathroom please.', emoji: '🚻', category: 'needs', bg: '#fef08a' },
   { id: 'sb-n2', label: 'I need help', speech: 'I need help please.', emoji: '🆘', category: 'needs', bg: '#fecaca' },
   { id: 'sb-n3', label: 'I need a quiet break', speech: 'It is too loud. I need a quiet break please.', emoji: '🎧', category: 'needs', bg: '#fef08a' },
@@ -42,7 +40,6 @@ const DEFAULT_SOUNDBOARD: SoundboardItem[] = [
   { id: 'sb-n5', label: 'Stop please', speech: 'Please stop.', emoji: '🛑', category: 'needs', bg: '#fecaca' },
   { id: 'sb-n6', label: 'All done / Finished', speech: 'I am all done.', emoji: '✅', category: 'needs', bg: '#fef08a' },
 
-  // Feelings
   { id: 'sb-f1', label: 'I feel happy', speech: 'I feel happy!', emoji: '😊', category: 'feelings', bg: '#bae6fd' },
   { id: 'sb-f2', label: 'I feel calm', speech: 'I feel calm and okay.', emoji: '😌', category: 'feelings', bg: '#bae6fd' },
   { id: 'sb-f3', label: 'I feel sad', speech: 'I feel sad right now.', emoji: '😢', category: 'feelings', bg: '#bae6fd' },
@@ -50,7 +47,6 @@ const DEFAULT_SOUNDBOARD: SoundboardItem[] = [
   { id: 'sb-f5', label: 'I feel overwhelmed', speech: 'I feel overwhelmed. Please give me some space.', emoji: '😰', category: 'feelings', bg: '#bae6fd' },
   { id: 'sb-f6', label: 'I am tired', speech: 'I am tired and need to rest.', emoji: '😴', category: 'feelings', bg: '#bae6fd' },
 
-  // Quick Chat
   { id: 'sb-q1', label: 'Yes', speech: 'Yes!', emoji: '👍', category: 'quick', bg: '#fbcfe8' },
   { id: 'sb-q2', label: 'No thank you', speech: 'No thank you.', emoji: '🙅', category: 'quick', bg: '#fbcfe8' },
   { id: 'sb-q3', label: 'Wait a moment', speech: 'Please wait a moment, I am typing.', emoji: '✋', category: 'quick', bg: '#fbcfe8' },

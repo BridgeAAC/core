@@ -212,6 +212,28 @@ export function App() {
         }
       });
     }
+    anyWin.__bridgeOpenFileFromNative = async (name: string, base64: string) => {
+      try {
+        toast(`Importing ${name}...`, 'info');
+        const bin = atob(base64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const res = await importAnyFile({ name, bytes }, { filename: name });
+        await putAssets(res.assets);
+        await saveVocab(res.vocab);
+        await refreshVocabList();
+        await openVocab(res.vocab.id);
+        toast(
+          `Loaded "${res.vocab.name}" (${res.stats.pages} pages, ${res.stats.buttons} buttons)`,
+          'success',
+        );
+      } catch (err) {
+        toast(err instanceof Error ? err.message : String(err), 'error');
+      }
+    };
+    try {
+      anyWin.webkit?.messageHandlers?.bridgeSwift?.postMessage?.({ action: 'ready' });
+    } catch {}
 
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {

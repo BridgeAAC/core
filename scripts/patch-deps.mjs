@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 
-// 1. Ensure mespeak ESpeak.js is valid UTF-8 for Rollup/Rolldown bundlers
 try {
   const espeakPath = 'node_modules/mespeak/src/ESpeak.js';
   if (fs.existsSync(espeakPath)) {
@@ -13,9 +12,6 @@ try {
   }
 } catch {}
 
-// 2. Patch @diffusionstudio/vits-web to use IndexedDB (with OPFS fallback) for universal
-// iPad Safari + Desktop offline persistence, direct ArrayBuffer wasmBinary + getPreloadedPackage
-// loading, CDN mirror fallbacks, and safe printErr handling.
 try {
   const vitsPath = 'node_modules/@diffusionstudio/vits-web/dist/vits-web.js';
   if (fs.existsSync(vitsPath)) {

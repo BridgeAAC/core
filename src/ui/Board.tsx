@@ -167,6 +167,12 @@ export function Board() {
     lastActivationRef.current = { id: b.id, time: now };
     unlockAudio();
     playClickBeep();
+    try {
+      (window as any).webkit?.messageHandlers?.bridgeSwift?.postMessage?.({
+        action: 'haptic',
+        style: 'light',
+      });
+    } catch {}
 
     const gp = guidedPath.value;
     if (gp.length > 0 && gp[0].pageId === page!.id && gp[0].buttonId === b.id) {
