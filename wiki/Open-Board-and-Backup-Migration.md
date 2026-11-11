@@ -3,7 +3,7 @@
 BridgeAAC features client-side file reading and export tools engineered to promote communication freedom, user data portability, and seamless cross-platform accessibility.
 
 > [!NOTE]
-> **Nominative Fair Use & Interoperability Disclaimer**: Any references in this guide to proprietary software, trademarks, or file formats—including **TouchChat®** (`.ce`), **Saltillo NovaChat®** (`.c4v`), and **WordPower™**—are made strictly for **nominative fair use** to describe file format compatibility and migration procedures for files lawfully created or owned by users. BridgeAAC is an independent open-source project and is **not** affiliated with, endorsed by, or authorized by PRC-Saltillo, Prentke Romich Company, or Inman Innovations, Inc. BridgeAAC does not distribute proprietary commercial vocabularies or licensed symbol sets.
+> **Nominative Fair Use & Interoperability Disclaimer**: Any references in this guide to proprietary software, trademarks, or file formats—including **AAC Backup** (`.ce`), **Saltillo NovaChat®** (`.c4v`), and **WordPower™**—are made strictly for **nominative fair use** to describe file format compatibility and migration procedures for files lawfully created or owned by users. BridgeAAC is an independent open-source project and is **not** affiliated with, endorsed by, or authorized by PRC-Saltillo, Prentke Romich Company, or Inman Innovations, Inc. BridgeAAC does not distribute proprietary commercial vocabularies or licensed symbol sets.
 
 ---
 
@@ -13,9 +13,9 @@ BridgeAAC features client-side file reading and export tools engineered to promo
 | :---: | :---: | :---: | :--- |
 | **`.bridge`** | BridgeAAC Native | JSON vocabulary + base64 audio/symbol bundle | Open, lossless BridgeAAC interchange format. |
 | **`.obf` / `.obz`** | Open Board Format (OpenAAC) | Standard JSON manifest (`.obf`) or ZIP package (`.obz`) | Standardized international open-source AAC format. |
-| **`.ce`** | TouchChat® backup archive | ZIP container holding SQLite database (`*.c4v`) & user image bundle | Client-side SQLite parsing via `sql.js` (WebAssembly). |
-| **`.c4v`** | NovaChat® / TouchChat® database | Standalone SQLite database file | Direct database table ingestion. |
-| **`.wf`** | WordPower™ / TouchChat® format | Vocabulary bundle archive | Client-side conversion. |
+| **`.ce`** | AAC Backup backup archive | ZIP container holding SQLite database (`*.c4v`) & user image bundle | Client-side SQLite parsing via `sql.js` (WebAssembly). |
+| **`.c4v`** | NovaChat® / AAC Backup database | Standalone SQLite database file | Direct database table ingestion. |
+| **`.wf`** | WordPower™ / AAC Backup format | Vocabulary bundle archive | Client-side conversion. |
 
 ---
 

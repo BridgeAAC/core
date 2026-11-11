@@ -80,7 +80,7 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
   const warnings: string[] = [];
   const assets: AssetBlob[] = [];
 
-  progress(0.05, 'Unpacking TouchChat archive…');
+  progress(0.05, 'Unpacking AAC archive…');
   await tick();
 
   let c4vBytes: Uint8Array | null = null;
@@ -98,7 +98,7 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
       });
     } catch (e) {
       throw new Error(
-        `Could not read TouchChat archive (${e instanceof Error ? e.message : 'corrupt ZIP file'}).`,
+        `Could not read archive (${e instanceof Error ? e.message : 'corrupt ZIP file'}).`,
       );
     }
     for (const [name, bytes] of Object.entries(entries)) {
@@ -111,19 +111,19 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
       }
     }
     if (!c4vBytes) {
-      throw new Error('This archive does not contain a TouchChat vocabulary (.c4v) database.');
+      throw new Error('This archive does not contain a vocabulary (.c4v) database.');
     }
   } else if (isSqliteHeader(data)) {
     c4vBytes = data;
     c4vEntryName = opts.filename ?? 'Vocabulary.c4v';
   } else {
     throw new Error(
-      'Not a valid TouchChat (.ce / .c4v) file. Expected a TouchChat ZIP archive or SQLite vocabulary database.',
+      'Not a valid (.ce / .c4v) file. Expected a valid ZIP archive or SQLite vocabulary database.',
     );
   }
 
   if (!isSqliteHeader(c4vBytes)) {
-    throw new Error('The vocabulary database inside this TouchChat file is corrupt or not a SQLite 3 file.');
+    throw new Error('The vocabulary database inside this file is corrupt or not a SQLite 3 file.');
   }
 
   progress(0.15, 'Initializing SQLite engine…');
@@ -134,13 +134,13 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
   try {
     db = new SQL.Database(c4vBytes);
   } catch (e) {
-    throw new Error(`Could not open TouchChat SQLite database: ${e instanceof Error ? e.message : String(e)}`);
+    throw new Error(`Could not open SQLite database: ${e instanceof Error ? e.message : String(e)}`);
   }
 
   try {
     const tables = tableSet(db);
     if (!tables.has('pages') || !tables.has('buttons')) {
-      throw new Error('This SQLite database is missing required TouchChat tables (pages, buttons).');
+      throw new Error('This SQLite database is missing required tables (pages, buttons).');
     }
 
     progress(0.25, 'Reading vocabulary metadata and styles…');
@@ -537,7 +537,7 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
             out.push({ type: 'share' });
             break;
           default:
-            out.push({ type: 'unsupported', source: 'touchchat', code: c });
+            out.push({ type: 'unsupported', source: 'ce', code: c });
             break;
         }
       }
@@ -878,7 +878,7 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
     }
 
     if (pages.length === 0) {
-      throw new Error('No pages were found in this TouchChat vocabulary.');
+      throw new Error('No pages were found in this vocabulary archive.');
     }
 
     let homePageId: ID =
@@ -902,7 +902,7 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
 
     if (missingSymbolRefs > 0) {
       warnings.push(
-        `${missingSymbolRefs.toLocaleString()} button symbols referenced proprietary TouchChat symbol libraries (e.g. SymbolStix / PCS) that are not embedded in .ce files, so those buttons display text only.`,
+        `${missingSymbolRefs.toLocaleString()} button symbols referenced external symbol libraries (e.g. SymbolStix / PCS) that are not embedded in .ce files, so those buttons display text only.`,
       );
     }
     if (unsupportedSymbolFormats > 0) {
@@ -911,10 +911,10 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
       );
     }
 
-    const fallbackName = (opts.filename || c4vEntryName || 'TouchChat Vocabulary')
+    const fallbackName = (opts.filename || c4vEntryName || 'Imported Vocabulary')
       .replace(/^.*[/\\]/, '')
       .replace(/\.(ce|wf|c4v)$/i, '');
-    const vocabName = vars.get('Name')?.trim() || fallbackName || 'TouchChat Vocabulary';
+    const vocabName = vars.get('Name')?.trim() || fallbackName || 'Imported Vocabulary';
     const locale = vars.get('Locale')?.trim() || 'en';
     const description = vars.get('Description')?.trim() || undefined;
     const now = Date.now();
@@ -925,7 +925,7 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
       description,
       locale,
       source: {
-        kind: 'touchchat',
+        kind: 'ce',
         filename: opts.filename,
         importedAt: now,
       },

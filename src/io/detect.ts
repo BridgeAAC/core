@@ -66,7 +66,7 @@ export async function importAnyFile(
       return importObz(bytes, mergedOpts);
     }
     throw new Error(
-      `Unsupported ZIP archive "${file.name}". Supported formats: TouchChat (.ce, .wf, .c4v), Open Board (.obz, .obf), and BridgeAAC (.bridge).`,
+      `Unsupported ZIP archive "${file.name}". Supported formats: Open Board (.obz, .obf), BridgeAAC (.bridge), and AAC archives (.ce, .wf, .c4v).`,
     );
   }
 
@@ -78,7 +78,7 @@ export async function importAnyFile(
       parsed = JSON.parse(text) as Record<string, unknown>;
     } catch {
       throw new Error(
-        `Could not parse "${file.name}". Supported formats: TouchChat (.ce, .wf, .c4v), Open Board (.obf, .obz), and BridgeAAC (.bridge).`,
+        `Could not parse "${file.name}". Supported formats: Open Board (.obf, .obz), BridgeAAC (.bridge), and AAC archives (.ce, .wf, .c4v).`,
       );
     }
     if (typeof parsed.format === 'string' && parsed.format.startsWith('open-board')) {
@@ -90,6 +90,6 @@ export async function importAnyFile(
   }
 
   throw new Error(
-    `Unsupported file "${file.name}". Supported formats: TouchChat (.ce, .wf, .c4v), Open Board (.obf, .obz), and BridgeAAC (.bridge).`,
+    `Unsupported file "${file.name}". Supported formats: Open Board (.obf, .obz), BridgeAAC (.bridge), and AAC archives (.ce, .wf, .c4v).`,
   );
 }

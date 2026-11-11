@@ -65,12 +65,12 @@
 	<array>
 		<dict>
 			<key>CFBundleTypeName</key>
-			<string>TouchChat Vocabulary</string>
+			<string>AAC Vocabulary File</string>
 			<key>LSHandlerRank</key>
 			<string>Alternate</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>org.bridgeaac.touchchat-ce</string>
+				<string>org.bridgeaac.aac-ce</string>
 				<string>public.data</string>
 			</array>
 		</dict>
@@ -96,9 +96,9 @@
 				<string>public.archive</string>
 			</array>
 			<key>UTTypeDescription</key>
-			<string>TouchChat Vocabulary File (.ce, .c4v, .wf)</string>
+			<string>AAC Vocabulary File (.ce, .c4v, .wf)</string>
 			<key>UTTypeIdentifier</key>
-			<string>org.bridgeaac.touchchat-ce</string>
+			<string>org.bridgeaac.aac-ce</string>
 			<key>UTTypeTagSpecification</key>
 			<dict>
 				<key>public.filename-extension</key>
