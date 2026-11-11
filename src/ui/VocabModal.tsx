@@ -23,6 +23,7 @@ import { exportObz } from '../io/obf';
 import { exportCe } from '../io/ce';
 import { SUPPORTED_LANGUAGES, type LangCode } from '../i18n';
 import type { ImportResult } from '../model';
+import { enrichVocabularyWithArasaac, type EnrichProgress } from '../data/arasaac';
 
 function downloadBytes(filename: string, bytes: Uint8Array, mime = 'application/octet-stream') {
   const blob = new Blob([bytes as BlobPart], { type: mime });
@@ -46,6 +47,8 @@ export function VocabModal() {
   const [progressMsg, setProgressMsg] = useState('');
   const [lastImport, setLastImport] = useState<ImportResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [enriching, setEnriching] = useState(false);
+  const [enrichProgress, setEnrichProgress] = useState<EnrichProgress | null>(null);
 
   const [newVocabName, setNewVocabName] = useState('');
   const [newRows, setNewRows] = useState(6);
@@ -112,6 +115,31 @@ export function VocabModal() {
       const bytes = await exportCe(v, map);
       downloadBytes(`${safeName}.ce`, bytes, 'application/zip');
       toast(`Exported ${safeName}.ce`, 'success');
+    }
+  }
+
+  async function handleEnrich(id: string) {
+    const v = id === active?.id ? active : await loadVocab(id);
+    if (!v) return;
+    setEnriching(true);
+    setEnrichProgress({ total: 0, processed: 0, matched: 0 });
+    try {
+      const res = await enrichVocabularyWithArasaac(v, (p) => {
+        setEnrichProgress(p);
+      });
+      await refreshVocabList();
+      if (id === active?.id) {
+        await openVocab(id);
+      }
+      toast(
+        `Auto-Enrich complete: matched ${res.newlyMatched.toLocaleString()} symbols for offline use!`,
+        'success',
+      );
+    } catch (e) {
+      toast(e instanceof Error ? e.message : String(e), 'error');
+    } finally {
+      setEnriching(false);
+      setEnrichProgress(null);
     }
   }
 
@@ -193,6 +221,23 @@ export function VocabModal() {
             </div>
           )}
 
+          {enriching && enrichProgress && (
+            <div class="progress-card" role="status">
+              <div class="progress-bar-track">
+                <div
+                  class="progress-bar-fill"
+                  style={{
+                    width: `${enrichProgress.total > 0 ? Math.round((enrichProgress.processed / enrichProgress.total) * 100) : 0}%`,
+                  }}
+                />
+              </div>
+              <div class="progress-text">
+                Matching ARASAAC symbols: {enrichProgress.processed.toLocaleString()} /{' '}
+                {enrichProgress.total.toLocaleString()} ({enrichProgress.matched.toLocaleString()} found)
+              </div>
+            </div>
+          )}
+
           {errorMsg && (
             <div class="alert-box error" role="alert">
               <strong>Import Error:</strong> {errorMsg}
@@ -212,9 +257,17 @@ export function VocabModal() {
                   Note: {w}
                 </div>
               ))}
-              <div style={{ marginTop: '8px' }}>
+              <div style={{ marginTop: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <button type="button" class="btn primary" onClick={close}>
                   Open Board
+                </button>
+                <button
+                  type="button"
+                  class="btn secondary"
+                  disabled={enriching}
+                  onClick={() => void handleEnrich(lastImport.vocab.id)}
+                >
+                  {enriching ? 'Enriching...' : 'Auto-Enrich with ARASAAC Symbols'}
                 </button>
               </div>
             </div>
@@ -294,6 +347,15 @@ export function VocabModal() {
                           Open
                         </button>
                       )}
+                      <button
+                        type="button"
+                        class="sm-btn"
+                        disabled={enriching}
+                        onClick={() => void handleEnrich(item.id)}
+                        title="Automatically match text buttons to open ARASAAC pictograms and save offline"
+                      >
+                        Enrich ARASAAC
+                      </button>
                       <button
                         type="button"
                         class="sm-btn"

@@ -1,5 +1,6 @@
 import type { Action, Button, ImageRef } from '../model';
 import { VOCAB_TRANSLATIONS } from './multilingual';
+import { getArasaacIdForWord } from './arasaac';
 
 let reverseMultilingualMap: Map<string, string> | null = null;
 function getReverseMultilingualMap(): Map<string, string> {
@@ -1225,7 +1226,12 @@ export function resolveIconForButton(
     const hit = WORD_ICON_MAP[key];
     if (hit) return hit;
     if (COLOR_SWATCH_MAP[key]) return `badge:color:${COLOR_SWATCH_MAP[key]}`;
+    const arasaacId = getArasaacIdForWord(key);
+    if (arasaacId) return `arasaac:${arasaacId}`;
   }
+
+  const directArasaac = getArasaacIdForWord(trimmed);
+  if (directArasaac) return `arasaac:${directArasaac}`;
 
   if (/^-[a-z']+$/i.test(trimmed)) {
     return `badge:gram:${trimmed}`;
