@@ -216,7 +216,7 @@ const featureHtml = `<!doctype html>
   <div class="left">
     <div class="badge">100% Free &bull; Offline &bull; Open Source</div>
     <h1>BridgeAAC</h1>
-    <p>Voice communication board for everyone. Opens TouchChat (.ce) &amp; Open Board files with offline neural speech.</p>
+    <p>Voice communication board for everyone. Opens Open Board (.obf) and standard AAC backups with offline neural speech.</p>
     <div class="pills">
       <span class="pill">10 Languages</span>
       <span class="pill">Offline Neural Voices</span>

@@ -1,6 +1,6 @@
 # Troubleshooting & Frequently Asked Questions (FAQ)
 
-Find clear answers to setup, speech audio, TouchChat file migrations, and accessibility options for BridgeAAC (`bridgeaac/core`).
+Find clear answers to setup, speech audio, AAC Backup file migrations, and accessibility options for BridgeAAC (`bridgeaac/core`).
 
 > [!TIP]
 > **Fast Diagnostic**: If speech is silent on an iPad, verify the **Silent Mode Bell icon** in Control Center is OFF and tap any button once on the screen to initialize Safari's Web Audio context.
@@ -34,14 +34,14 @@ Find clear answers to setup, speech audio, TouchChat file migrations, and access
 
 ## 2. Vocabularies & File Import
 
-### Q: Can I transfer a TouchChat vocabulary from an iPad to an Android tablet or Chromebook?
-**Yes.** Export the vocabulary from TouchChat on the iPad as a `.ce` file (via Files, AirDrop, or Google Drive). Then open BridgeAAC on your Android tablet or Chromebook, tap **Vocab** &rarr; **Import File**, and choose the `.ce` file. The vocabulary will load with identical button positions, colors, symbols, and folder navigations.
+### Q: Can I transfer a AAC Backup vocabulary from an iPad to an Android tablet or Chromebook?
+**Yes.** Export the vocabulary from AAC Backup on the iPad as a `.ce` file (via Files, AirDrop, or Google Drive). Then open BridgeAAC on your Android tablet or Chromebook, tap **Vocab** &rarr; **Import File**, and choose the `.ce` file. The vocabulary will load with identical button positions, colors, symbols, and folder navigations.
 
 ---
 
-### Q: What should I do if an imported TouchChat file displays "corrupted file"?
-- If the TouchChat file was created prior to 2012, it may use an older non-SQLite format.
-- Open the file in a recent version of TouchChat on an iPad, duplicate it, and export a fresh copy. Modern TouchChat exports will always be formatted in standard SQLite.
+### Q: What should I do if an imported AAC Backup file displays "corrupted file"?
+- If the AAC Backup file was created prior to 2012, it may use an older non-SQLite format.
+- Open the file in a recent version of AAC Backup on an iPad, duplicate it, and export a fresh copy. Modern AAC Backup exports will always be formatted in standard SQLite.
 
 ---
 

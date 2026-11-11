@@ -16,8 +16,8 @@
   "fileAssociations": [
     {
       "ext": "ce",
-      "name": "TouchChat Vocabulary File",
-      "description": "TouchChat Vocabulary Export (.ce)",
+      "name": "AAC Vocabulary File",
+      "description": "AAC Vocabulary Export (.ce)",
       "role": "Editor"
     },
     {
@@ -65,7 +65,7 @@
     "maintainer": "BridgeAAC <support@bridgeaac.org>",
     "category": "Education;Accessibility;AudioVideo;",
     "icon": "public/icon-512.png",
-    "synopsis": "Free, offline-first AAC voice communication app compatible with TouchChat (.ce) files"
+    "synopsis": "Free, offline-first AAC voice communication app"
   },
   "mac": {
     "artifactName": "BridgeAAC-macOS.${ext}",

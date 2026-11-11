@@ -82,7 +82,7 @@ export default defineConfig({
         name: 'BridgeAAC',
         short_name: 'BridgeAAC',
         description:
-          'Free, open-source AAC communication app. Opens TouchChat (.ce) and Open Board (.obf/.obz) vocabulary files.',
+          'Free, open-source AAC communication app. Opens Open Board (.obf/.obz), BridgeAAC, and standard vocabulary files.',
         theme_color: '#1d4ed8',
         background_color: '#f4f6fb',
         display: 'standalone',

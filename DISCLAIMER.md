@@ -30,10 +30,9 @@ BridgeAAC is an independent, free, open-source assistive augmentative and altern
 BridgeAAC is an independent, non-commercial open-source project developed for interoperability and accessibility purposes.
 
 ### Nominative Fair Use Statement
-Any reference within the Software, documentation, source code, or file filters to third-party commercial products, trademarks, file extensions, or brands—including but not limited to **TouchChat®**, **NovaChat®**, **WordPower™**, **SymbolStix®**, **Tobii Dynavox®**, or **Apple®**—is strictly for **nominative fair use** to describe technical file format compatibility, data portability, and user migration capabilities (e.g., describing the software's ability to read and parse standardized `.ce`, `.c4v`, and `.obf` archives created or owned by the user).
+Any reference within the Software, documentation, source code, or file filters to third-party commercial products, trademarks, file extensions, or brands—including but not limited to **WordPower™**, **SymbolStix®**, **Tobii Dynavox®**, or **Apple®**—is strictly for **nominative fair use** to describe technical file format compatibility, data portability, and user migration capabilities (e.g., describing the software's ability to read and parse standardized `.ce`, `.c4v`, and `.obf` archives created or owned by the user).
 
 ### Independent Status & Disclaimers of Affiliation
-- **TouchChat®** and **NovaChat®** are registered trademarks of PRC-Saltillo / Prentke Romich Company.
 - **WordPower™** is a registered trademark of Inman Innovations, Inc.
 - **SymbolStix®** is a registered trademark of n2y LLC.
 - **ARASAAC** pictograms are produced and owned by the Government of Aragon and licensed under Creative Commons (CC BY-NC-SA 4.0).

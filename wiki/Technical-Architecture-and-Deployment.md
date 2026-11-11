@@ -43,7 +43,7 @@ BridgeAAC is built to meet strict criteria critical for assistive communication:
 | :--- | :--- | :--- |
 | **UI Framework** | Preact 10 (`@preact/signals`) | Minimalist virtual-DOM UI with signals for instant, low-overhead rendering. |
 | **Build Tooling** | Vite 8 + TypeScript 5.8 | Sub-second HMR and optimized ES2022 bundling. |
-| **Database Engine** | `sql.js` (SQLite WASM) | In-memory SQLite execution to read and write TouchChat `*.c4v` databases client-side. |
+| **Database Engine** | `sql.js` (SQLite WASM) | In-memory SQLite execution to read and write AAC Backup `*.c4v` databases client-side. |
 | **Archive Unpacking**| `fflate` | High-speed, zero-dependency ZIP compression/decompression for `.ce` and `.obz` archives. |
 | **Neural Synthesis**| `ONNX Runtime Web` + `Piper` | Client-side neural speech inference via WebAssembly SIMD. |
 | **Offline PWA** | `vite-plugin-pwa` + `Workbox` | Service Worker pre-caching for 100% offline application delivery. |

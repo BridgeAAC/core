@@ -115,7 +115,7 @@ Once BridgeAAC is open, complete these four steps for an optimal communication e
 ### 1. Select Your Starter Vocabulary
 - Tap the **Vocab** icon (books icon) in the top bar.
 - Choose your preferred language (BridgeAAC includes prebuilt starter vocabularies across 10 languages: English, Spanish, French, German, Portuguese, Italian, Arabic, Chinese, Hindi, and Tagalog).
-- If you have an existing TouchChat file (`.ce`, `.c4v`, `.wf`) or Open Board file (`.obf`, `.obz`), tap **Import File** to open it immediately.
+- If you have an existing AAC Backup file (`.ce`, `.c4v`, `.wf`) or Open Board file (`.obf`, `.obz`), tap **Import File** to open it immediately.
 
 ### 2. Pre-Cache Vocabulary Audio (Instant Speech)
 - Tap the **Settings** icon (gear icon) in the top bar.

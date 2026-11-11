@@ -34,7 +34,7 @@ describe('color & binary helpers', () => {
   });
 });
 
-describe('synthetic TouchChat .ce import & export round-trip', () => {
+describe('synthetic .ce format import & export round-trip', () => {
   it('imports a synthetic .ce with BGR colors, navigation, suffix attachment, grammar sets, and embedded symbols', async () => {
     const SQL = await getSql();
     const db = new SQL.Database();
@@ -280,7 +280,7 @@ describe('OBF / OBZ & BridgeAAC backup round-trip', () => {
   it('throws friendly errors on corrupt or unrecognized files', async () => {
     await expect(
       importAnyFile({ name: 'broken.ce', bytes: new Uint8Array([1, 2, 3, 4]) }, {}),
-    ).rejects.toThrow(/Not a valid TouchChat/i);
+    ).rejects.toThrow(/Not a valid.*(\.ce|\.c4v)/i);
 
     await expect(
       importAnyFile({ name: 'unknown.xyz', bytes: new Uint8Array([9, 9, 9]) }, {}),
@@ -289,7 +289,7 @@ describe('OBF / OBZ & BridgeAAC backup round-trip', () => {
 });
 
 const realCePath = path.resolve(__dirname, '../fixtures/real-wordpower60.ce');
-describe.skipIf(!fs.existsSync(realCePath))('real TouchChat WordPower60 .ce fixture', () => {
+describe.skipIf(!fs.existsSync(realCePath))('real .ce fixture', () => {
   it('imports WordPower60 Basic SS Copy.ce cleanly and quickly', async () => {
     const bytes = new Uint8Array(fs.readFileSync(realCePath));
     const t0 = performance.now();

@@ -18,7 +18,7 @@ BridgeAAC provides a modern, touch-first communication system engineered to run 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │  Universal File Support      Offline Neural Speech        Accessible Design     │
-│  TouchChat (.ce, .c4v, .wf)  Piper ONNX on-device models  Calm Sensory Mode     │
+│  AAC Backup (.ce, .c4v, .wf)  Piper ONNX on-device models  Calm Sensory Mode     │
 │  Open Board (.obf, .obz)     meSpeak instant Web Audio    Switch Scanning       │
 │  BridgeAAC native (.bridge)  One-click vocab audio cache  Pointer Dwell (Gaze)  │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -52,7 +52,7 @@ Explore the complete system documentation:
 | Guide | Core Content | Audience |
 | :--- | :--- | :--- |
 | **[Getting Started & Installation](Getting-Started)** | Step-by-step setup on iPad (Safari PWA + Guided Access), Android, Windows, macOS, and Linux. | All Users, Families |
-| **[File Interoperability & Migration](TouchChat-and-Open-Board-Migration)** | Importing `.ce`, `.c4v`, `.wf`, `.obf`, and `.obz` files with full round-trip layout and symbol fidelity. | SLPs, Therapists, Parents |
+| **[File Interoperability & Migration](Open-Board-and-Backup-Migration)** | Importing `.ce`, `.c4v`, `.wf`, `.obf`, and `.obz` files with full round-trip layout and symbol fidelity. | SLPs, Therapists, Parents |
 | **[Offline Speech & Neural Voices](Speech-and-Offline-Audio)** | The four-tier speech engine, Piper neural ONNX models, audio caching, and pronunciation overrides. | All Users, Caregivers |
 | **[Motor Access & Switch Scanning](Motor-Access-and-Switch-Scanning)** | Touch timing filters (hold/repeat debounce), pointer dwell for eye-gaze, and 1/2-switch scanning. | OTs, Assistive Tech Specialists |
 | **[Grid Editor & Customization](Grid-Editor-and-Customization)** | Visual button editor, ARASAAC symbol search, personal photo uploads, page creation, and Word Finder. | SLPs, Teachers, Parents |
@@ -62,7 +62,7 @@ Explore the complete system documentation:
 | **[Privacy, HIPAA & Security](Privacy-HIPAA-and-Security)** | Zero-telemetry architecture, local-only ePHI isolation, sandboxing, and clinical HIPAA compliance. | SLPs, Clinics, Families |
 | **[Languages & Localization](Languages-and-Localization)** | Breakdown of all 10 supported languages, RTL Arabic engine, multilingual keyboards, and prediction. | International Users, SLPs |
 | **[Technical Architecture & Build](Technical-Architecture-and-Deployment)** | Deep technical look at IndexedDB, OPFS, SQLite WASM, Piper ONNX, Electron, Swift, and CI/CD. | Developers, Contributors |
-| **[Troubleshooting & FAQ](Troubleshooting-and-FAQ)** | Solutions for audio silence, offline storage limits, TouchChat file imports, and switch setups. | All Users |
+| **[Troubleshooting & FAQ](Troubleshooting-and-FAQ)** | Solutions for audio silence, offline storage limits, AAC Backup file imports, and switch setups. | All Users |
 | **[Legal & Medical Disclaimer](Legal-and-Medical-Disclaimer)** | Critical medical disclaimers, limitation of liability, and third-party trademark notices. | All Users |
 
 ---

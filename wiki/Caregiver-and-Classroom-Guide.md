@@ -65,7 +65,7 @@ AAC devices are prone to being dropped, submerged in water, or lost. **Never let
 
 ### Weekly Backup Routine:
 1. Tap **Vocab** in the top navigation bar.
-2. Tap **Export** &rarr; **Export as BridgeAAC (`.bridge`)** or **Export as TouchChat (`.ce`)**.
+2. Tap **Export** &rarr; **Export as BridgeAAC (`.bridge`)** or **Export as AAC Backup (`.ce`)**.
 3. Save the file with a date stamp (e.g., `BridgeAAC_Backup_Emily_2026-11-09.bridge`).
 4. Upload the file to Google Drive, iCloud, or email it to the therapist.
 5. If the iPad is broken or replaced, open BridgeAAC on the new device, tap **Vocab** &rarr; **Import File**, and restore the entire vocabulary in seconds.

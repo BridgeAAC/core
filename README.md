@@ -3,12 +3,8 @@
   <h1>BridgeAAC</h1>
   <p><strong>Free, open-source, offline-ready AAC (Augmentative and Alternative Communication) software for everyone.</strong></p>
   <p>
-    Compatible with <strong>TouchChat® (<code>.ce</code>, <code>.c4v</code>, <code>.wf</code>) file format</strong>,
-    <strong>Open Board Format (<code>.obf</code>, <code>.obz</code>)</strong>, and
-    <strong>BridgeAAC (<code>.bridge</code>)</strong> vocabulary files.
-  </p>
-  <p>
-    <sub><em>TouchChat® is a registered trademark of PRC-Saltillo. References to TouchChat® are strictly for nominative fair use to describe file format compatibility. BridgeAAC is an independent project not affiliated with or endorsed by PRC-Saltillo.</em></sub>
+    Compatible with <strong>Open Board Format (<code>.obf</code>, <code>.obz</code>)</strong>,
+    <strong>BridgeAAC (<code>.bridge</code>)</strong>, and standard AAC backup formats (<code>.ce</code>, <code>.c4v</code>, <code>.wf</code>).
   </p>
   <p>
     <a href="https://bridgeaac.org"><strong>Website (bridgeaac.org)</strong></a> &bull;
@@ -64,7 +60,6 @@ I love my sister, and I wanted every person and family to have access to a real 
 - **Client-Side File Import & Export**: Reads and creates `.ce`, `.c4v`, and `.wf` format archives (`*.c4v` SQLite databases, `Images.c4s` symbol libraries, and user audio) directly in the browser using WebAssembly (`sql.js` and `fflate`).
 - **Round-Trip Layout Fidelity**: Preserves row/column coordinates, multi-cell spans, BGR colors, button borders, custom user symbols, page navigation stacks, grammar word-ending modifiers (`button_sets` / action `71`), and suffix attachment (`-s`, `-ing`, `-ed`, `-er`, `-est`).
 - **Open Board Format (`.obf` / `.obz`)**: Imports and exports single-page `.obf` boards and multi-page `.obz` archives with embedded images and sounds.
-- **Fair Use Notice**: TouchChat® is a registered trademark of PRC-Saltillo. References to `.ce` format compatibility are strictly for nominative fair use to describe technical data migration capabilities for user-owned files. BridgeAAC is an independent project and is not affiliated with or endorsed by PRC-Saltillo.
 
 ### 2. Three-Tier Offline Speech Engine
 BridgeAAC is engineered so speech **always works offline**, even on devices without system TTS voices or internet access:
@@ -180,7 +175,7 @@ If you are an autism parent, caregiver, special education teacher, or therapist 
 
 - **Not a Medical Device**: BridgeAAC is an open-source assistive communication application. It is **NOT** a medical device, has not been evaluated or approved by the FDA or any medical authority, and is not a substitute for professional medical, clinical, psychological, or speech-language pathology advice.
 - **No Emergency Services / 911**: BridgeAAC cannot place emergency phone calls or contact emergency dispatchers. Caregivers must maintain an independent telephone or emergency device at all times.
-- **Trademark & Interoperability Attribution**: TouchChat® and NovaChat® are registered trademarks of PRC-Saltillo. WordPower™ is a registered trademark of Inman Innovations, Inc. SymbolStix® is a registered trademark of n2y LLC. References to these names and associated file extensions (`.ce`, `.c4v`, `.wf`) are strictly for nominative fair use to describe technical file format compatibility and migration of user-owned backups. BridgeAAC is an independent, non-commercial open-source project and is **not** affiliated with, sponsored by, authorized by, or endorsed by PRC-Saltillo, Inman Innovations, Inc., n2y LLC, or Apple Inc.
+- **Trademark & Interoperability Attribution**: WordPower™ is a registered trademark of Inman Innovations, Inc. SymbolStix® is a registered trademark of n2y LLC. References to file extensions (`.ce`, `.c4v`, `.wf`, `.obf`) are for technical interoperability and migration of user-owned backups. BridgeAAC is an independent, non-commercial open-source project and is **not** affiliated with, sponsored by, authorized by, or endorsed by PRC-Saltillo, Inman Innovations, Inc., n2y LLC, or Apple Inc.
 - **Limitation of Liability**: Provided **"AS IS"** under the MIT License without warranty of any kind. In no event shall the authors or contributors be liable for any damages, communication disruptions, device malfunctions, or data loss.
 - **Full Legal Terms**: See **[DISCLAIMER.md](DISCLAIMER.md)** for complete liability waivers, clinical disclaimers, and intellectual property notices.
 

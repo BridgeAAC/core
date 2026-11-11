@@ -74,7 +74,7 @@ export interface Page {
   hidden?: boolean;
 }
 
-export type VocabSourceKind = 'builtin' | 'user' | 'touchchat' | 'obf' | 'bridge';
+export type VocabSourceKind = 'builtin' | 'user' | 'ce' | 'obf' | 'bridge';
 
 export interface Vocabulary {
   id: ID;

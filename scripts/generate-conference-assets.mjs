@@ -434,8 +434,8 @@ async function renderConferenceSlide() {
           <p>BridgeWords 42, 60, 84, 108 and Strict ARASAAC Core 50 with clinical Fitzgerald Key color coding.</p>
         </div>
         <div class="feat-card">
-          <h3>TouchChat &amp; Open Board</h3>
-          <p>Direct lossless import of TouchChat (.ce) and Open Board (.obf) format vocabularies.</p>
+          <h3>Open Board &amp; Standard Imports</h3>
+          <p>Direct lossless import of Open Board (.obf, .obz), BridgeAAC, and standard AAC formats.</p>
         </div>
         <div class="feat-card">
           <h3>Dual Offline Architecture</h3>
