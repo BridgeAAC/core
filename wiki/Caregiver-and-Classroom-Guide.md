@@ -35,10 +35,10 @@ To ensure the device remains a true communication tool rather than a toy, keep B
 6. The student cannot exit the app, switch to web browsers, or access other apps.
 
 ### BridgeAAC App PIN Protection
-1. In BridgeAAC, tap **Settings** &rarr; **System**.
-2. Under **Security & PIN Lock**, set a 4-digit PIN.
-3. Enable **Protect Edit Mode**, **Protect Vocabularies**, and **Protect Settings**.
-4. The student can communicate freely, but tapping the Edit pencil or Settings gear prompts for the PIN.
+1. In BridgeAAC, tap **Settings** (gear icon) &rarr; **PIN Lock** tab.
+2. In the **PIN Code** box, enter a 4-digit code known only to parents and staff.
+3. Once set, the student can communicate freely on the board, but tapping the Edit pencil, Vocab manager, or Settings gear instantly prompts for the PIN keypad.
+4. To remove the PIN, clear the field so it is blank. For complete configuration instructions, see the [Settings & Configuration Guide](Settings-and-Configuration).
 
 ---
 

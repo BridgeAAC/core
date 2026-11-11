@@ -13,11 +13,40 @@
   <p>
     <a href="https://bridgeaac.org"><strong>Website (bridgeaac.org)</strong></a> &bull;
     <a href="https://github.com/BridgeAAC/core/wiki"><strong>Documentation Wiki</strong></a> &bull;
+    <a href="#screenshots"><strong>Screenshots</strong></a> &bull;
     <a href="#installation"><strong>Installation</strong></a> &bull;
     <a href="#supported-languages"><strong>10 Languages</strong></a> &bull;
     <a href="#development--cicd"><strong>Development</strong></a>
   </p>
 </div>
+
+---
+
+## App Screenshots
+
+<div align="center">
+  <img src="docs/images/01-communication-board.png" alt="BridgeAAC Core Communication Board" width="90%" />
+  <p><em>Standard Core Communication Board with dynamic Fitzgerald Key color coding, message bar, and symbol prediction.</em></p>
+</div>
+
+<br />
+
+| Calm Sensory Mode | Daily Visual Planner |
+| :---: | :---: |
+| <img src="docs/images/02-calm-sensory-mode.png" alt="Calm Sensory Mode" width="100%" /> | <img src="docs/images/03-daily-planner-rewards.png" alt="Daily Visual Planner" width="100%" /> |
+| *Sensory-friendly low-glare sage palette with softened pastel saturation.* | *Visual schedule with morning/evening routines and gamified rewards.* |
+
+| Mood Tracking & Analytics | Gamified Learning Games |
+| :---: | :---: |
+| <img src="docs/images/04-mood-tracker-analytics.png" alt="Mood Tracker and Analytics" width="100%" /> | <img src="docs/images/05-gamified-learning.png" alt="Gamified Learning Games" width="100%" /> |
+| *Log emotions, identify triggers, and view mood trends.* | *Interactive Sentence Builder and Emotion Match skill games.* |
+
+| Offline Neural Voice Customization | Phone & Compact Layout |
+| :---: | :---: |
+| <img src="docs/images/06-offline-voices-customization.png" alt="Offline Voice Customization" width="100%" /> | <img src="docs/images/iphone-board.png" alt="BridgeAAC Mobile Layout" width="100%" /> |
+| *Downloadable Piper VITS neural voices with fine pitch and rate controls.* | *Responsive grid layout optimized for phone screens and mobile AAC.* |
+
+---
 
 ---
 

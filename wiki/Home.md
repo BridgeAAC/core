@@ -57,6 +57,7 @@ Explore the complete system documentation:
 | **[Motor Access & Switch Scanning](Motor-Access-and-Switch-Scanning)** | Touch timing filters (hold/repeat debounce), pointer dwell for eye-gaze, and 1/2-switch scanning. | OTs, Assistive Tech Specialists |
 | **[Grid Editor & Customization](Grid-Editor-and-Customization)** | Visual button editor, ARASAAC symbol search, personal photo uploads, page creation, and Word Finder. | SLPs, Teachers, Parents |
 | **[Life & Learning Hub](Life-and-Learning-Hub)** | Daily Planner, Mood Tracker, Sentence Builder & Emotion Match games, "About Me" passport, and Notes. | Caregivers, Teachers, Users |
+| **[Settings & Configuration](Settings-and-Configuration)** | Complete guide to voices, touch timing, switch scanning, visual ergonomic styling, and PIN locks. | All Users |
 | **[Caregiver & Classroom Guide](Caregiver-and-Classroom-Guide)** | Practical AAC modeling (Aided Language Stimulation), Guided Access locking, PIN protection, and backups. | Parents, Teachers, Aides |
 | **[Privacy, HIPAA & Security](Privacy-HIPAA-and-Security)** | Zero-telemetry architecture, local-only ePHI isolation, sandboxing, and clinical HIPAA compliance. | SLPs, Clinics, Families |
 | **[Languages & Localization](Languages-and-Localization)** | Breakdown of all 10 supported languages, RTL Arabic engine, multilingual keyboards, and prediction. | International Users, SLPs |
