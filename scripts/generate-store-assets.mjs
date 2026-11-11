@@ -67,52 +67,46 @@ async function renderHtmlToPng(html, width, height, outPath) {
   console.log(`Generated ${outPath} (${width}x${height})`);
 }
 
-const iconHtml = (size, maskable = false) => `<!doctype html>
+const iconSvgRaw = fs.readFileSync(path.resolve('public/icon.svg'), 'utf-8');
+
+const iconHtml = (size, maskable = false, fullBleed = false) => {
+  let content = iconSvgRaw;
+  if (fullBleed) {
+    content = content.replace('rx="225"', 'rx="0"');
+  }
+  return `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8"/>
 <style>
   html, body {
     margin: 0; padding: 0; width: ${size}px; height: ${size}px; overflow: hidden;
-    background: linear-gradient(145deg, #1e40af 0%, #2563eb 52%, #0ea5e9 100%);
+    background: #ffffff;
     display: flex; align-items: center; justify-content: center;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "San Francisco", -apple-system-body, "Helvetica Neue", Helvetica, Arial, sans-serif;
   }
   .wrap {
-    width: ${maskable ? Math.round(size * 0.72) : Math.round(size * 0.82)}px;
-    height: ${maskable ? Math.round(size * 0.72) : Math.round(size * 0.82)}px;
-    display: flex; align-items: center; justify-content: center; position: relative;
+    width: ${maskable ? Math.round(size * 0.82) : size}px;
+    height: ${maskable ? Math.round(size * 0.82) : size}px;
+    display: flex; align-items: center; justify-content: center;
   }
-  svg { width: 100%; height: 100%; filter: drop-shadow(0 ${Math.round(size * 0.025)}px ${Math.round(size * 0.05)}px rgba(15, 23, 42, 0.35)); }
+  svg { width: 100%; height: 100%; display: block; }
 </style>
 </head>
 <body>
   <div class="wrap">
-    <svg viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M36 38C36 25.8497 45.8497 16 58 16H182C194.15 16 204 25.8497 204 38V148C204 160.15 194.15 170 182 170H108L66 208V170H58C45.8497 170 36 160.15 36 148V38Z" fill="#FFFFFF"/>
-      <rect x="54" y="34" width="60" height="52" rx="12" fill="#FEF08A" stroke="#EAB308" stroke-width="3.5"/>
-      <rect x="126" y="34" width="60" height="52" rx="12" fill="#BBF7D0" stroke="#22C55E" stroke-width="3.5"/>
-      <rect x="54" y="98" width="60" height="52" rx="12" fill="#BFDBFE" stroke="#3B82F6" stroke-width="3.5"/>
-      <rect x="126" y="98" width="60" height="52" rx="12" fill="#FED7AA" stroke="#F97316" stroke-width="3.5"/>
-      <circle cx="84" cy="52" r="8" fill="#854D0E"/>
-      <path d="M70 76C70 68 76 64 84 64C92 64 98 68 98 76" stroke="#854D0E" stroke-width="5" stroke-linecap="round"/>
-      <path d="M142 54V66H150L159 74V46L150 54H142Z" fill="#166534"/>
-      <path d="M166 52C171 56 171 64 166 68" stroke="#166534" stroke-width="4.5" stroke-linecap="round"/>
-      <path d="M173 46C181 53 181 67 173 74" stroke="#166534" stroke-width="4.5" stroke-linecap="round"/>
-      <path d="M84 138C84 138 69 128 69 117C69 111.5 73.5 108 78 108C81 108 83 109.8 84 112C85 109.8 87 108 90 108C94.5 108 99 111.5 99 117C99 128 84 138 84 138Z" fill="#1D4ED8"/>
-      <path d="M156 107L160.9 117.2L172 118.8L164 126.6L165.9 137.7L156 132.4L146.1 137.7L148 126.6L140 118.8L151.1 117.2L156 107Z" fill="#C2410C"/>
-    </svg>
+    ${content}
   </div>
  </body>
 </html>`;
+};
 
-await renderHtmlToPng(iconHtml(1024, false), 1024, 1024, 'AppIcon.png');
-await renderHtmlToPng(iconHtml(1024, false), 1024, 1024, 'store-assets/apple-app-store/AppIcon-1024x1024.png');
-await renderHtmlToPng(iconHtml(512, false), 512, 512, 'store-assets/google-play/hi-res-icon-512x512.png');
-await renderHtmlToPng(iconHtml(512, false), 512, 512, 'public/icon-512.png');
-await renderHtmlToPng(iconHtml(512, true), 512, 512, 'public/icon-maskable-512.png');
-await renderHtmlToPng(iconHtml(192, false), 192, 192, 'public/icon-192.png');
-await renderHtmlToPng(iconHtml(180, false), 180, 180, 'public/apple-touch-icon.png');
+await renderHtmlToPng(iconHtml(1024, false, true), 1024, 1024, 'AppIcon.png');
+await renderHtmlToPng(iconHtml(1024, false, true), 1024, 1024, 'store-assets/apple-app-store/AppIcon-1024x1024.png');
+await renderHtmlToPng(iconHtml(512, false, true), 512, 512, 'store-assets/google-play/hi-res-icon-512x512.png');
+await renderHtmlToPng(iconHtml(512, false, true), 512, 512, 'public/icon-512.png');
+await renderHtmlToPng(iconHtml(512, true, true), 512, 512, 'public/icon-maskable-512.png');
+await renderHtmlToPng(iconHtml(192, false, true), 192, 192, 'public/icon-192.png');
+await renderHtmlToPng(iconHtml(180, false, true), 180, 180, 'public/apple-touch-icon.png');
 
 const featureHtml = `<!doctype html>
 <html>

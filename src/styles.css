@@ -23,11 +23,16 @@
   --btn-radius: 10px;
   --icon-scale: 1;
   --app-font:
-    system-ui,
     -apple-system,
+    BlinkMacSystemFont,
+    'SF Pro Display',
+    'SF Pro Text',
+    'SF Pro',
+    system-ui,
     'Segoe UI',
     Roboto,
-    Ubuntu,
+    Helvetica,
+    Arial,
     sans-serif,
     'Apple Color Emoji',
     'Noto Color Emoji',
@@ -166,6 +171,9 @@ body,
   -webkit-user-select: none;
   -webkit-touch-callout: none;
   touch-action: manipulation;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 html[data-font='dyslexic'] .btn-label,
