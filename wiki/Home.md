@@ -52,7 +52,7 @@ Explore the complete system documentation:
 | Guide | Core Content | Audience |
 | :--- | :--- | :--- |
 | **[Getting Started & Installation](Getting-Started)** | Step-by-step setup on iPad (Safari PWA + Guided Access), Android, Windows, macOS, and Linux. | All Users, Families |
-| **[TouchChat & Open Board Migration](TouchChat-and-Open-Board-Migration)** | Importing `.ce`, `.c4v`, `.wf`, `.obf`, and `.obz` files with full round-trip layout and symbol fidelity. | SLPs, Therapists, Parents |
+| **[File Interoperability & Migration](TouchChat-and-Open-Board-Migration)** | Importing `.ce`, `.c4v`, `.wf`, `.obf`, and `.obz` files with full round-trip layout and symbol fidelity. | SLPs, Therapists, Parents |
 | **[Offline Speech & Neural Voices](Speech-and-Offline-Audio)** | The four-tier speech engine, Piper neural ONNX models, audio caching, and pronunciation overrides. | All Users, Caregivers |
 | **[Motor Access & Switch Scanning](Motor-Access-and-Switch-Scanning)** | Touch timing filters (hold/repeat debounce), pointer dwell for eye-gaze, and 1/2-switch scanning. | OTs, Assistive Tech Specialists |
 | **[Grid Editor & Customization](Grid-Editor-and-Customization)** | Visual button editor, ARASAAC symbol search, personal photo uploads, page creation, and Word Finder. | SLPs, Teachers, Parents |

@@ -141,7 +141,7 @@ export function VocabModal() {
         onClick={(e) => e.stopPropagation()}
       >
         <div class="modal-header">
-          <h2>Vocabularies & TouchChat (.ce) Files</h2>
+          <h2>Vocabularies & File Formats</h2>
           <button type="button" class="icon-close" onClick={close} aria-label="Close">
             ×
           </button>
@@ -171,7 +171,7 @@ export function VocabModal() {
               onChange={(e) => void handleFile((e.target as HTMLInputElement).files?.[0])}
             />
             <div class="drop-title">
-              <strong>Import TouchChat (.ce, .wf, .c4v)</strong>, Open Board (.obf, .obz), or
+              <strong>Import compatible archive (.ce, .wf, .c4v)</strong>, Open Board (.obf, .obz), or
               BridgeAAC (.bridge)
             </div>
             <div class="drop-sub">
@@ -288,7 +288,7 @@ export function VocabModal() {
                         type="button"
                         class="sm-btn"
                         onClick={() => void handleExport(item.id, 'ce')}
-                        title="Export as TouchChat .ce file"
+                        title="Export as compatible .ce file"
                       >
                         Export .ce
                       </button>

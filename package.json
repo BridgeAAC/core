@@ -7,7 +7,7 @@
   "main": "electron/main.cjs",
   "author": "BridgeAAC <support@bridgeaac.org>",
   "license": "MIT",
-  "description": "Free, open-source, offline AAC communication app compatible with TouchChat .ce and Open Board Format files.",
+  "description": "Free, open-source, offline AAC communication app with client-side file interoperability for .ce and Open Board Format (.obf/.obz) files.",
   "scripts": {
     "postinstall": "node scripts/patch-deps.mjs",
     "dev": "vite",

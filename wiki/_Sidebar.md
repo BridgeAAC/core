@@ -8,7 +8,7 @@
 - [Troubleshooting & FAQ](Troubleshooting-and-FAQ)
 
 #### Core Features
-- [TouchChat & Open Board Migration](TouchChat-and-Open-Board-Migration)
+- [File Interoperability & Migration](TouchChat-and-Open-Board-Migration)
 - [Offline Speech & Neural Voices](Speech-and-Offline-Audio)
 - [Motor Access & Switch Scanning](Motor-Access-and-Switch-Scanning)
 - [Grid Editor & Customization](Grid-Editor-and-Customization)

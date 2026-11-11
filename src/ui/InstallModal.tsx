@@ -184,7 +184,7 @@ export function InstallModal() {
                     panel.value = 'vocabs';
                   }}
                 >
-                  Import TouchChat (.ce)
+                  Import Archive (.ce)
                 </button>
               </div>
             </div>
