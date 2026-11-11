@@ -119,7 +119,13 @@ export function PageSetModal({ isOnboarding = false }: PageSetModalProps) {
                 key={p.size}
                 type="button"
                 class={`pageset-card ${isSelected ? 'selected' : ''} ${isFeatured ? 'featured' : ''}`}
-                onClick={() => setSelectedSize(p.size)}
+                onClick={() => {
+                  if (isSelected) {
+                    void handleNext();
+                  } else {
+                    setSelectedSize(p.size);
+                  }
+                }}
                 aria-pressed={isSelected}
               >
                 <div class="pageset-card-main">
@@ -145,11 +151,11 @@ export function PageSetModal({ isOnboarding = false }: PageSetModalProps) {
           </button>
           <button
             type="button"
-            class="pageset-btn pageset-btn-next"
+            class="pageset-btn pageset-btn-next pageset-btn-continue"
             onClick={() => void handleNext()}
             disabled={installing}
           >
-            {installing ? 'Loading...' : 'Next'}
+            {installing ? 'Loading...' : 'Continue'}
           </button>
         </div>
       </div>
