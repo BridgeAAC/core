@@ -79,18 +79,18 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
     <header class="topbar">
       <div class="nav-row" role="toolbar" aria-label="Navigation">
         <div class="nav-group">
-          <button type="button" class="nav-btn" onClick={() => goHome()} title={t.home}>
-            <Icon name="home" />
+          <button type="button" class="nav-btn home-btn" onClick={() => goHome()} title={t.home}>
+            <Icon name="home" size={20} />
             <span class="nav-label">{t.home}</span>
           </button>
           <button
             type="button"
-            class="nav-btn"
+            class={`nav-btn back-btn ${canGoBack.value ? 'can-go-back' : ''}`}
             onClick={() => goBack()}
             disabled={!canGoBack.value}
             title={t.back}
           >
-            <Icon name="back" />
+            <Icon name="back" size={20} />
             <span class="nav-label">{t.back}</span>
           </button>
           <button
@@ -100,7 +100,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             title="Jump to a page or find where a word lives"
             aria-label={`Page: ${pg?.name ?? 'none'}. Open pages and word finder`}
           >
-            <Icon name="search" size={18} />
+            <Icon name="search" size={20} />
             <span class="page-pill-name">{pg?.name ?? t.pages}</span>
             <span class="page-pill-find nav-label">{t.findWord}</span>
           </button>
@@ -112,7 +112,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
               title="A word-ending modifier is active. Tap to turn it off."
             >
               Word form {form.value}
-              <Icon name="clear" size={16} />
+              <Icon name="clear" size={18} />
             </button>
           )}
         </div>
@@ -124,7 +124,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             onClick={onQuickImport}
             title="Switch, import, or export vocabularies"
           >
-            <Icon name="books" />
+            <Icon name="books" size={20} />
             <span class="nav-label vocab-name">{v?.name ?? t.vocabularies}</span>
           </button>
           <button
@@ -133,7 +133,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             onClick={() => (keyboardOpen.value = true)}
             title="Type with the keyboard"
           >
-            <Icon name="keyboard" />
+            <Icon name="keyboard" size={20} />
             <span class="nav-label">{t.keyboard}</span>
           </button>
           <button
@@ -142,7 +142,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             onClick={() => (panel.value = 'messages')}
             title="Soundboard, saved phrases, and recent messages"
           >
-            <Icon name="chat" />
+            <Icon name="chat" size={20} />
             <span class="nav-label">{t.phrases}</span>
           </button>
           <button
@@ -152,7 +152,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             title="Daily Planner, Mood Tracker, Games, About Me & Caregiver Notes"
             aria-label="Daily Planner, Mood Tracker, Games, About Me, and Caregiver Notes"
           >
-            <Icon name="star" />
+            <Icon name="star" size={20} />
             <span class="nav-label">{t.tools || 'Tools'}</span>
           </button>
           <button
@@ -161,7 +161,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             onClick={() => (isEdit ? exitEditMode() : enterEditMode())}
             title={isEdit ? 'Finish editing' : 'Edit buttons and pages'}
           >
-            <Icon name={isEdit ? 'check' : 'pencil'} />
+            <Icon name={isEdit ? 'check' : 'pencil'} size={20} />
             <span class="nav-label">{isEdit ? t.done : t.edit}</span>
           </button>
           {!standalone && (
@@ -171,7 +171,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
               onClick={() => (panel.value = 'help')}
               title="Install the app and set up offline voices"
             >
-              <Icon name="download" />
+              <Icon name="download" size={20} />
               <span class="nav-label">{t.install}</span>
             </button>
           )}
@@ -181,7 +181,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             onClick={() => requireUnlock(() => (panel.value = 'settings'))}
             title="Settings"
           >
-            <Icon name="gear" />
+            <Icon name="gear" size={20} />
             <span class="nav-label">{t.settings}</span>
           </button>
         </div>
@@ -261,7 +261,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             disabled={!isSpeaking && !msg.trim()}
             aria-label={isSpeaking ? 'Stop speaking' : 'Speak message'}
           >
-            <Icon name={isSpeaking ? 'stop' : 'speak'} size={24} />
+            <Icon name={isSpeaking ? 'stop' : 'speak'} size={28} />
             <span class="msg-btn-label">{isSpeaking ? t.stop : t.speak}</span>
           </button>
           <button
@@ -271,7 +271,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             disabled={!msg}
             aria-label="Delete last word"
           >
-            <Icon name="delWord" />
+            <Icon name="delWord" size={20} />
             <span class="msg-btn-label">{t.word}</span>
           </button>
           <button
@@ -281,7 +281,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             disabled={!msg}
             aria-label="Delete last letter"
           >
-            <Icon name="backspace" />
+            <Icon name="backspace" size={20} />
             <span class="msg-btn-label">{t.letter}</span>
           </button>
           <button
@@ -291,7 +291,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             disabled={!msg && form.value === FORM_DEFAULT}
             aria-label="Clear message"
           >
-            <Icon name="clear" />
+            <Icon name="clear" size={20} />
             <span class="msg-btn-label">{t.clear}</span>
           </button>
           <button
@@ -301,7 +301,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             disabled={!msg.trim()}
             aria-label="Save message to phrases"
           >
-            <Icon name="star" />
+            <Icon name="star" size={20} />
             <span class="msg-btn-label">{t.save}</span>
           </button>
         </div>

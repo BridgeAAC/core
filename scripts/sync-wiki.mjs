@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 
 const wikiSource = path.resolve('wiki');
 const targetArg = process.argv[2] || process.env.WIKI_DIR;
@@ -11,14 +11,14 @@ let targetDir = targetArg ? path.resolve(targetArg) : path.resolve('.wiki_repo')
 if (!fs.existsSync(targetDir)) {
   console.log(`Cloning ${wikiGitUrl} into ${targetDir}...`);
   try {
-    execSync(`git clone ${wikiGitUrl} "${targetDir}"`, { stdio: 'inherit' });
+    execFileSync('git', ['clone', wikiGitUrl, targetDir], { stdio: 'inherit' });
   } catch (err) {
     console.error(`Could not clone ${wikiGitUrl}. Make sure the wiki is enabled on GitHub.`);
     process.exit(1);
   }
 } else {
   try {
-    execSync('git pull --rebase', { cwd: targetDir, stdio: 'inherit' });
+    execFileSync('git', ['pull', '--rebase'], { cwd: targetDir, stdio: 'inherit' });
   } catch {}
 }
 
@@ -48,14 +48,18 @@ copyRecursive(wikiSource, targetDir);
 console.log(`Copied wiki files from ${wikiSource} to ${targetDir}`);
 
 try {
-  execSync('git add -A', { cwd: targetDir, stdio: 'inherit' });
-  const status = execSync('git status --porcelain', { cwd: targetDir }).toString().trim();
+  execFileSync('git', ['add', '-A'], { cwd: targetDir, stdio: 'inherit' });
+  const status = execFileSync('git', ['status', '--porcelain'], { cwd: targetDir }).toString().trim();
   if (!status) {
     console.log('Wiki repository is already up to date. Nothing to commit.');
   } else {
-    execSync('git commit -m "Update BridgeAAC documentation wiki"', { cwd: targetDir, stdio: 'inherit' });
+    execFileSync('git', ['commit', '-m', 'Update BridgeAAC documentation wiki'], { cwd: targetDir, stdio: 'inherit' });
     console.log('Pushing to GitHub Wiki...');
-    execSync('git push origin master || git push origin main', { cwd: targetDir, stdio: 'inherit' });
+    try {
+      execFileSync('git', ['push', 'origin', 'master'], { cwd: targetDir, stdio: 'inherit' });
+    } catch {
+      execFileSync('git', ['push', 'origin', 'main'], { cwd: targetDir, stdio: 'inherit' });
+    }
     console.log('Successfully updated GitHub Wiki!');
   }
 } catch (err) {

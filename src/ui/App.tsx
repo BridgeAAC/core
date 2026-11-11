@@ -31,6 +31,7 @@ import { MessagesModal } from './MessagesModal';
 import { KeyboardModal } from './KeyboardModal';
 import { InstallModal } from './InstallModal';
 import { ToolsModal } from './ToolsModal';
+import { PageSetModal } from './PageSetModal';
 
 function PinModal() {
   const req = pinRequest.value;
@@ -305,6 +306,9 @@ export function App() {
       {panel.value === 'messages' && <MessagesModal />}
       {panel.value === 'tools' && <ToolsModal />}
       {panel.value === 'help' && <InstallModal />}
+      {(!s.onboarded || panel.value === 'pageset') && (
+        <PageSetModal isOnboarding={!s.onboarded} />
+      )}
       <KeyboardModal />
       {editTarget.value && <ButtonEditorModal />}
       <PinModal />

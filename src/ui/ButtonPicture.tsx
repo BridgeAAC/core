@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { ImageRef } from '../model';
-import { assetsVersion, loadAssetUrl, resolveImageSync } from '../store/assets';
-import { getSvgPictogram } from '../data/icons';
+import {
+  assetsVersion,
+  loadArasaacUrl,
+  loadAssetUrl,
+  resolveImageSync,
+} from '../store/assets';
+import { getSvgPictogram, resolveIconForButton } from '../data/icons';
 
 function renderBadgeSvg(spec: string) {
   const firstColon = spec.indexOf(':');
@@ -54,15 +59,24 @@ export function ButtonPicture({ image, alt = '' }: { image?: ImageRef; alt?: str
 
   useEffect(() => {
     setImgError(false);
-    if (!image || !image.startsWith('img:')) {
+    if (!image) {
       setAsyncUrl(undefined);
       return;
     }
     let cancelled = false;
-    const assetId = image.slice(4);
-    void loadAssetUrl(assetId).then((url) => {
-      if (!cancelled) setAsyncUrl(url);
-    });
+    if (image.startsWith('img:')) {
+      const assetId = image.slice(4);
+      void loadAssetUrl(assetId).then((url) => {
+        if (!cancelled) setAsyncUrl(url);
+      });
+    } else if (image.startsWith('arasaac:')) {
+      const id = image.slice(8);
+      void loadArasaacUrl(id).then((url) => {
+        if (!cancelled && url) setAsyncUrl(url);
+      });
+    } else {
+      setAsyncUrl(undefined);
+    }
     return () => {
       cancelled = true;
     };
@@ -103,8 +117,22 @@ export function ButtonPicture({ image, alt = '' }: { image?: ImageRef; alt?: str
     );
   }
 
-  const src = sync === 'loading' ? asyncUrl : sync.url;
+  const src = sync === 'loading' ? asyncUrl : asyncUrl || sync.url;
   if (!src || imgError) {
+    const fallbackRef = alt ? resolveIconForButton(alt) : undefined;
+    if (fallbackRef?.startsWith('svg:')) {
+      const svgMarkup = getSvgPictogram(fallbackRef.slice(4));
+      if (svgMarkup) {
+        return (
+          <span
+            class="btn-svg-wrap"
+            role="img"
+            aria-label={alt}
+            dangerouslySetInnerHTML={{ __html: svgMarkup }}
+          />
+        );
+      }
+    }
     return alt ? (
       <span class="btn-svg-wrap" role="img" aria-label={alt}>
         {renderBadgeSvg(`word:${alt.slice(0, 2).toUpperCase()}`)}

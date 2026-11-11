@@ -81,14 +81,17 @@ function startLocalServer(distDir) {
         }
       }
 
-      const cleanPath = decodeURIComponent(urlStr.split('?')[0]);
-      let filePath = path.join(distDir, cleanPath === '/' ? 'index.html' : cleanPath);
-      if (
-        !filePath.startsWith(distDir) ||
-        !fs.existsSync(filePath) ||
-        fs.statSync(filePath).isDirectory()
-      ) {
-        filePath = path.join(distDir, 'index.html');
+      const rawPath = urlStr.split('?')[0];
+      const safeRelative = path.posix.normalize(rawPath).replace(/^(\.\.[\/\\])+/, '');
+      const candidate = path.resolve(distDir, '.' + path.sep + safeRelative);
+      const rel = path.relative(distDir, candidate);
+      let filePath = path.join(distDir, 'index.html');
+      if (rel && !rel.startsWith('..') && !path.isAbsolute(rel) && candidate.startsWith(distDir + path.sep)) {
+        try {
+          if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+            filePath = candidate;
+          }
+        } catch {}
       }
       const ext = path.extname(filePath).toLowerCase();
       res.writeHead(200, {

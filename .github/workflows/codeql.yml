@@ -47,12 +47,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Build Web Bundle
+        run: |
+          mkdir -p Sources/BridgeAAC/Resources/WebBundle
+          npm ci
+          npm run ios:sync
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: swift
-          build-mode: autobuild
+          build-mode: manual
           queries: security-extended,security-and-quality
+
+      - name: Build Swift Package
+        run: |
+          swift build
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3

@@ -23,10 +23,17 @@ const MIME = {
 function startServer() {
   return new Promise((resolve) => {
     const srv = http.createServer((req, res) => {
-      const clean = decodeURIComponent((req.url || '/').split('?')[0]);
-      let fp = path.join(distDir, clean === '/' ? 'index.html' : clean);
-      if (!fp.startsWith(distDir) || !fs.existsSync(fp) || fs.statSync(fp).isDirectory()) {
-        fp = path.join(distDir, 'index.html');
+      const rawPath = (req.url || '/').split('?')[0];
+      const safeRelative = path.posix.normalize(rawPath).replace(/^(\.\.[\/\\])+/, '');
+      const candidate = path.resolve(distDir, '.' + path.sep + safeRelative);
+      const rel = path.relative(distDir, candidate);
+      let fp = path.join(distDir, 'index.html');
+      if (rel && !rel.startsWith('..') && !path.isAbsolute(rel) && candidate.startsWith(distDir + path.sep)) {
+        try {
+          if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+            fp = candidate;
+          }
+        } catch {}
       }
       const ext = path.extname(fp).toLowerCase();
       res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });

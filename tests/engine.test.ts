@@ -24,11 +24,12 @@ import {
   removeNeuralVoice,
   type VoiceInfo,
 } from '../src/engine/speech';
-import { createStarterVocabulary } from '../src/data/starter';
+import { createStarterVocabulary, PAGE_SETS } from '../src/data/starter';
 import { resolveIconForButton } from '../src/data/icons';
 import { SUPPORTED_LANGUAGES } from '../src/i18n';
 import { firstFreeCell, newButton, occupancy, saveButton, searchButtons } from '../src/edit';
 import { vocab as vocabSignal } from '../src/state';
+import { arasaacUrl, collectArasaacIds } from '../src/store/assets';
 
 describe('message engine', () => {
   it('inserts text with automatic spacing and capitalization', () => {
@@ -503,5 +504,30 @@ describe('starter vocabulary & edit operations', () => {
     expect(resolveIconForButton('agua')).toBe(resolveIconForButton('water'));
     expect(resolveIconForButton('ماء')).toBe(resolveIconForButton('water'));
     expect(resolveIconForButton('水')).toBe(resolveIconForButton('water'));
+  });
+
+  it('generates core page sets including BridgeWords and strict ARASAAC', () => {
+    expect(PAGE_SETS.length).toBe(5);
+    for (const info of PAGE_SETS) {
+      const { vocab } = createStarterVocabulary('en', info.size);
+      expect(vocab.name).toBe(info.name);
+      expect(vocab.description).toBe(info.description);
+      const home = vocab.pages.find((p) => p.id === 'home');
+      expect(home).toBeDefined();
+      expect(home!.rows).toBe(info.rows);
+      expect(home!.cols).toBe(info.cols);
+      expect(home!.buttons.length).toBe(info.size);
+    }
+
+    const { vocab: arasaacVocab } = createStarterVocabulary('en', 50);
+    const arasaacHome = arasaacVocab.pages.find((p) => p.id === 'home')!;
+    const arasaacButtons = arasaacHome.buttons.filter((b) => b.image?.startsWith('arasaac:'));
+    expect(arasaacButtons.length).toBe(50);
+
+    const collectedIds = collectArasaacIds(arasaacVocab);
+    expect(collectedIds.length).toBe(49);
+    expect(collectedIds).toContain('2495');
+    expect(arasaacUrl(2495)).toBe('https://static.arasaac.org/pictograms/2495/2495_300.png');
+    expect(arasaacUrl('2495', 500)).toBe('https://static.arasaac.org/pictograms/2495/2495_500.png');
   });
 });

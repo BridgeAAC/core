@@ -2,48 +2,43 @@ import fs from 'node:fs';
 
 try {
   const espeakPath = 'node_modules/mespeak/src/ESpeak.js';
-  if (fs.existsSync(espeakPath)) {
-    const buf = fs.readFileSync(espeakPath);
-    try {
-      new TextDecoder('utf-8', { fatal: true }).decode(buf);
-    } catch {
-      fs.writeFileSync(espeakPath, buf.toString('latin1'), 'utf8');
-    }
+  const buf = fs.readFileSync(espeakPath);
+  try {
+    new TextDecoder('utf-8', { fatal: true }).decode(buf);
+  } catch {
+    fs.writeFileSync(espeakPath, buf.toString('latin1'), 'utf8');
   }
 } catch {}
 
 try {
   const ortPath = 'node_modules/onnxruntime-web/dist/esm/ort.min.js';
-  if (fs.existsSync(ortPath)) {
-    let ortCode = fs.readFileSync(ortPath, 'utf8');
-    let changed = false;
-    const failCheck = 'if(Np)throw new Error("previous call to \'initializeWebAssembly()\' failed.");';
-    if (ortCode.includes(failCheck)) {
-      ortCode = ortCode.replace(failCheck, 'if(Np){Np=!1;}');
-      changed = true;
-    }
-    const callSite = 'w(v).then(S=>{So=!1,ia=!0,oa=S,d()}';
-    const wasmHook = 'if(a.wasmBinary){v.wasmBinary=a.wasmBinary;v.instantiateWasm=(imp,cb)=>{WebAssembly.instantiate(a.wasmBinary,imp).then(res=>cb(res.instance||res,res.module)).catch(T);return{}}}w(v).then(S=>{So=!1,ia=!0,oa=S,d()}';
-    if (ortCode.includes(callSite) && !ortCode.includes('v.instantiateWasm=(imp,cb)=>')) {
-      ortCode = ortCode.replace(callSite, wasmHook);
-      changed = true;
-    }
-    const directEval = 'var mod=eval("quire".replace(/^/,"re"))(moduleName);';
-    const indirectEval = 'var mod=(0,eval)("quire".replace(/^/,"re"))(moduleName);';
-    if (ortCode.includes(directEval)) {
-      ortCode = ortCode.replace(directEval, indirectEval);
-      changed = true;
-    }
-    if (changed) {
-      fs.writeFileSync(ortPath, ortCode, 'utf8');
-    }
+  let ortCode = fs.readFileSync(ortPath, 'utf8');
+  let changed = false;
+  const failCheck = 'if(Np)throw new Error("previous call to \'initializeWebAssembly()\' failed.");';
+  if (ortCode.includes(failCheck)) {
+    ortCode = ortCode.replace(failCheck, 'if(Np){Np=!1;}');
+    changed = true;
+  }
+  const callSite = 'w(v).then(S=>{So=!1,ia=!0,oa=S,d()}';
+  const wasmHook = 'if(a.wasmBinary){v.wasmBinary=a.wasmBinary;v.instantiateWasm=(imp,cb)=>{WebAssembly.instantiate(a.wasmBinary,imp).then(res=>cb(res.instance||res,res.module)).catch(T);return{}}}w(v).then(S=>{So=!1,ia=!0,oa=S,d()}';
+  if (ortCode.includes(callSite) && !ortCode.includes('v.instantiateWasm=(imp,cb)=>')) {
+    ortCode = ortCode.replace(callSite, wasmHook);
+    changed = true;
+  }
+  const directEval = 'var mod=eval("quire".replace(/^/,"re"))(moduleName);';
+  const indirectEval = 'var mod=(0,eval)("quire".replace(/^/,"re"))(moduleName);';
+  if (ortCode.includes(directEval)) {
+    ortCode = ortCode.replace(directEval, indirectEval);
+    changed = true;
+  }
+  if (changed) {
+    fs.writeFileSync(ortPath, ortCode, 'utf8');
   }
 } catch {}
 
 try {
   const vitsPath = 'node_modules/@diffusionstudio/vits-web/dist/vits-web.js';
-  if (fs.existsSync(vitsPath)) {
-    const code = fs.readFileSync(vitsPath, 'utf8');
+  const code = fs.readFileSync(vitsPath, 'utf8');
     const idbMarker = code.indexOf('const IDB_NAME = "bridgeaac_piper_files";');
     const fnMarker = code.indexOf('async function p(e, m)');
     const markerIndex = idbMarker !== -1 ? idbMarker : fnMarker;
@@ -676,5 +671,4 @@ export {
 `;
       fs.writeFileSync(vitsPath, prefix + replacement, 'utf8');
     }
-  }
 } catch {}

@@ -19,7 +19,7 @@ import {
   summarize,
   type VocabSummary,
 } from './store/db';
-import { playAsset, stopAudio } from './store/assets';
+import { playAsset, preloadArasaacForVocabulary, stopAudio } from './store/assets';
 import { backspace, deleteWord, insertText } from './engine/message';
 import {
   isSpeaking,
@@ -29,7 +29,7 @@ import {
   warmupOfflineVoice,
 } from './engine/speech';
 import { Predictor, type PredictorData } from './engine/predict';
-import { createStarterVocabulary } from './data/starter';
+import { createStarterVocabulary, type PageSetSize } from './data/starter';
 import { ensureButtonImage } from './data/icons';
 import { putAssets } from './store/db';
 
@@ -42,7 +42,8 @@ export type Panel =
   | 'messages'
   | 'tools'
   | 'help'
-  | 'pageSettings';
+  | 'pageSettings'
+  | 'pageset';
 
 export const vocabList = signal<VocabSummary[]>([]);
 export const vocab = signal<Vocabulary | null>(null);
@@ -181,6 +182,7 @@ export async function openVocab(id: ID): Promise<void> {
     }
   }
   predictor.observeVocabulary(labels);
+  void preloadArasaacForVocabulary(v);
 }
 
 let saveTimer: ReturnType<typeof setTimeout> | undefined;
@@ -602,11 +604,12 @@ export function exitEditMode(): void {
   void flushSave();
 }
 
-export async function installStarter(locale = 'en'): Promise<ID> {
-  const { vocab: starter, assets } = createStarterVocabulary(locale);
-  starter.id = 'starter-' + locale + '-' + Math.random().toString(36).slice(2, 9);
+export async function installStarter(locale = 'en', size: PageSetSize = 60): Promise<ID> {
+  const { vocab: starter, assets } = createStarterVocabulary(locale, size);
+  starter.id = `starter-${size}-${locale}-${Math.random().toString(36).slice(2, 9)}`;
   await putAssets(assets.map((a) => ({ ...a, vocabId: starter.id })));
   await saveVocab(starter);
   await refreshVocabList();
+  void preloadArasaacForVocabulary(starter);
   return starter.id;
 }
