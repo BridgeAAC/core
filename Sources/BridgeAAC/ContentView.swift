@@ -30,19 +30,265 @@ final class BridgeBundleSchemeHandler: NSObject, WKURLSchemeHandler {
         return 16
     }
 
-    static func sanitizeFileName(_ name: String) -> String? {
+    static let allowedPiperFiles: [String] = [
+        "__list__.json",
+        "ar_JO-kareem-low.onnx",
+        "ar_JO-kareem-low.onnx.json",
+        "ar_JO-kareem-medium.onnx",
+        "ar_JO-kareem-medium.onnx.json",
+        "ca_ES-upc_ona-medium.onnx",
+        "ca_ES-upc_ona-medium.onnx.json",
+        "ca_ES-upc_ona-x_low.onnx",
+        "ca_ES-upc_ona-x_low.onnx.json",
+        "ca_ES-upc_pau-x_low.onnx",
+        "ca_ES-upc_pau-x_low.onnx.json",
+        "cs_CZ-jirka-low.onnx",
+        "cs_CZ-jirka-low.onnx.json",
+        "cs_CZ-jirka-medium.onnx",
+        "cs_CZ-jirka-medium.onnx.json",
+        "da_DK-talesyntese-medium.onnx",
+        "da_DK-talesyntese-medium.onnx.json",
+        "de_DE-eva_k-x_low.onnx",
+        "de_DE-eva_k-x_low.onnx.json",
+        "de_DE-karlsson-low.onnx",
+        "de_DE-karlsson-low.onnx.json",
+        "de_DE-kerstin-low.onnx",
+        "de_DE-kerstin-low.onnx.json",
+        "de_DE-mls-medium.onnx",
+        "de_DE-mls-medium.onnx.json",
+        "de_DE-pavoque-low.onnx",
+        "de_DE-pavoque-low.onnx.json",
+        "de_DE-ramona-low.onnx",
+        "de_DE-ramona-low.onnx.json",
+        "de_DE-thorsten-high.onnx",
+        "de_DE-thorsten-high.onnx.json",
+        "de_DE-thorsten-low.onnx",
+        "de_DE-thorsten-low.onnx.json",
+        "de_DE-thorsten-medium.onnx",
+        "de_DE-thorsten-medium.onnx.json",
+        "de_DE-thorsten_emotional-medium.onnx",
+        "de_DE-thorsten_emotional-medium.onnx.json",
+        "el_GR-rapunzelina-low.onnx",
+        "el_GR-rapunzelina-low.onnx.json",
+        "en_GB-alan-low.onnx",
+        "en_GB-alan-low.onnx.json",
+        "en_GB-alan-medium.onnx",
+        "en_GB-alan-medium.onnx.json",
+        "en_GB-alba-medium.onnx",
+        "en_GB-alba-medium.onnx.json",
+        "en_GB-aru-medium.onnx",
+        "en_GB-aru-medium.onnx.json",
+        "en_GB-cori-high.onnx",
+        "en_GB-cori-high.onnx.json",
+        "en_GB-cori-medium.onnx",
+        "en_GB-cori-medium.onnx.json",
+        "en_GB-jenny_dioco-medium.onnx",
+        "en_GB-jenny_dioco-medium.onnx.json",
+        "en_GB-northern_english_male-medium.onnx",
+        "en_GB-northern_english_male-medium.onnx.json",
+        "en_GB-semaine-medium.onnx",
+        "en_GB-semaine-medium.onnx.json",
+        "en_GB-southern_english_female-low.onnx",
+        "en_GB-southern_english_female-low.onnx.json",
+        "en_GB-vctk-medium.onnx",
+        "en_GB-vctk-medium.onnx.json",
+        "en_US-amy-low.onnx",
+        "en_US-amy-low.onnx.json",
+        "en_US-amy-medium.onnx",
+        "en_US-amy-medium.onnx.json",
+        "en_US-arctic-medium.onnx",
+        "en_US-arctic-medium.onnx.json",
+        "en_US-danny-low.onnx",
+        "en_US-danny-low.onnx.json",
+        "en_US-hfc_female-medium.onnx",
+        "en_US-hfc_female-medium.onnx.json",
+        "en_US-hfc_male-medium.onnx",
+        "en_US-hfc_male-medium.onnx.json",
+        "en_US-joe-medium.onnx",
+        "en_US-joe-medium.onnx.json",
+        "en_US-kathleen-low.onnx",
+        "en_US-kathleen-low.onnx.json",
+        "en_US-kristin-medium.onnx",
+        "en_US-kristin-medium.onnx.json",
+        "en_US-kusal-medium.onnx",
+        "en_US-kusal-medium.onnx.json",
+        "en_US-l2arctic-medium.onnx",
+        "en_US-l2arctic-medium.onnx.json",
+        "en_US-lessac-high.onnx",
+        "en_US-lessac-high.onnx.json",
+        "en_US-lessac-low.onnx",
+        "en_US-lessac-low.onnx.json",
+        "en_US-lessac-medium.onnx",
+        "en_US-lessac-medium.onnx.json",
+        "en_US-libritts-high.onnx",
+        "en_US-libritts-high.onnx.json",
+        "en_US-libritts_r-medium.onnx",
+        "en_US-libritts_r-medium.onnx.json",
+        "en_US-ljspeech-high.onnx",
+        "en_US-ljspeech-high.onnx.json",
+        "en_US-ljspeech-medium.onnx",
+        "en_US-ljspeech-medium.onnx.json",
+        "en_US-ryan-high.onnx",
+        "en_US-ryan-high.onnx.json",
+        "en_US-ryan-low.onnx",
+        "en_US-ryan-low.onnx.json",
+        "en_US-ryan-medium.onnx",
+        "en_US-ryan-medium.onnx.json",
+        "es_ES-carlfm-x_low.onnx",
+        "es_ES-carlfm-x_low.onnx.json",
+        "es_ES-davefx-medium.onnx",
+        "es_ES-davefx-medium.onnx.json",
+        "es_ES-mls_10246-low.onnx",
+        "es_ES-mls_10246-low.onnx.json",
+        "es_ES-mls_9972-low.onnx",
+        "es_ES-mls_9972-low.onnx.json",
+        "es_ES-sharvard-medium.onnx",
+        "es_ES-sharvard-medium.onnx.json",
+        "es_MX-ald-medium.onnx",
+        "es_MX-ald-medium.onnx.json",
+        "es_MX-claude-high.onnx",
+        "es_MX-claude-high.onnx.json",
+        "fa_IR-amir-medium.onnx",
+        "fa_IR-amir-medium.onnx.json",
+        "fa_IR-gyro-medium.onnx",
+        "fa_IR-gyro-medium.onnx.json",
+        "fi_FI-harri-low.onnx",
+        "fi_FI-harri-low.onnx.json",
+        "fi_FI-harri-medium.onnx",
+        "fi_FI-harri-medium.onnx.json",
+        "fr_FR-gilles-low.onnx",
+        "fr_FR-gilles-low.onnx.json",
+        "fr_FR-mls-medium.onnx",
+        "fr_FR-mls-medium.onnx.json",
+        "fr_FR-mls_1840-low.onnx",
+        "fr_FR-mls_1840-low.onnx.json",
+        "fr_FR-siwis-low.onnx",
+        "fr_FR-siwis-low.onnx.json",
+        "fr_FR-siwis-medium.onnx",
+        "fr_FR-siwis-medium.onnx.json",
+        "fr_FR-tom-medium.onnx",
+        "fr_FR-tom-medium.onnx.json",
+        "fr_FR-upmc-medium.onnx",
+        "fr_FR-upmc-medium.onnx.json",
+        "hu_HU-anna-medium.onnx",
+        "hu_HU-anna-medium.onnx.json",
+        "hu_HU-berta-medium.onnx",
+        "hu_HU-berta-medium.onnx.json",
+        "hu_HU-imre-medium.onnx",
+        "hu_HU-imre-medium.onnx.json",
+        "is_IS-bui-medium.onnx",
+        "is_IS-bui-medium.onnx.json",
+        "is_IS-salka-medium.onnx",
+        "is_IS-salka-medium.onnx.json",
+        "is_IS-steinn-medium.onnx",
+        "is_IS-steinn-medium.onnx.json",
+        "is_IS-ugla-medium.onnx",
+        "is_IS-ugla-medium.onnx.json",
+        "it_IT-riccardo-x_low.onnx",
+        "it_IT-riccardo-x_low.onnx.json",
+        "ka_GE-natia-medium.onnx",
+        "ka_GE-natia-medium.onnx.json",
+        "kk_KZ-iseke-x_low.onnx",
+        "kk_KZ-iseke-x_low.onnx.json",
+        "kk_KZ-issai-high.onnx",
+        "kk_KZ-issai-high.onnx.json",
+        "kk_KZ-raya-x_low.onnx",
+        "kk_KZ-raya-x_low.onnx.json",
+        "lb_LU-marylux-medium.onnx",
+        "lb_LU-marylux-medium.onnx.json",
+        "ne_NP-google-medium.onnx",
+        "ne_NP-google-medium.onnx.json",
+        "ne_NP-google-x_low.onnx",
+        "ne_NP-google-x_low.onnx.json",
+        "nl_BE-nathalie-medium.onnx",
+        "nl_BE-nathalie-medium.onnx.json",
+        "nl_BE-nathalie-x_low.onnx",
+        "nl_BE-nathalie-x_low.onnx.json",
+        "nl_BE-rdh-medium.onnx",
+        "nl_BE-rdh-medium.onnx.json",
+        "nl_BE-rdh-x_low.onnx",
+        "nl_BE-rdh-x_low.onnx.json",
+        "nl_NL-mls-medium.onnx",
+        "nl_NL-mls-medium.onnx.json",
+        "nl_NL-mls_5809-low.onnx",
+        "nl_NL-mls_5809-low.onnx.json",
+        "nl_NL-mls_7432-low.onnx",
+        "nl_NL-mls_7432-low.onnx.json",
+        "no_NO-talesyntese-medium.onnx",
+        "no_NO-talesyntese-medium.onnx.json",
+        "ort-wasm-simd-threaded.wasm",
+        "ort-wasm-simd.wasm",
+        "ort-wasm-threaded.wasm",
+        "ort-wasm.wasm",
+        "piper_phonemize.data",
+        "piper_phonemize.wasm",
+        "pl_PL-darkman-medium.onnx",
+        "pl_PL-darkman-medium.onnx.json",
+        "pl_PL-gosia-medium.onnx",
+        "pl_PL-gosia-medium.onnx.json",
+        "pl_PL-mc_speech-medium.onnx",
+        "pl_PL-mc_speech-medium.onnx.json",
+        "pl_PL-mls_6892-low.onnx",
+        "pl_PL-mls_6892-low.onnx.json",
+        "pt_BR-edresson-low.onnx",
+        "pt_BR-edresson-low.onnx.json",
+        "pt_BR-faber-medium.onnx",
+        "pt_BR-faber-medium.onnx.json",
+        "pt_PT-tugão-medium.onnx",
+        "pt_PT-tugão-medium.onnx.json",
+        "ro_RO-mihai-medium.onnx",
+        "ro_RO-mihai-medium.onnx.json",
+        "ru_RU-denis-medium.onnx",
+        "ru_RU-denis-medium.onnx.json",
+        "ru_RU-dmitri-medium.onnx",
+        "ru_RU-dmitri-medium.onnx.json",
+        "ru_RU-irina-medium.onnx",
+        "ru_RU-irina-medium.onnx.json",
+        "ru_RU-ruslan-medium.onnx",
+        "ru_RU-ruslan-medium.onnx.json",
+        "sk_SK-lili-medium.onnx",
+        "sk_SK-lili-medium.onnx.json",
+        "sl_SI-artur-medium.onnx",
+        "sl_SI-artur-medium.onnx.json",
+        "sr_RS-serbski_institut-medium.onnx",
+        "sr_RS-serbski_institut-medium.onnx.json",
+        "sv_SE-nst-medium.onnx",
+        "sv_SE-nst-medium.onnx.json",
+        "sw_CD-lanfrica-medium.onnx",
+        "sw_CD-lanfrica-medium.onnx.json",
+        "tr_TR-dfki-medium.onnx",
+        "tr_TR-dfki-medium.onnx.json",
+        "tr_TR-fahrettin-medium.onnx",
+        "tr_TR-fahrettin-medium.onnx.json",
+        "tr_TR-fettah-medium.onnx",
+        "tr_TR-fettah-medium.onnx.json",
+        "uk_UA-lada-x_low.onnx",
+        "uk_UA-lada-x_low.onnx.json",
+        "uk_UA-ukrainian_tts-medium.onnx",
+        "uk_UA-ukrainian_tts-medium.onnx.json",
+        "vi_VN-25hours_single-low.onnx",
+        "vi_VN-25hours_single-low.onnx.json",
+        "vi_VN-vais1000-medium.onnx",
+        "vi_VN-vais1000-medium.onnx.json",
+        "vi_VN-vivos-x_low.onnx",
+        "vi_VN-vivos-x_low.onnx.json",
+        "voices.json",
+        "zh_CN-huayan-medium.onnx",
+        "zh_CN-huayan-medium.onnx.json",
+        "zh_CN-huayan-x_low.onnx",
+        "zh_CN-huayan-x_low.onnx.json"
+    ]
+
+    static func safePiperFileName(_ name: String) -> String? {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
-        let base = (trimmed as NSString).lastPathComponent
-        guard !base.isEmpty, base != ".", base != ".." else { return nil }
-        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: ".-_"))
-        guard base.unicodeScalars.allSatisfy({ allowed.contains($0) }) else { return nil }
-        guard !base.contains("..") else { return nil }
-        return base
+        guard !trimmed.contains("/"), !trimmed.contains("\\"), !trimmed.contains("..") else { return nil }
+        guard let matched = allowedPiperFiles.first(where: { $0 == trimmed }) else { return nil }
+        return matched
     }
 
     static func safeFileURL(in directory: URL, filename: String) -> URL? {
-        guard let safeName = sanitizeFileName(filename) else { return nil }
+        guard let safeName = safePiperFileName(filename) else { return nil }
         let dirCanonical = directory.standardizedFileURL
         let targetURL = directory.appendingPathComponent(safeName).standardizedFileURL
         guard targetURL.path.hasPrefix(dirCanonical.path) else { return nil }
@@ -119,7 +365,7 @@ final class BridgeBundleSchemeHandler: NSObject, WKURLSchemeHandler {
     }
 
     private func handlePiperCacheRequest(url: URL, fileName: String, task: WKURLSchemeTask) {
-        guard let safeName = Self.sanitizeFileName(fileName),
+        guard let safeName = Self.safePiperFileName(fileName),
               let cacheDir = Self.piperCacheDirectory() else {
             sendStatus(404, url: url, task: task)
             return
@@ -245,11 +491,11 @@ final class BridgeNativeCoordinator: NSObject, ObservableObject, WKScriptMessage
                 "default": v.language == AVSpeechSynthesisVoice.currentLanguageCode()
             ]
         }
-        guard let data = try? JSONSerialization.data(withJSONObject: voices),
-              let json = String(data: data, encoding: .utf8) else {
-            return "[]"
+        guard let data = try? JSONSerialization.data(withJSONObject: voices) else {
+            return "window.__bridgeSwiftVoices = []; window.bridgeSwift = true;"
         }
-        return "window.__bridgeSwiftVoices = \(json); window.bridgeSwift = true;"
+        let b64 = data.base64EncodedString()
+        return "try { window.__bridgeSwiftVoices = JSON.parse(decodeURIComponent(escape(atob('\(b64)')))); } catch (_) { window.__bridgeSwiftVoices = []; } window.bridgeSwift = true;"
     }
 
     func handleIncomingFile(url: URL) {
@@ -319,21 +565,45 @@ final class BridgeNativeCoordinator: NSObject, ObservableObject, WKScriptMessage
             }
 
         case "downloadPiperFile":
+            guard let rawFilename = body["filename"] as? String,
+                  !rawFilename.contains("/"),
+                  !rawFilename.contains("\\"),
+                  !rawFilename.contains(".."),
+                  let validName = BridgeBundleSchemeHandler.safePiperFileName(rawFilename) else {
+                let reqId = body["reqId"] as? String ?? ""
+                emitPiperDownloadEvent(reqId: reqId, ok: false, size: 0, error: "Invalid filename")
+                return
+            }
             let reqId = body["reqId"] as? String ?? ""
-            let filename = body["filename"] as? String ?? ""
             let urls = body["urls"] as? [String] ?? []
             let minSize = body["minSize"] as? Int ?? 16
-            downloadPiperFileNative(reqId: reqId, filename: filename, urls: urls, minSize: minSize)
+            downloadPiperFileNative(reqId: reqId, filename: validName, urls: urls, minSize: minSize)
 
         case "savePiperFile":
+            guard let rawFilename = body["filename"] as? String,
+                  !rawFilename.contains("/"),
+                  !rawFilename.contains("\\"),
+                  !rawFilename.contains(".."),
+                  let validName = BridgeBundleSchemeHandler.safePiperFileName(rawFilename) else {
+                let reqId = body["reqId"] as? String ?? ""
+                emitPiperDownloadEvent(reqId: reqId, ok: false, size: 0, error: "Invalid filename")
+                return
+            }
             let reqId = body["reqId"] as? String ?? ""
-            let filename = body["filename"] as? String ?? ""
             let base64 = body["base64"] as? String ?? ""
-            savePiperFileNative(reqId: reqId, filename: filename, base64: base64)
+            savePiperFileNative(reqId: reqId, filename: validName, base64: base64)
 
         case "deletePiperFile":
-            let filename = body["filename"] as? String ?? ""
-            deletePiperFileNative(filename: filename)
+            let rawFilename = body["filename"] as? String ?? ""
+            if rawFilename == "__all__" {
+                deletePiperFileNative(filename: "__all__")
+                return
+            }
+            guard !rawFilename.contains("/"),
+                  !rawFilename.contains("\\"),
+                  !rawFilename.contains(".."),
+                  let validName = BridgeBundleSchemeHandler.safePiperFileName(rawFilename) else { return }
+            deletePiperFileNative(filename: validName)
 
         case "haptic":
             #if os(iOS)
@@ -381,7 +651,10 @@ final class BridgeNativeCoordinator: NSObject, ObservableObject, WKScriptMessage
     }
 
     private func downloadPiperFileNative(reqId: String, filename: String, urls: [String], minSize: Int) {
-        guard let cacheDir = BridgeBundleSchemeHandler.piperCacheDirectory(),
+        guard !filename.contains("/"),
+              !filename.contains("\\"),
+              !filename.contains(".."),
+              let cacheDir = BridgeBundleSchemeHandler.piperCacheDirectory(),
               let destURL = BridgeBundleSchemeHandler.safeFileURL(in: cacheDir, filename: filename) else {
             emitPiperDownloadEvent(reqId: reqId, ok: false, size: 0, error: "Invalid cache directory")
             return
@@ -444,7 +717,10 @@ final class BridgeNativeCoordinator: NSObject, ObservableObject, WKScriptMessage
     }
 
     private func savePiperFileNative(reqId: String, filename: String, base64: String) {
-        guard let cacheDir = BridgeBundleSchemeHandler.piperCacheDirectory(),
+        guard !filename.contains("/"),
+              !filename.contains("\\"),
+              !filename.contains(".."),
+              let cacheDir = BridgeBundleSchemeHandler.piperCacheDirectory(),
               let destURL = BridgeBundleSchemeHandler.safeFileURL(in: cacheDir, filename: filename),
               let data = Data(base64Encoded: base64, options: .ignoreUnknownCharacters) else {
             emitPiperDownloadEvent(reqId: reqId, ok: false, size: 0, error: "Invalid data")
@@ -471,7 +747,10 @@ final class BridgeNativeCoordinator: NSObject, ObservableObject, WKScriptMessage
             }
             return
         }
-        guard let target = BridgeBundleSchemeHandler.safeFileURL(in: cacheDir, filename: filename) else { return }
+        guard !filename.contains("/"),
+              !filename.contains("\\"),
+              !filename.contains(".."),
+              let target = BridgeBundleSchemeHandler.safeFileURL(in: cacheDir, filename: filename) else { return }
         try? FileManager.default.removeItem(at: target)
     }
 
