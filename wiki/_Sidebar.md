@@ -12,6 +12,7 @@
 - [Offline Speech & Neural Voices](Speech-and-Offline-Audio)
 - [Motor Access & Switch Scanning](Motor-Access-and-Switch-Scanning)
 - [Grid Editor & Customization](Grid-Editor-and-Customization)
+- [Settings & Configuration](Settings-and-Configuration)
 
 #### Life & Learning
 - [Life & Learning Hub](Life-and-Learning-Hub)
