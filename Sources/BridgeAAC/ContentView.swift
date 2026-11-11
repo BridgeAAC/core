@@ -30,6 +30,25 @@ final class BridgeBundleSchemeHandler: NSObject, WKURLSchemeHandler {
         return 16
     }
 
+    static func sanitizeFileName(_ name: String) -> String? {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        let base = (trimmed as NSString).lastPathComponent
+        guard !base.isEmpty, base != ".", base != ".." else { return nil }
+        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: ".-_"))
+        guard base.unicodeScalars.allSatisfy({ allowed.contains($0) }) else { return nil }
+        guard !base.contains("..") else { return nil }
+        return base
+    }
+
+    static func safeFileURL(in directory: URL, filename: String) -> URL? {
+        guard let safeName = sanitizeFileName(filename) else { return nil }
+        let dirCanonical = directory.standardizedFileURL
+        let targetURL = directory.appendingPathComponent(safeName).standardizedFileURL
+        guard targetURL.path.hasPrefix(dirCanonical.path) else { return nil }
+        return targetURL
+    }
+
     static func piperCacheDirectory() -> URL? {
         guard let supportDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
             return nil
@@ -64,9 +83,11 @@ final class BridgeBundleSchemeHandler: NSObject, WKURLSchemeHandler {
             return
         }
 
-        var targetURL = bundleRoot.appendingPathComponent(relativePath)
+        let bundleCanonical = bundleRoot.standardizedFileURL.path
+        let candidateURL = bundleRoot.appendingPathComponent(relativePath).standardizedFileURL
+        var targetURL = candidateURL
         var isDir: ObjCBool = false
-        if !FileManager.default.fileExists(atPath: targetURL.path, isDirectory: &isDir) || isDir.boolValue {
+        if !targetURL.path.hasPrefix(bundleCanonical) || !FileManager.default.fileExists(atPath: targetURL.path, isDirectory: &isDir) || isDir.boolValue {
             targetURL = bundleRoot.appendingPathComponent("index.html")
         }
 
@@ -98,8 +119,8 @@ final class BridgeBundleSchemeHandler: NSObject, WKURLSchemeHandler {
     }
 
     private func handlePiperCacheRequest(url: URL, fileName: String, task: WKURLSchemeTask) {
-        let safeName = (fileName as NSString).lastPathComponent
-        guard let cacheDir = Self.piperCacheDirectory() else {
+        guard let safeName = Self.sanitizeFileName(fileName),
+              let cacheDir = Self.piperCacheDirectory() else {
             sendStatus(404, url: url, task: task)
             return
         }
@@ -111,8 +132,8 @@ final class BridgeBundleSchemeHandler: NSObject, WKURLSchemeHandler {
             for item in files where item.hasSuffix(".onnx") {
                 let jsonName = item + ".json"
                 guard fileSet.contains(jsonName) else { continue }
-                let onnxURL = cacheDir.appendingPathComponent(item)
-                let jsonURL = cacheDir.appendingPathComponent(jsonName)
+                guard let onnxURL = Self.safeFileURL(in: cacheDir, filename: item),
+                      let jsonURL = Self.safeFileURL(in: cacheDir, filename: jsonName) else { continue }
                 let onnxSize = (try? FileManager.default.attributesOfItem(atPath: onnxURL.path)[.size] as? Int) ?? 0
                 let jsonSize = (try? FileManager.default.attributesOfItem(atPath: jsonURL.path)[.size] as? Int) ?? 0
                 if onnxSize >= 1_000_000 && jsonSize >= 50 {
@@ -124,7 +145,10 @@ final class BridgeBundleSchemeHandler: NSObject, WKURLSchemeHandler {
             return
         }
 
-        let fileURL = cacheDir.appendingPathComponent(safeName)
+        guard let fileURL = Self.safeFileURL(in: cacheDir, filename: safeName) else {
+            sendStatus(404, url: url, task: task)
+            return
+        }
         let minSize = Self.minValidSize(for: safeName)
         guard FileManager.default.fileExists(atPath: fileURL.path),
               let data = try? Data(contentsOf: fileURL, options: .mappedIfSafe),
@@ -244,9 +268,13 @@ final class BridgeNativeCoordinator: NSObject, ObservableObject, WKScriptMessage
     }
 
     private func sendFileToWeb(webView: WKWebView, name: String, base64: String) {
-        let escapedName = name.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
-        let js = "window.__bridgeOpenFileFromNative && window.__bridgeOpenFileFromNative(\"\(escapedName)\", \"\(base64)\");"
-        webView.evaluateJavaScript(js, completionHandler: nil)
+        webView.callAsyncJavaScript(
+            "if (window.__bridgeOpenFileFromNative) { window.__bridgeOpenFileFromNative(name, base64); }",
+            arguments: ["name": name, "base64": base64],
+            in: nil,
+            in: .page,
+            completionHandler: nil
+        )
     }
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -353,12 +381,11 @@ final class BridgeNativeCoordinator: NSObject, ObservableObject, WKScriptMessage
     }
 
     private func downloadPiperFileNative(reqId: String, filename: String, urls: [String], minSize: Int) {
-        let safeName = (filename as NSString).lastPathComponent
-        guard !safeName.isEmpty, let cacheDir = BridgeBundleSchemeHandler.piperCacheDirectory() else {
+        guard let cacheDir = BridgeBundleSchemeHandler.piperCacheDirectory(),
+              let destURL = BridgeBundleSchemeHandler.safeFileURL(in: cacheDir, filename: filename) else {
             emitPiperDownloadEvent(reqId: reqId, ok: false, size: 0, error: "Invalid cache directory")
             return
         }
-        let destURL = cacheDir.appendingPathComponent(safeName)
         if FileManager.default.fileExists(atPath: destURL.path),
            let attrs = try? FileManager.default.attributesOfItem(atPath: destURL.path),
            let existingSize = attrs[.size] as? Int,
@@ -417,19 +444,18 @@ final class BridgeNativeCoordinator: NSObject, ObservableObject, WKScriptMessage
     }
 
     private func savePiperFileNative(reqId: String, filename: String, base64: String) {
-        let safeName = (filename as NSString).lastPathComponent
-        guard !safeName.isEmpty,
-              let cacheDir = BridgeBundleSchemeHandler.piperCacheDirectory(),
+        guard let cacheDir = BridgeBundleSchemeHandler.piperCacheDirectory(),
+              let destURL = BridgeBundleSchemeHandler.safeFileURL(in: cacheDir, filename: filename),
               let data = Data(base64Encoded: base64, options: .ignoreUnknownCharacters) else {
             emitPiperDownloadEvent(reqId: reqId, ok: false, size: 0, error: "Invalid data")
             return
         }
-        var destURL = cacheDir.appendingPathComponent(safeName)
+        var mutableDest = destURL
         do {
-            try data.write(to: destURL, options: .atomic)
+            try data.write(to: mutableDest, options: .atomic)
             var rv = URLResourceValues()
             rv.isExcludedFromBackup = true
-            try? destURL.setResourceValues(rv)
+            try? mutableDest.setResourceValues(rv)
             emitPiperDownloadEvent(reqId: reqId, ok: true, size: data.count, error: nil)
         } catch {
             emitPiperDownloadEvent(reqId: reqId, ok: false, size: 0, error: error.localizedDescription)
@@ -445,18 +471,20 @@ final class BridgeNativeCoordinator: NSObject, ObservableObject, WKScriptMessage
             }
             return
         }
-        let safeName = (filename as NSString).lastPathComponent
-        guard !safeName.isEmpty else { return }
-        let target = cacheDir.appendingPathComponent(safeName)
+        guard let target = BridgeBundleSchemeHandler.safeFileURL(in: cacheDir, filename: filename) else { return }
         try? FileManager.default.removeItem(at: target)
     }
 
     private func emitPiperDownloadEvent(reqId: String, ok: Bool, size: Int, error: String?) {
         var payload: [String: Any] = ["reqId": reqId, "ok": ok, "size": size]
         if let error = error { payload["error"] = error }
-        guard let data = try? JSONSerialization.data(withJSONObject: payload),
-              let json = String(data: data, encoding: .utf8) else { return }
-        webView?.evaluateJavaScript("window.__bridgeOnPiperDownload && window.__bridgeOnPiperDownload(\(json));", completionHandler: nil)
+        webView?.callAsyncJavaScript(
+            "if (window.__bridgeOnPiperDownload) { window.__bridgeOnPiperDownload(payload); }",
+            arguments: ["payload": payload],
+            in: nil,
+            in: .page,
+            completionHandler: nil
+        )
     }
 
     private func speakNative(
@@ -536,9 +564,13 @@ final class BridgeNativeCoordinator: NSObject, ObservableObject, WKScriptMessage
         var payload: [String: Any] = ["id": activeSpeechId, "type": type]
         if let charIndex = charIndex { payload["charIndex"] = charIndex }
         if let charLength = charLength { payload["charLength"] = charLength }
-        guard let data = try? JSONSerialization.data(withJSONObject: payload),
-              let json = String(data: data, encoding: .utf8) else { return }
-        webView?.evaluateJavaScript("window.__bridgeOnSwiftSpeechEvent && window.__bridgeOnSwiftSpeechEvent(\(json));", completionHandler: nil)
+        webView?.callAsyncJavaScript(
+            "if (window.__bridgeOnSwiftSpeechEvent) { window.__bridgeOnSwiftSpeechEvent(payload); }",
+            arguments: ["payload": payload],
+            in: nil,
+            in: .page,
+            completionHandler: nil
+        )
     }
 }
 
