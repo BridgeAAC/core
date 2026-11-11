@@ -1,112 +1,104 @@
-# TouchChat & Open Board Migration Guide
+# File Interoperability & Migration Guide
 
-BridgeAAC features native, client-side compatibility with **TouchChat (`.ce`)** and **Open Board Format (`.obf` / `.obz`)** vocabulary files.
+BridgeAAC features client-side file reading and export tools engineered to promote communication freedom, user data portability, and seamless cross-platform accessibility.
 
-You can import existing vocabularies that communicators, students, or therapy clients have used for years without losing button arrangements, color codes, symbols, audio recordings, or grammar modifiers — and export them back at any time.
-
-> [!TIP]
-> **Instant AirDrop Transfer**: If your student or child already has a TouchChat board on an iPad, export it to Files and AirDrop the `.ce` file straight to your target device. BridgeAAC opens it instantly with zero conversion fees.
+> [!NOTE]
+> **Nominative Fair Use & Interoperability Disclaimer**: Any references in this guide to proprietary software, trademarks, or file formats—including **TouchChat®** (`.ce`), **Saltillo NovaChat®** (`.c4v`), and **WordPower™**—are made strictly for **nominative fair use** to describe file format compatibility and migration procedures for files lawfully created or owned by users. BridgeAAC is an independent open-source project and is **not** affiliated with, endorsed by, or authorized by PRC-Saltillo, Prentke Romich Company, or Inman Innovations, Inc. BridgeAAC does not distribute proprietary commercial vocabularies or licensed symbol sets.
 
 ---
 
 ## 1. Supported File Formats
 
-| Format Extension | System / Application | Contents Decoded by BridgeAAC |
-| :--- | :--- | :--- |
-| **`.ce`** | TouchChat (iOS / iPadOS) | Complete vocabulary backup archive containing SQLite database (`*.c4v`), symbol library (`Images.c4s`), and audio recordings. |
-| **`.c4v`** | TouchChat / Saltillo NovaChat | Standalone vocabulary SQLite database table structures, button links, coordinates, and grammar actions. |
-| **`.wf`** | WordPower / TouchChat | WordPower vocabulary bundle archives. |
-| **`.obz`** | Open Board Format (Archive) | ZIP archive containing multiple `.obf` JSON pages, embedded PNG/SVG/JPEG symbols, and WAV/MP3 sound effects. |
-| **`.obf`** | Open Board Format (Single Page) | Single JSON communication grid specifying rows, columns, button text, vocalizations, actions, and media. |
-| **`.bridge`** | BridgeAAC Native | Complete, self-contained JSON backup format with embedded media, settings, and undo history. |
+| Format Extension | Compatibility Target | Technical Structure | Notes |
+| :---: | :---: | :---: | :--- |
+| **`.bridge`** | BridgeAAC Native | JSON vocabulary + base64 audio/symbol bundle | Open, lossless BridgeAAC interchange format. |
+| **`.obf` / `.obz`** | Open Board Format (OpenAAC) | Standard JSON manifest (`.obf`) or ZIP package (`.obz`) | Standardized international open-source AAC format. |
+| **`.ce`** | TouchChat® backup archive | ZIP container holding SQLite database (`*.c4v`) & user image bundle | Client-side SQLite parsing via `sql.js` (WebAssembly). |
+| **`.c4v`** | NovaChat® / TouchChat® database | Standalone SQLite database file | Direct database table ingestion. |
+| **`.wf`** | WordPower™ / TouchChat® format | Vocabulary bundle archive | Client-side conversion. |
 
 ---
 
-## 2. How to Export a Vocabulary from TouchChat (iPad)
+## 2. How to Export User Vocabularies from iOS to BridgeAAC
 
-To transfer a vocabulary from an existing iPad running TouchChat:
+To migrate your personal or student vocabulary from an existing iPad:
 
-### Option A: Using AirDrop or Files (Recommended)
-1. In TouchChat on your iPad, tap **Vocab** in the top-left corner and choose **Choose New Vocab**.
-2. Tap **Menu** (top-right) and select **Import/Export Vocab**.
-3. Choose **Export to iTunes / Files**.
-4. Select the vocabulary you want to export (e.g., `WordPower 60 Basic`).
-5. In the export dialog, choose **Save to Files** or tap **AirDrop** to send it directly to your computer or another device.
-6. The resulting file will have a `.ce` extension (e.g., `WordPower60.ce`).
+### Method A: Direct Export to Files / AirDrop
+1. In your iPad AAC application, navigate to **Vocab** &rarr; **Choose New Vocab**.
+2. Tap **Menu** (top-right) &rarr; **Import/Export Vocab**.
+3. Choose **Export to Files** or **Share Vocab**.
+4. Select the user-created vocabulary you wish to transfer.
+5. Save the file to the iPad **Files** app or AirDrop it directly to your target computer, tablet, or phone.
+6. The resulting backup file will have a `.ce` extension.
 
-### Option B: Using Dropbox / Google Drive
-1. In TouchChat, go to **Menu** &rarr; **Import/Export Vocab** &rarr; **Export to Dropbox**.
-2. Save the `.ce` file to your cloud storage.
-3. Download the `.ce` file onto the device where you plan to use BridgeAAC.
-
----
-
-## 3. How to Import into BridgeAAC
-
-Importing is instantaneous, 100% private, and runs entirely in your local browser or app:
-
-1. Open BridgeAAC.
-2. Tap the **Vocab** icon (books icon) in the top navigation bar.
-3. Tap the **Import File** button.
-4. Select your `.ce`, `.c4v`, `.obz`, `.obf`, or `.bridge` file from your device’s file picker.
-5. BridgeAAC’s WebAssembly engine unpacks the archive, inspects the schema, loads the database, and converts pages into the active board.
-6. A success dialog will appear showing the number of pages, buttons, and embedded images imported.
-7. Tap **Load Board** to begin communicating immediately.
+### Method B: Cloud Storage (Dropbox / Google Drive)
+1. In your AAC application, go to **Menu** &rarr; **Import/Export Vocab** &rarr; **Export to Dropbox** or upload the file to Google Drive.
+2. Download the `.ce` file onto your target device.
 
 ---
 
-## 4. Technical Fidelity: What Gets Preserved
+## 3. Importing into BridgeAAC
 
-BridgeAAC was engineered with a custom TouchChat SQLite parser (`src/io/ce.ts`) and Open Board parser (`src/io/obf.ts`) that guarantees round-trip layout fidelity:
+1. Open BridgeAAC on your device ([bridgeaac.org](https://bridgeaac.org), native app, or desktop installer).
+2. Tap the **Vocab** icon in the navigation bar.
+3. Click or tap **Import File**.
+4. Select your `.ce`, `.c4v`, `.wf`, `.obz`, or `.obf` file from your file picker.
+5. BridgeAAC parses the file 100% locally in your device's memory using client-side WebAssembly:
+   - Zero file data is uploaded to any external server.
+   - Grid dimensions, coordinates, button colors, and custom images are preserved.
+6. Once unpacked, the vocabulary is stored locally in your device's persistent storage and is ready for immediate offline use.
+
+---
+
+## 4. Technical Compatibility Architecture
+
+BridgeAAC's conversion engine (`src/io/ce.ts` and `src/io/obf.ts`) processes user archives directly inside the browser or native app using open web standards:
 
 ```
-[TouchChat .ce Archive]
-  ├── *.c4v (SQLite Database)  ──>  sql.js WASM Parser
-  │     ├── pages table             ├── Page dimensions (cols x rows)
-  │     ├── buttons table           ├── Coordinates (row, col, colSpan, rowSpan)
-  │     ├── button_actions table    ├── Speech, Navigations, Clear, Backspace
-  │     └── button_sets table       └── Grammar variants (-s, -ing, -ed)
-  └── Images.c4s (Symbol Archive) ──>  Extracted into IndexedDB Asset Storage
+[User-Provided .ce Archive]
+            │
+            ▼ (Client-Side WASM Unzipper - fflate)
+┌───────────────────────────────────────┐
+│ SQLite Database (*.c4v)               │
+│ User Image Bundle (Images.c4s)        │
+│ Recorded Audio Wavs (*.wav)           │
+└───────────────────────────────────────┘
+            │
+            ▼ (Client-Side SQLite WASM - sql.js)
+┌───────────────────────────────────────┐
+│ Grid Dimensions, Coordinates & Colors │
+│ Dynamic Grammar Variants (Action 71)  │
+│ Extracted User Media (IndexedDB/OPFS) │
+└───────────────────────────────────────┘
+            │
+            ▼
+[Independent Native BridgeAAC Vocabulary Model]
 ```
 
-### Layout & Coordinates
-- **Exact Grid Positioning**: Rows, columns, multi-cell horizontal spans, and vertical spans are calculated and preserved identically to the TouchChat layout.
-- **Button Colors**: TouchChat stores colors in 32-bit integer BGR format (`0x00BBGGRR`). BridgeAAC automatically converts these into standard hex color codes, correctly rendering Fitzgerald Key color schemes.
-- **Borders & Typography**: Border thicknesses, text colors, and font scales are translated directly to modern CSS variables.
-
-### Grammar Word Endings (Action 71)
-Commercial vocabularies like WordPower use TouchChat’s Action `71` ("Button Sets") to power dynamic grammar inflections. When a user taps a verb like `go`, a grammar modal pops up offering `-ing` (*going*), `-ed` (*went*), `-s` (*goes*). BridgeAAC fully implements Action `71`, preserving the underlying grammar variants and suffix attachment rules.
-
-### Symbols & Custom Photography
-- **`Images.c4s` Extraction**: TouchChat packs custom user photos and symbols inside a binary container (`Images.c4s`). BridgeAAC unzips and converts these into local IndexedDB image blobs (`img:<id>`).
-- **Open Board Vector Symbols**: SVG and PNG symbols embedded within `.obz` packages are extracted into local blob storage.
+### Visual Layout & Color Preservations
+- **Exact Grid Positioning**: Rows, columns, and multi-cell spans are calculated and mapped to maintain familiar finger-memory for the communicator.
+- **Color Standards**: BGR color values are converted to standard web hexadecimal formats, maintaining familiar Fitzgerald Key or Goossens' color coding schemes.
+- **Grammar Inflection Actions**: Dynamic button actions (such as tense changes or suffix modifiers) are parsed into standardized grammar variants.
+- **Embedded User Images**: Custom personal photos and symbols embedded inside user archives are unpacked into local client storage. Note that third-party proprietary symbol sets (such as SymbolStix® or PCS®) that are not embedded in backup archives due to third-party vendor licensing will display the button's intended text.
 
 ---
 
-## 5. Exporting Vocabularies from BridgeAAC
+## 5. Exporting Your Vocabulary
 
-You are never locked into BridgeAAC. You can export your customized communication boards at any time:
-
-1. Tap **Vocab** in the top navigation bar.
-2. Under **Active Vocabulary**, tap the **Export** menu.
-3. Choose your target format:
-   - **Export as TouchChat (`.ce`)**: Creates a full `.ce` ZIP archive with a SQLite `vocabulary.c4v` database and `Images.c4s` symbol library. This file can be imported back into TouchChat on an iPad.
-   - **Export as Open Board (`.obz`)**: Creates a multi-page `.obz` bundle compliant with Open Board Format v1 specifications for use in other open-source AAC software.
-   - **Export as BridgeAAC (`.bridge`)**: Creates a compact native JSON backup containing all board settings, vocabularies, and undo states.
-4. Save the file to your device or cloud backup.
+BridgeAAC gives you total freedom and data ownership over your communication boards:
+1. Tap **Vocab** in the navigation bar.
+2. Locate the vocabulary card and tap **Export**.
+3. Choose your desired output format:
+   - **Export as BridgeAAC (`.bridge`)**: Recommended for full lossless backup and sharing between BridgeAAC devices.
+   - **Export as Open Board (`.obz`)**: Standard open format compatible with open AAC tools worldwide.
+   - **Export as Compatible Archive (`.ce`)**: Re-packages the vocabulary into a SQLite `.ce` archive for interoperability with other AAC software.
 
 ---
 
-## 6. Migration Troubleshooting
+## 6. Troubleshooting Interoperability
 
-### "The file could not be read or is corrupted"
-- **Cause**: Some very old TouchChat files (from before 2012) use an obsolete non-SQLite database schema.
-- **Fix**: Open the file in a modern version of TouchChat on iOS first, tap **Save/Duplicate**, and re-export. TouchChat will update the archive to modern SQLite format.
+### Legacy File Format Warnings
+- **Pre-2012 Archives**: Archives created before 2012 may use a legacy proprietary database structure rather than standard SQLite 3. Re-saving or duplicating the vocabulary in a modern version of your AAC software will update the underlying database to standard SQLite before exporting.
 
-### "Symbols are showing as default icons"
-- **Cause**: The `.ce` file references proprietary SymbolStix icons that were not bundled into the exported file due to TouchChat licensing restrictions.
-- **Fix**: In BridgeAAC, enter **Edit Mode**, tap the button, and use the built-in **ARASAAC Symbol Search** to pick an equivalent free, open-source pictogram.
-
-### "Imported grid appears crowded or misaligned"
-- **Cause**: The vocabulary was configured for an unusual screen aspect ratio.
-- **Fix**: Tap **Settings** &rarr; **Display** and adjust **Grid Spacing** or toggle **Display Mode** between compact and comfortable padding.
+### Missing Proprietary Symbols
+- If certain buttons display text without symbols after importing a `.ce` file, this occurs because commercial symbol libraries (such as SymbolStix®) are protected by third-party copyrights and are not bundled inside exported `.ce` archives. You can easily add free symbols or custom photos using BridgeAAC's built-in **Button Editor** and the open ARASAAC library.
