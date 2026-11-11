@@ -14,10 +14,12 @@ import {
   downloadNeuralVoice,
   getCachedDownloadedNeuralVoices,
   getDownloadedNeuralVoices,
+  getVoiceMirrorUrl,
   listVoices,
   NEURAL_OFFLINE_MODELS,
   precacheVocabularyAudio,
   removeNeuralVoice,
+  setVoiceMirrorUrl,
   unlockAudio,
   type VoiceInfo,
 } from '../engine/speech';
@@ -42,6 +44,8 @@ export function SettingsModal() {
   );
   const [pronWord, setPronWord] = useState('');
   const [pronSoundsLike, setPronSoundsLike] = useState('');
+  const [mirrorUrl, setMirrorUrlState] = useState<string>(() => getVoiceMirrorUrl());
+  const [testingMirror, setTestingMirror] = useState<boolean>(false);
 
   useEffect(() => {
     void listVoices().then(setVoices);
@@ -51,6 +55,29 @@ export function SettingsModal() {
 
   function close() {
     panel.value = null;
+  }
+
+  async function handleTestMirror() {
+    const url = mirrorUrl.trim();
+    if (!url) {
+      toast('Using default distributed voice CDN mirrors.', 'info');
+      return;
+    }
+    setTestingMirror(true);
+    try {
+      const clean = url.replace(/\/+$/, '');
+      const testUrl = `${clean}/en_US-amy-medium.onnx.json`;
+      const res = await fetch(testUrl, { method: 'GET', cache: 'no-store' });
+      if (res.ok) {
+        toast('Custom voice server connected successfully!', 'success');
+      } else {
+        toast(`Server returned HTTP ${res.status}. Check URL and CORS headers.`, 'error');
+      }
+    } catch (err: any) {
+      toast(`Could not reach server: ${err?.message || 'Network error'}`, 'error');
+    } finally {
+      setTestingMirror(false);
+    }
   }
 
   async function handlePrecacheVocab() {
@@ -377,6 +404,14 @@ export function SettingsModal() {
                               <button
                                 type="button"
                                 class="btn secondary sm"
+                                onClick={() => speakText('Hello, this is my voice in Bridge A A C.')}
+                                title="Preview voice sound"
+                              >
+                                Test
+                              </button>
+                              <button
+                                type="button"
+                                class="btn secondary sm"
                                 onClick={() => void handleRemoveNeural(m.modelId, m.voiceURI)}
                                 title="Remove downloaded model"
                               >
@@ -399,6 +434,52 @@ export function SettingsModal() {
                       </div>
                     );
                   })}
+                </div>
+              </div>
+
+              <div class="section-box" style={{ marginTop: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <div>
+                    <strong>Voice Download Server / Mirror</strong>
+                    <p class="hint" style={{ margin: '2px 0 0' }}>
+                      Optional custom HTTP(S) server to host neural voice ONNX files for fast local network downloads.
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <input
+                    type="url"
+                    class="field-input"
+                    style={{ flex: 1, minWidth: '240px', padding: '6px 10px', borderRadius: '6px', border: '1px solid #94a3b8' }}
+                    placeholder="https://voices.bridgeaac.org or http://192.168.1.100:8080/voices"
+                    value={mirrorUrl}
+                    onInput={(e) => {
+                      const val = (e.target as HTMLInputElement).value;
+                      setMirrorUrlState(val);
+                      setVoiceMirrorUrl(val);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    class="btn secondary sm"
+                    disabled={testingMirror}
+                    onClick={() => void handleTestMirror()}
+                  >
+                    {testingMirror ? 'Testing...' : 'Test Connection'}
+                  </button>
+                  {mirrorUrl && (
+                    <button
+                      type="button"
+                      class="btn secondary sm"
+                      onClick={() => {
+                        setMirrorUrlState('');
+                        setVoiceMirrorUrl('');
+                        toast('Reset to default voice mirrors.', 'info');
+                      }}
+                    >
+                      Reset
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1109,13 +1190,20 @@ export function SettingsModal() {
                     Website (bridgeaac.org)
                   </a>
                   <a
-                    href="https://github.com/bridgeaac/core"
+                    href="mailto:support@bridgeaac.org?subject=Urgent%20Family%20Support%20-%20BridgeAAC"
+                    class="btn secondary sm"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    Support (support@bridgeaac.org)
+                  </a>
+                  <a
+                    href="https://github.com/BridgeAAC/core/blob/main/DISCLAIMER.md"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="btn secondary sm"
                     style={{ textDecoration: 'none' }}
                   >
-                    Open Source License (MIT)
+                    Legal & Disclaimer
                   </a>
                   <button
                     type="button"
@@ -1136,6 +1224,54 @@ export function SettingsModal() {
                     Erase All Local Data
                   </button>
                 </div>
+              </div>
+
+              <div
+                class="section-box"
+                style={{
+                  marginTop: '12px',
+                  background: 'var(--bg-msg)',
+                  borderLeft: '4px solid #22c55e',
+                }}
+              >
+                <strong>Immediate Support for Families & Autism Parents</strong>
+                <p class="hint" style={{ margin: '4px 0 8px' }}>
+                  If you are an autism parent, caregiver, or educator needing an immediate bug fix,
+                  custom grid layout, or accessibility adjustment, reach out directly. We prioritize
+                  urgent family assistance.
+                </p>
+                <a
+                  href="mailto:support@bridgeaac.org?subject=Urgent%20Family%20Support%20-%20BridgeAAC"
+                  class="btn primary sm"
+                  style={{ textDecoration: 'none', display: 'inline-block' }}
+                >
+                  ✉️ Contact: support@bridgeaac.org
+                </a>
+              </div>
+
+              <div
+                class="section-box"
+                style={{
+                  marginTop: '8px',
+                  fontSize: '0.8rem',
+                  color: 'var(--fg-muted)',
+                  lineHeight: '1.4',
+                }}
+              >
+                <strong>Legal & Clinical Disclaimer</strong>
+                <p style={{ margin: '4px 0' }}>
+                  BridgeAAC is an assistive communication software tool, NOT an FDA-approved medical
+                  device. It does not provide medical or clinical advice and has no emergency call
+                  (911) connectivity. Provided "AS IS" without warranty of any kind.
+                </p>
+                <a
+                  href="https://github.com/BridgeAAC/core/blob/main/DISCLAIMER.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'var(--accent)', textDecoration: 'underline' }}
+                >
+                  View Full Legal & Limitation of Liability Terms (DISCLAIMER.md)
+                </a>
               </div>
             </div>
           )}

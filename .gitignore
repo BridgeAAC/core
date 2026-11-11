@@ -16,3 +16,6 @@ fixtures/
 *.local
 .env
 .env.*
+.wiki_repo/
+.xtool-bin/
+.bsp/

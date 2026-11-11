@@ -220,9 +220,9 @@ html[data-color-coding='monochrome'] .aac-btn {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.12);
+  background: #334155;
   color: var(--fg-topbar);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1.5px solid #475569;
   border-radius: 8px;
   padding: 6px 10px;
   min-height: 34px;
@@ -233,7 +233,7 @@ html[data-color-coding='monochrome'] .aac-btn {
 }
 
 .nav-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.22);
+  background: #475569;
 }
 
 .nav-btn:disabled {
@@ -243,8 +243,8 @@ html[data-color-coding='monochrome'] .aac-btn {
 
 .nav-btn.accent-outline,
 .nav-btn.vocab-btn {
-  background: rgba(37, 99, 235, 0.35);
-  border-color: #60a5fa;
+  background: #1e3a8a;
+  border-color: #3b82f6;
 }
 
 .vocab-name {
@@ -255,13 +255,14 @@ html[data-color-coding='monochrome'] .aac-btn {
 }
 
 .nav-btn.active-edit {
-  background: #f59e0b;
-  color: #111827;
-  border-color: #fbbf24;
+  background: #d97706;
+  color: #ffffff;
+  border-color: #f59e0b;
 }
 
 .page-pill {
-  background: rgba(255, 255, 255, 0.16);
+  background: #334155;
+  border-color: #64748b;
 }
 
 .page-pill-name {
@@ -304,19 +305,20 @@ html[data-color-coding='monochrome'] .aac-btn {
   display: flex;
   align-items: stretch;
   gap: 6px;
-  padding: 5px 8px;
-  background: rgba(0, 0, 0, 0.18);
+  padding: 6px 8px;
+  background: #0f172a;
+  border-top: 1px solid #334155;
 }
 
 .message-display {
   flex: 1;
-  min-height: 54px;
-  max-height: 82px;
+  min-height: 56px;
+  max-height: 84px;
   overflow-y: auto;
-  background: var(--bg-msg);
-  color: var(--fg-msg);
-  border: 2px solid #94a3b8;
-  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
+  border: 2px solid #64748b;
+  border-radius: 8px;
   padding: 8px 12px;
   display: flex;
   align-items: center;
@@ -328,12 +330,12 @@ html[data-color-coding='monochrome'] .aac-btn {
 }
 
 .message-display.is-speaking {
-  border-color: var(--speak-bg);
-  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.25);
+  border-color: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.35);
 }
 
 .message-placeholder {
-  color: #94a3b8;
+  color: #64748b;
   font-weight: 500;
   font-size: 0.98rem;
 }
@@ -358,18 +360,18 @@ html[data-color-coding='monochrome'] .aac-btn {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 56px;
+  min-width: 58px;
   padding: 4px 8px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.14);
-  color: var(--fg-topbar);
+  border-radius: 8px;
+  border: 1.5px solid #475569;
+  background: #334155;
+  color: #f8fafc;
   font-weight: 700;
   cursor: pointer;
 }
 
 .msg-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.24);
+  background: #475569;
 }
 
 .msg-btn:disabled {
@@ -378,15 +380,30 @@ html[data-color-coding='monochrome'] .aac-btn {
 }
 
 .msg-btn.speak-btn {
-  background: var(--speak-bg);
-  border-color: #22c55e;
+  background: #15803d;
+  border-color: #166534;
   color: #ffffff;
-  min-width: 68px;
+  min-width: 72px;
+}
+
+.msg-btn.speak-btn:hover:not(:disabled) {
+  background: #166534;
 }
 
 .msg-btn.speak-btn.speaking {
   background: #dc2626;
-  border-color: #f87171;
+  border-color: #b91c1c;
+}
+
+.msg-btn.danger-subtle {
+  background: #334155;
+  border-color: #ef4444;
+  color: #fca5a5;
+}
+
+.msg-btn.danger-subtle:hover:not(:disabled) {
+  background: #7f1d1d;
+  color: #ffffff;
 }
 
 .msg-btn-icon {
@@ -594,16 +611,18 @@ html[data-color-coding='monochrome'] .aac-btn {
 }
 
 .aac-btn.guided-pulse {
-  animation: pulseGuide 1s infinite alternate;
+  animation: pulseGuide 0.8s infinite alternate;
   z-index: 4;
 }
 
 @keyframes pulseGuide {
   from {
-    box-shadow: 0 0 0 3px #2563eb, 0 0 12px rgba(37, 99, 235, 0.7);
+    outline: 3px solid #1d4ed8;
+    outline-offset: 2px;
   }
   to {
-    box-shadow: 0 0 0 6px #f59e0b, 0 0 18px rgba(245, 158, 11, 0.9);
+    outline: 4px solid #d97706;
+    outline-offset: 3px;
   }
 }
 

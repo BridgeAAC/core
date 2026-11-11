@@ -13,6 +13,34 @@ try {
 } catch {}
 
 try {
+  const ortPath = 'node_modules/onnxruntime-web/dist/esm/ort.min.js';
+  if (fs.existsSync(ortPath)) {
+    let ortCode = fs.readFileSync(ortPath, 'utf8');
+    let changed = false;
+    const failCheck = 'if(Np)throw new Error("previous call to \'initializeWebAssembly()\' failed.");';
+    if (ortCode.includes(failCheck)) {
+      ortCode = ortCode.replace(failCheck, 'if(Np){Np=!1;}');
+      changed = true;
+    }
+    const callSite = 'w(v).then(S=>{So=!1,ia=!0,oa=S,d()}';
+    const wasmHook = 'if(a.wasmBinary){v.wasmBinary=a.wasmBinary;v.instantiateWasm=(imp,cb)=>{WebAssembly.instantiate(a.wasmBinary,imp).then(res=>cb(res.instance||res,res.module)).catch(T);return{}}}w(v).then(S=>{So=!1,ia=!0,oa=S,d()}';
+    if (ortCode.includes(callSite) && !ortCode.includes('v.instantiateWasm=(imp,cb)=>')) {
+      ortCode = ortCode.replace(callSite, wasmHook);
+      changed = true;
+    }
+    const directEval = 'var mod=eval("quire".replace(/^/,"re"))(moduleName);';
+    const indirectEval = 'var mod=(0,eval)("quire".replace(/^/,"re"))(moduleName);';
+    if (ortCode.includes(directEval)) {
+      ortCode = ortCode.replace(directEval, indirectEval);
+      changed = true;
+    }
+    if (changed) {
+      fs.writeFileSync(ortPath, ortCode, 'utf8');
+    }
+  }
+} catch {}
+
+try {
   const vitsPath = 'node_modules/@diffusionstudio/vits-web/dist/vits-web.js';
   if (fs.existsSync(vitsPath)) {
     const code = fs.readFileSync(vitsPath, 'utf8');
@@ -24,6 +52,25 @@ try {
       const replacement = `const IDB_NAME = "bridgeaac_piper_files";
 const IDB_STORE = "files";
 let idbPromise = null;
+const memoryBlobCache = new Map();
+const configJsonCache = new Map();
+const swiftDownloadCallbacks = new Map();
+let swiftDownloadSeq = 0;
+
+if (typeof window !== "undefined") {
+  window.__bridgeOnPiperDownload = (payload) => {
+    if (!payload || !payload.reqId) return;
+    const cb = swiftDownloadCallbacks.get(payload.reqId);
+    if (cb) {
+      swiftDownloadCallbacks.delete(payload.reqId);
+      cb(payload);
+    }
+  };
+}
+
+function hasSwiftBridge() {
+  return typeof window !== "undefined" && Boolean(window.webkit?.messageHandlers?.bridgeSwift?.postMessage);
+}
 
 function openPiperDb() {
   if (typeof indexedDB === "undefined") return Promise.reject(new Error("No IndexedDB"));
@@ -61,7 +108,24 @@ function mimeForName(name) {
 }
 
 function fallbackUrlsFor(url) {
-  const urls = [url];
+  const urls = [];
+  const fileName = url.split("/").at(-1) || "";
+  let customMirror = "";
+  try {
+    if (typeof localStorage !== "undefined") {
+      customMirror = (localStorage.getItem("bridgeaac.voice_mirror_url") || "").trim();
+    }
+  } catch {}
+  if (customMirror) {
+    const cleanMirror = customMirror.replace(/\\/+$/, "");
+    if (url.includes("huggingface.co/diffusionstudio/piper-voices/resolve/main/")) {
+      const rel = url.split("piper-voices/resolve/main/")[1];
+      if (rel) urls.push(\`\${cleanMirror}/\${rel}\`);
+    }
+    urls.push(\`\${cleanMirror}/\${fileName}\`);
+  }
+  urls.push(url);
+  const httpsProto = ["https", "://"].join("");
   if (url.includes("huggingface.co/diffusionstudio/piper-voices/resolve/main/")) {
     urls.push(
       url.replace(
@@ -73,6 +137,12 @@ function fallbackUrlsFor(url) {
       url.replace(
         "huggingface.co/diffusionstudio/piper-voices/resolve/main/",
         "huggingface.co/rhasspy/piper-voices/resolve/main/"
+      )
+    );
+    urls.push(
+      url.replace(
+        httpsProto + "huggingface.co/diffusionstudio/piper-voices/resolve/main/",
+        httpsProto + "raw.githubusercontent.com/rhasspy/piper-voices/v1.0.0/"
       )
     );
   } else if (url.includes("cdnjs.cloudflare.com/ajax/libs/onnxruntime-web/1.18.0/")) {
@@ -104,6 +174,11 @@ async function p(e, m) {
   const ab = m instanceof ArrayBuffer ? m : await m.arrayBuffer();
   if (ab.byteLength < minValidSize(name)) {
     throw new Error(\`Downloaded file \${name} is incomplete (\${ab.byteLength} bytes)\`);
+  }
+  const mime = mimeForName(name);
+  memoryBlobCache.set(name, new Blob([ab], { type: mime }));
+  if (hasSwiftBridge()) {
+    return;
   }
   let saved = false;
   try {
@@ -138,6 +213,16 @@ async function p(e, m) {
 
 async function R(e) {
   const o = e.split("/").at(-1);
+  memoryBlobCache.delete(o);
+  configJsonCache.delete(o);
+  if (hasSwiftBridge()) {
+    try {
+      window.webkit.messageHandlers.bridgeSwift.postMessage({
+        action: "deletePiperFile",
+        filename: o
+      });
+    } catch {}
+  }
   try {
     const db = await openPiperDb();
     await new Promise((resolve) => {
@@ -159,6 +244,23 @@ async function D(e) {
   const o = e.split("/").at(-1);
   const minBytes = minValidSize(o);
   const mime = mimeForName(o);
+  const mem = memoryBlobCache.get(o);
+  if (mem && mem.size >= minBytes) {
+    return mem;
+  }
+  if (hasSwiftBridge()) {
+    try {
+      const resp = await fetch(\`/__piper_cache__/\${encodeURIComponent(o)}\`);
+      if (resp.ok) {
+        const ab = await resp.arrayBuffer();
+        if (ab.byteLength >= minBytes) {
+          const blob = new Blob([ab], { type: mime });
+          memoryBlobCache.set(o, blob);
+          return blob;
+        }
+      }
+    } catch {}
+  }
   try {
     const db = await openPiperDb();
     const val = await new Promise((resolve) => {
@@ -168,10 +270,14 @@ async function D(e) {
       req.onerror = () => resolve(undefined);
     });
     if (val instanceof ArrayBuffer && val.byteLength >= minBytes) {
-      return new Blob([val], { type: mime });
+      const blob = new Blob([val], { type: mime });
+      memoryBlobCache.set(o, blob);
+      return blob;
     }
     if (val instanceof Blob && val.size >= minBytes) {
-      return new Blob([await val.arrayBuffer()], { type: mime });
+      const blob = new Blob([await val.arrayBuffer()], { type: mime });
+      memoryBlobCache.set(o, blob);
+      return blob;
     }
   } catch {}
   if (e.match(/huggingface\\.co|jsdelivr\\.net|cloudflare\\.com|unpkg\\.com/)) {
@@ -182,7 +288,9 @@ async function D(e) {
         });
         const file = await (await n.getFileHandle(o)).getFile();
         if (file && file.size >= minBytes) {
-          return new Blob([await file.arrayBuffer()], { type: mime });
+          const blob = new Blob([await file.arrayBuffer()], { type: mime });
+          memoryBlobCache.set(o, blob);
+          return blob;
         }
       }
     } catch {
@@ -192,31 +300,78 @@ async function D(e) {
 }
 
 async function S(e, m) {
+  const fileName = e.split("/").at(-1);
+  const minBytes = minValidSize(fileName);
+  const mime = mimeForName(fileName);
   const candidates = fallbackUrlsFor(e);
+  if (hasSwiftBridge()) {
+    try {
+      const reqId = \`piper_dl_\${++swiftDownloadSeq}_\${Date.now()}\`;
+      const result = await new Promise((resolve) => {
+        const timer = setTimeout(() => {
+          swiftDownloadCallbacks.delete(reqId);
+          resolve({ ok: false, error: "Native download timeout" });
+        }, 180000);
+        swiftDownloadCallbacks.set(reqId, (payload) => {
+          clearTimeout(timer);
+          resolve(payload);
+        });
+        window.webkit.messageHandlers.bridgeSwift.postMessage({
+          action: "downloadPiperFile",
+          reqId,
+          filename: fileName,
+          urls: candidates,
+          minSize: minBytes
+        });
+      });
+      if (result && result.ok) {
+        const cached = await D(e);
+        if (cached && cached.size >= minBytes) {
+          m == null || m({ url: e, total: cached.size, loaded: cached.size });
+          return cached;
+        }
+      }
+    } catch {}
+  }
   let lastErr = null;
   for (const targetUrl of candidates) {
-    try {
-      const n = await fetch(targetUrl);
-      if (!n.ok) throw new Error(\`HTTP \${n.status} for \${targetUrl}\`);
-      const o = n.body == null ? void 0 : n.body.getReader();
-      const a = +(n.headers.get("Content-Length") ?? 0);
-      if (!o) {
-        const ab = await n.arrayBuffer();
-        m == null || m({ url: e, total: ab.byteLength, loaded: ab.byteLength });
-        return new Blob([ab], { type: mimeForName(e) });
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const n = await fetch(targetUrl);
+        if (!n.ok) throw new Error(\`HTTP \${n.status} for \${targetUrl}\`);
+        const o = n.body == null ? void 0 : n.body.getReader();
+        const a = +(n.headers.get("Content-Length") ?? 0);
+        if (!o) {
+          const ab = await n.arrayBuffer();
+          if (ab.byteLength < minBytes) {
+            throw new Error(\`Incomplete download (\${ab.byteLength} bytes)\`);
+          }
+          m == null || m({ url: e, total: ab.byteLength, loaded: ab.byteLength });
+          const blob = new Blob([ab], { type: mime });
+          memoryBlobCache.set(fileName, blob);
+          return blob;
+        }
+        let i = 0;
+        const t = [];
+        for (;;) {
+          const { done: s, value: d } = await o.read();
+          if (s) break;
+          t.push(d);
+          i += d.length;
+          m == null || m({ url: e, total: Math.max(a, i), loaded: i });
+        }
+        const combined = new Blob(t, { type: mime });
+        if (combined.size < minBytes) {
+          throw new Error(\`Incomplete download (\${combined.size} bytes)\`);
+        }
+        memoryBlobCache.set(fileName, combined);
+        return combined;
+      } catch (err) {
+        lastErr = err;
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 450 * (attempt + 1)));
+        }
       }
-      let i = 0;
-      const t = [];
-      for (;;) {
-        const { done: s, value: d } = await o.read();
-        if (s) break;
-        t.push(d);
-        i += d.length;
-        m == null || m({ url: e, total: a, loaded: i });
-      }
-      return new Blob(t, { type: mimeForName(e) });
-    } catch (err) {
-      lastErr = err;
     }
   }
   throw lastErr ?? new Error(\`Failed to download \${e}\`);
@@ -233,25 +388,32 @@ function b(e, m, n) {
   return i.buffer;
 }
 
-let h, _, wasmBytes, dataBytes, wasmBlobUrl, dataBlobUrl, ortBlobUrl;
+let h, _, wasmBytes, phonemizeWasmModule, dataBytes, ortBytes, wasmBlobUrl, dataBlobUrl, ortBlobUrl;
 const sessionCache = new Map();
 let predictQueue = Promise.resolve();
 
 async function ensureRuntimeBlobs() {
-  if (!wasmBytes || !wasmBlobUrl) {
+  if (!wasmBytes || !phonemizeWasmModule) {
     const wFile = await f(\`\${x}.wasm\`);
     wasmBytes = await wFile.arrayBuffer();
-    wasmBlobUrl = URL.createObjectURL(new Blob([wasmBytes], { type: "application/wasm" }));
+    phonemizeWasmModule = await WebAssembly.compile(wasmBytes);
+    if (!wasmBlobUrl) {
+      wasmBlobUrl = URL.createObjectURL(new Blob([wasmBytes], { type: "application/wasm" }));
+    }
   }
-  if (!dataBytes || !dataBlobUrl) {
+  if (!dataBytes) {
     const dFile = await f(\`\${x}.data\`);
     dataBytes = await dFile.arrayBuffer();
-    dataBlobUrl = URL.createObjectURL(new Blob([dataBytes], { type: "application/octet-stream" }));
+    if (!dataBlobUrl) {
+      dataBlobUrl = URL.createObjectURL(new Blob([dataBytes], { type: "application/octet-stream" }));
+    }
   }
-  if (!ortBlobUrl) {
+  if (!ortBytes) {
     const oFile = await f(\`\${B}ort-wasm-simd.wasm\`);
-    const oBytes = await oFile.arrayBuffer();
-    ortBlobUrl = URL.createObjectURL(new Blob([oBytes], { type: "application/wasm" }));
+    ortBytes = await oFile.arrayBuffer();
+    if (!ortBlobUrl) {
+      ortBlobUrl = URL.createObjectURL(new Blob([ortBytes], { type: "application/wasm" }));
+    }
   }
 }
 
@@ -260,23 +422,49 @@ async function runPredictOnce(e, m) {
   await ensureRuntimeBlobs();
   const n = c[e.voiceId];
   if (!n) throw new Error(\`Unknown Piper voiceId: \${e.voiceId}\`);
-  const cleanText = String(e.text ?? "").trim();
-  if (!cleanText) {
-    return new Blob([b(new Float32Array(1600), 1, 16000)], { type: "audio/x-wav" });
-  }
-  const o = JSON.stringify([{ text: cleanText }]);
-  _.env.allowLocalModels = !1, _.env.wasm.numThreads = 1, _.env.wasm.wasmPaths = {
+  _.env.allowLocalModels = !1;
+  _.env.wasm.numThreads = 1;
+  _.env.wasm.wasmBinary = ortBytes;
+  _.env.wasm.wasmPaths = {
     "ort-wasm-simd.wasm": ortBlobUrl,
     "ort-wasm.wasm": ortBlobUrl,
     "ort-wasm-simd-threaded.wasm": ortBlobUrl,
     "ort-wasm-threaded.wasm": ortBlobUrl
   };
-  const a = await f(\`\${u}/\${n}.json\`), i = JSON.parse(await a.text()), t = await new Promise(async (v, rej) => {
+  let i = configJsonCache.get(n);
+  if (!i) {
+    const a = await f(\`\${u}/\${n}.json\`);
+    i = JSON.parse(await a.text());
+    configJsonCache.set(n, i);
+  }
+  let y = sessionCache.get(e.voiceId);
+  if (!y) {
+    try {
+      const k = await f(\`\${u}/\${n}\`, m);
+      y = await _.InferenceSession.create(await k.arrayBuffer(), { executionProviders: ["wasm"] });
+      sessionCache.set(e.voiceId, y);
+    } catch (err) {
+      sessionCache.delete(e.voiceId);
+      throw err;
+    }
+  }
+  const cleanText = String(e.text ?? "").trim();
+  if (!cleanText) {
+    return new Blob([b(new Float32Array(1600), 1, 16000)], { type: "audio/x-wav" });
+  }
+  const o = JSON.stringify([{ text: cleanText }]);
+  const t = await new Promise(async (v, rej) => {
     let resolved = false;
     try {
       const inst = await h.createPiperPhonemize({
-        wasmBinary: wasmBytes.slice(0),
-        getPreloadedPackage: () => dataBytes.slice(0),
+        wasmBinary: wasmBytes,
+        instantiateWasm: (imports, successCallback) => {
+          WebAssembly.instantiate(phonemizeWasmModule, imports).then((instance) => {
+            successCallback(instance, phonemizeWasmModule);
+          }).catch(rej);
+          return {};
+        },
+        getPreloadedPackage: () => dataBytes,
         print: (l) => {
           try {
             const parsed = JSON.parse(l);
@@ -312,12 +500,6 @@ async function runPredictOnce(e, m) {
   if (!t || !t.length) {
     return new Blob([b(new Float32Array(Math.round(s * 0.1)), 1, s)], { type: "audio/x-wav" });
   }
-  let y = sessionCache.get(e.voiceId);
-  if (!y) {
-    const k = await f(\`\${u}/\${n}\`, m);
-    y = await _.InferenceSession.create(await k.arrayBuffer(), { executionProviders: ["wasm"] });
-    sessionCache.set(e.voiceId, y);
-  }
   const w = {
     input: new _.Tensor("int64", t, [1, t.length]),
     input_lengths: new _.Tensor("int64", [t.length]),
@@ -331,7 +513,14 @@ async function runPredictOnce(e, m) {
 }
 
 function N(e, m) {
-  const next = predictQueue.then(() => runPredictOnce(e, m));
+  const next = predictQueue.then(() => {
+    return Promise.race([
+      runPredictOnce(e, m),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Piper inference timeout after 12000ms")), 12000)
+      )
+    ]);
+  });
   predictQueue = next.catch(() => {});
   return next;
 }
@@ -342,29 +531,37 @@ async function f(e, m) {
 }
 
 async function I(e, m) {
-  const n = c[e], o = [\`\${u}/\${n}\`, \`\${u}/\${n}.json\`, \`\${x}.wasm\`, \`\${x}.data\`, \`\${B}ort-wasm-simd.wasm\`];
+  const n = c[e];
+  const runtimeFiles = [\`\${x}.wasm\`, \`\${x}.data\`, \`\${B}ort-wasm-simd.wasm\`];
+  const modelFiles = [\`\${u}/\${n}.json\`, \`\${u}/\${n}\`];
+  const allFiles = [...runtimeFiles, ...modelFiles];
   const progressMap = new Map();
-  await Promise.all(
-    o.map(async (a) => {
-      const existing = await D(a);
-      if (existing) {
-        progressMap.set(a, { loaded: existing.size, total: existing.size });
-        return;
-      }
-      const blob = await S(a, (prog) => {
-        progressMap.set(a, { loaded: prog.loaded, total: prog.total || prog.loaded });
-        if (m) {
-          let sumLoaded = 0, sumTotal = 0;
-          for (const v of progressMap.values()) {
-            sumLoaded += v.loaded;
-            sumTotal += v.total;
-          }
-          m({ url: a, loaded: sumLoaded, total: Math.max(sumTotal, sumLoaded, 25000000) });
-        }
-      });
-      await p(a, blob);
-    })
-  );
+  for (const a of allFiles) {
+    const existing = await D(a);
+    if (existing) {
+      progressMap.set(a, { loaded: existing.size, total: existing.size });
+    }
+  }
+  const report = () => {
+    if (!m) return;
+    let sumLoaded = 0, sumTotal = 0;
+    for (const v of progressMap.values()) {
+      sumLoaded += v.loaded;
+      sumTotal += v.total;
+    }
+    m({ url: e, loaded: sumLoaded, total: Math.max(sumTotal, sumLoaded, 28000000) });
+  };
+  report();
+  for (const a of allFiles) {
+    if (progressMap.has(a)) continue;
+    const blob = await S(a, (prog) => {
+      progressMap.set(a, { loaded: prog.loaded, total: prog.total || prog.loaded });
+      report();
+    });
+    await p(a, blob);
+    progressMap.set(a, { loaded: blob.size, total: blob.size });
+    report();
+  }
 }
 
 async function F(e) {
@@ -375,6 +572,28 @@ async function F(e) {
 
 async function L() {
   const found = new Set();
+  for (const k of memoryBlobCache.keys()) {
+    const s = String(k);
+    if (s.endsWith(".onnx")) {
+      const a = s.slice(0, -5);
+      if (a in c) found.add(a);
+    }
+  }
+  if (hasSwiftBridge()) {
+    try {
+      const resp = await fetch("/__piper_cache__/__list__.json");
+      if (resp.ok) {
+        const list = await resp.json();
+        if (Array.isArray(list)) {
+          for (const item of list) {
+            if (typeof item === "string" && item in c) {
+              found.add(item);
+            }
+          }
+        }
+      }
+    } catch {}
+  }
   try {
     const db = await openPiperDb();
     const keys = await new Promise((resolve) => {
@@ -409,6 +628,16 @@ async function L() {
 
 async function j() {
   sessionCache.clear();
+  memoryBlobCache.clear();
+  configJsonCache.clear();
+  if (hasSwiftBridge()) {
+    try {
+      window.webkit.messageHandlers.bridgeSwift.postMessage({
+        action: "deletePiperFile",
+        filename: "__all__"
+      });
+    } catch {}
+  }
   try {
     const db = await openPiperDb();
     await new Promise((resolve) => {
