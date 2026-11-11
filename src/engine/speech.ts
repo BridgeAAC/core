@@ -234,12 +234,49 @@ function getSynth(): SpeechSynthesis | undefined {
 
 let sharedAudioCtx: AudioContext | null = null;
 let gestureListenersBound = false;
+let primedAudioEl: HTMLAudioElement | null = null;
+
+const SILENT_WAV_BASE64 =
+  'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+
+export function primeAudioElement(): void {
+  if (typeof Audio === 'undefined') return;
+  try {
+    if (!primedAudioEl) {
+      primedAudioEl = new Audio();
+      primedAudioEl.preload = 'auto';
+      (primedAudioEl as any).playsInline = true;
+    }
+    primedAudioEl.src = SILENT_WAV_BASE64;
+    void primedAudioEl.play().catch(() => {});
+  } catch {}
+}
+
+export function getVoiceMirrorUrl(): string {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      return (localStorage.getItem('bridgeaac.voice_mirror_url') || '').trim();
+    }
+  } catch {}
+  return '';
+}
+
+export function setVoiceMirrorUrl(url: string): void {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const clean = url.trim();
+      if (clean) localStorage.setItem('bridgeaac.voice_mirror_url', clean);
+      else localStorage.removeItem('bridgeaac.voice_mirror_url');
+    }
+  } catch {}
+}
 
 function bindGestureAudioUnlock(): void {
   if (gestureListenersBound || typeof window === 'undefined') return;
   gestureListenersBound = true;
   const onGesture = () => {
     unlockAudio();
+    primeAudioElement();
   };
   window.addEventListener('pointerdown', onGesture, { capture: true, passive: true });
   window.addEventListener('touchstart', onGesture, { capture: true, passive: true });
@@ -266,6 +303,7 @@ export function getAudioContext(): AudioContext | null {
 
 export function unlockAudio(): void {
   bindGestureAudioUnlock();
+  primeAudioElement();
   const ctx = getAudioContext();
   if (!ctx) return;
   if (ctx.state === 'suspended') {
@@ -282,7 +320,11 @@ export function unlockAudio(): void {
 
 export function warmupOfflineVoice(langPrefix = 'en'): void {
   void getMeSpeak(langPrefix).catch(() => {});
-  void getDownloadedNeuralVoices().catch(() => {});
+  void getDownloadedNeuralVoices()
+    .then((list) => {
+      if (list.length > 0) warmupNeuralVoice(list[0]);
+    })
+    .catch(() => {});
 }
 
 export function isSpeechSupported(): boolean {
@@ -581,7 +623,7 @@ export async function getDownloadedNeuralVoices(): Promise<string[]> {
   const combined = new Set<string>();
   const isRealBrowser =
     typeof window !== 'undefined' &&
-    typeof indexedDB !== 'undefined' &&
+    (typeof indexedDB !== 'undefined' || Boolean(getSwiftHandler())) &&
     !/jsdom/i.test(navigator?.userAgent ?? '');
 
   if (isRealBrowser) {
@@ -595,6 +637,10 @@ export async function getDownloadedNeuralVoices(): Promise<string[]> {
         }
         await kvSet('installed_neural_voices', Array.from(combined));
         cachedStoredNeuralModels = combined;
+        if (combined.size > 0) {
+          const first = Array.from(combined)[0];
+          warmupNeuralVoice(first);
+        }
         return Array.from(combined);
       }
     } catch {}
@@ -612,6 +658,32 @@ export async function getDownloadedNeuralVoices(): Promise<string[]> {
 }
 
 const inFlightPiper = new Map<string, Promise<ArrayBuffer | null>>();
+const warmedNeuralModels = new Set<string>();
+
+export function warmupNeuralVoice(modelId?: string): void {
+  const isRealBrowser =
+    typeof window !== 'undefined' &&
+    (typeof indexedDB !== 'undefined' || Boolean(getSwiftHandler())) &&
+    !/jsdom/i.test(navigator?.userAgent ?? '');
+  if (!isRealBrowser) return;
+  const cleanId = modelId?.startsWith('bridge:piper-')
+    ? modelId.slice('bridge:piper-'.length)
+    : modelId || getCachedDownloadedNeuralVoices()[0];
+  if (!cleanId || warmedNeuralModels.has(cleanId)) return;
+  warmedNeuralModels.add(cleanId);
+  void (async () => {
+    try {
+      const vits = await getVits();
+      if (!vits) return;
+      await vits.predict({
+        text: '',
+        voiceId: cleanId as any,
+      });
+    } catch {
+      warmedNeuralModels.delete(cleanId);
+    }
+  })();
+}
 
 export async function downloadNeuralVoice(
   modelId: string,
@@ -619,12 +691,11 @@ export async function downloadNeuralVoice(
   vocab?: Vocabulary | null,
 ): Promise<boolean> {
   try {
-    void vocab;
     unlockAudio();
     onProgress?.(2);
     const isRealBrowser =
       typeof window !== 'undefined' &&
-      typeof indexedDB !== 'undefined' &&
+      (typeof indexedDB !== 'undefined' || Boolean(getSwiftHandler())) &&
       !/jsdom/i.test(navigator?.userAgent ?? '');
 
     if (isRealBrowser) {
@@ -641,6 +712,7 @@ export async function downloadNeuralVoice(
         }
       });
       onProgress?.(90);
+      warmedNeuralModels.add(modelId);
 
       const warmupPhrases = [
         'Hello, this offline voice is ready to use.',
@@ -648,18 +720,38 @@ export async function downloadNeuralVoice(
         'Hello, this is my voice in Bridge A A C.',
       ];
       for (let i = 0; i < warmupPhrases.length; i++) {
-        const phrase = warmupPhrases[i];
-        const wavBlob = await vits.predict({
-          text: phrase,
-          voiceId: modelId as any,
-        });
-        const ab = await wavBlob.arrayBuffer();
-        if (ab.byteLength > 100) {
-          const cacheKey = `piper:v2:${modelId}:${phrase.trim().toLowerCase()}`;
-          ttsMp3Cache.set(cacheKey, ab);
-          await ttsCachePut(cacheKey, ab);
-        }
+        try {
+          const phrase = warmupPhrases[i];
+          const wavBlob = await vits.predict({
+            text: phrase,
+            voiceId: modelId as any,
+          });
+          const ab = await wavBlob.arrayBuffer();
+          if (ab.byteLength > 100) {
+            const cacheKey = `piper:v2:${modelId}:${phrase.trim().toLowerCase()}`;
+            ttsMp3Cache.set(cacheKey, ab);
+            await ttsCachePut(cacheKey, ab);
+          }
+        } catch {}
         onProgress?.(92 + Math.round(((i + 1) / warmupPhrases.length) * 7));
+      }
+
+      if (vocab) {
+        const homePage = vocab.pages.find((p) => p.id === vocab.homePageId) ?? vocab.pages[0];
+        if (homePage) {
+          const corePhrases = homePage.buttons
+            .filter((b) => b.actions.some((a) => a.type === 'speak' || a.type === 'insert'))
+            .slice(0, 14)
+            .map((b) => (b.message || b.label || '').trim())
+            .filter(Boolean);
+          void (async () => {
+            for (const word of corePhrases) {
+              try {
+                await synthesizePiperNeuralWav(word, modelId);
+              } catch {}
+            }
+          })();
+        }
       }
 
       opfsStoredModels.add(modelId);
@@ -686,6 +778,7 @@ export async function removeNeuralVoice(modelId: string): Promise<void> {
     const updated = existing.filter((id) => id !== modelId);
     await kvSet('installed_neural_voices', updated);
     opfsStoredModels.delete(modelId);
+    warmedNeuralModels.delete(modelId);
     cachedStoredNeuralModels?.delete(modelId);
     for (const key of Array.from(ttsMp3Cache.keys())) {
       if (key.startsWith(`piper:v2:${modelId}:`) || key.startsWith(`piper:${modelId}:`)) {
@@ -976,12 +1069,12 @@ async function fetchNaturalAudioBuffer(text: string, lang: string): Promise<Arra
       { signal: controller.signal },
     );
     if (!res.ok || res.status === 204) {
-      naturalTtsCooldownUntil = Date.now() + 60_000;
+      naturalTtsCooldownUntil = Date.now() + 2_000;
       return null;
     }
     const ct = res.headers.get('content-type') ?? '';
     if (!ct.includes('audio')) {
-      naturalTtsCooldownUntil = Date.now() + 60_000;
+      naturalTtsCooldownUntil = Date.now() + 2_000;
       return null;
     }
     const buf = await res.arrayBuffer();
@@ -994,7 +1087,7 @@ async function fetchNaturalAudioBuffer(text: string, lang: string): Promise<Arra
     void ttsCachePut(key, buf);
     return buf;
   } catch {
-    naturalTtsCooldownUntil = Date.now() + 60_000;
+    naturalTtsCooldownUntil = Date.now() + 2_000;
     return null;
   } finally {
     clearTimeout(timer);
@@ -1118,6 +1211,31 @@ function scheduleWordBoundaries(
   return timers;
 }
 
+function arrayBufferToBase64(buf: ArrayBuffer): string {
+  const bytes = new Uint8Array(buf);
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+function estimateBufferDurationSec(buf: ArrayBuffer, rate: number): number {
+  if (buf.byteLength > 44) {
+    try {
+      const view = new DataView(buf);
+      if (view.getUint32(0, true) === 1179011410 && view.getUint32(8, true) === 1163280727) {
+        const byteRate = view.getUint32(28, true);
+        if (byteRate > 0) {
+          return Math.max(0.15, (buf.byteLength - 44) / byteRate / Math.max(0.5, rate));
+        }
+      }
+    } catch {}
+  }
+  return Math.max(0.4, buf.byteLength / 32000 / Math.max(0.5, rate));
+}
+
 async function playAudioBufferChunk(
   buf: ArrayBuffer,
   settings: SpeechSettings,
@@ -1126,13 +1244,62 @@ async function playAudioBufferChunk(
 ): Promise<{ durationSec: number; donePromise: Promise<boolean> } | null> {
   const isMespeak = audioKind === 'mespeak-wav';
   const isWav = audioKind === 'piper-wav' || audioKind === 'mespeak-wav';
+  const rate = isMespeak ? 1 : clamp(settings.rate, 0.5, 2.0, 1);
+  const volume = clamp(settings.volume, 0, 1, 1);
+  const swiftHandler = getSwiftHandler();
+
+  if (swiftHandler) {
+    try {
+      const playId = nextId++;
+      const durationSec = estimateBufferDurationSec(buf, rate);
+      const base64 = arrayBufferToBase64(buf);
+      const w = env();
+      let settled = false;
+      const donePromise = new Promise<boolean>((resolve) => {
+        const finishPlay = (ok: boolean) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(safetyTimer);
+          resolve(ok);
+        };
+        const safetyTimer = setTimeout(
+          () => finishPlay(true),
+          Math.max(1500, Math.round((durationSec + 2.0) * 1000)),
+        );
+        w.__bridgeOnSwiftSpeechEvent = (ev: {
+          id: number;
+          type: 'start' | 'boundary' | 'end' | 'error';
+        }) => {
+          if (ev.id !== playId) return;
+          if (ev.type === 'end') finishPlay(true);
+          else if (ev.type === 'error') finishPlay(false);
+        };
+        onCleanupRegister(() => {
+          clearTimeout(safetyTimer);
+          try {
+            swiftHandler.postMessage({ action: 'stop' });
+          } catch {}
+          finishPlay(false);
+        });
+      });
+      swiftHandler.postMessage({
+        action: 'playAudio',
+        id: playId,
+        base64,
+        rate,
+        volume,
+      });
+      return { durationSec, donePromise };
+    } catch {}
+  }
+
   const ctx = getAudioContext();
   if (ctx) {
     try {
-      if (ctx.state === 'suspended') {
+      if (ctx.state === 'suspended' || (ctx.state as string) === 'interrupted') {
         await Promise.race([
           ctx.resume().catch(() => {}),
-          new Promise<void>((r) => setTimeout(r, 150)),
+          new Promise((r) => setTimeout(r, 150)),
         ]);
       }
       if (ctx.state === 'running') {
@@ -1140,13 +1307,12 @@ async function playAudioBufferChunk(
         const audioBuffer = await ctx.decodeAudioData(copy);
         const source = ctx.createBufferSource();
         source.buffer = audioBuffer;
-        const rate = isMespeak ? 1 : clamp(settings.rate, 0.5, 2.0, 1);
         source.playbackRate.value = rate;
         if (!isMespeak && settings.pitch !== 1 && 'detune' in source) {
           source.detune.value = (clamp(settings.pitch, 0.5, 1.5, 1) - 1) * 500;
         }
         const gain = ctx.createGain();
-        gain.gain.value = clamp(settings.volume, 0, 1, 1);
+        gain.gain.value = volume;
 
         if (isMespeak && typeof ctx.createBiquadFilter === 'function') {
           const warmth = ctx.createBiquadFilter();
@@ -1167,8 +1333,20 @@ async function playAudioBufferChunk(
         }
         gain.connect(ctx.destination);
 
+        const durationSec = audioBuffer.duration / rate;
+        let settled = false;
         const donePromise = new Promise<boolean>((resolve) => {
-          source.onended = () => resolve(true);
+          const finishSource = (ok: boolean) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(safetyTimer);
+            resolve(ok);
+          };
+          const safetyTimer = setTimeout(
+            () => finishSource(true),
+            Math.max(1500, Math.round((durationSec + 1.5) * 1000)),
+          );
+          source.onended = () => finishSource(true);
         });
         onCleanupRegister(() => {
           try {
@@ -1177,7 +1355,7 @@ async function playAudioBufferChunk(
           } catch {}
         });
         source.start(0);
-        return { durationSec: audioBuffer.duration / rate, donePromise };
+        return { durationSec, donePromise };
       }
     } catch {}
   }
@@ -1188,25 +1366,35 @@ async function playAudioBufferChunk(
       const looksLikeWav = header ? header[0] === 0x52 && header[1] === 0x49 : isWav;
       const mime = looksLikeWav ? 'audio/wav' : 'audio/mpeg';
       const url = URL.createObjectURL(new Blob([buf], { type: mime }));
-      const el = new Audio(url);
-      el.volume = clamp(settings.volume, 0, 1, 1);
-      if (!isMespeak) el.playbackRate = clamp(settings.rate, 0.5, 2.0, 1);
+      const el = primedAudioEl ?? new Audio();
+      (el as any).playsInline = true;
+      el.src = url;
+      el.volume = volume;
+      if (!isMespeak) el.playbackRate = rate;
+      const estDurationFallback = estimateBufferDurationSec(buf, rate);
+      let settled = false;
       const donePromise = new Promise<boolean>((resolve) => {
-        el.onended = () => {
+        const finishEl = (ok: boolean) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(safetyTimer);
           URL.revokeObjectURL(url);
-          resolve(true);
+          resolve(ok);
         };
-        el.onerror = () => {
-          URL.revokeObjectURL(url);
-          resolve(false);
-        };
+        const safetyTimer = setTimeout(
+          () => finishEl(true),
+          Math.max(1800, Math.round((estDurationFallback + 2.0) * 1000)),
+        );
+        el.onended = () => finishEl(true);
+        el.onerror = () => finishEl(false);
       });
       onCleanupRegister(() => {
         el.pause();
         URL.revokeObjectURL(url);
       });
       await el.play();
-      const estDuration = Number.isFinite(el.duration) && el.duration > 0 ? el.duration : 1.2;
+      const estDuration =
+        Number.isFinite(el.duration) && el.duration > 0 ? el.duration / rate : estDurationFallback;
       return { durationSec: estDuration, donePromise };
     } catch {
       return null;
@@ -1240,13 +1428,26 @@ async function runFallbackAudioSpeech(
   for (let i = 0; i < chunks.length; i++) {
     if (me.cancelled || session !== me) return;
     const chunk = chunks[i];
+    const norm = chunk.text.trim().toLowerCase();
 
     let buf: ArrayBuffer | null = null;
     let audioKind: 'natural-mp3' | 'piper-wav' | 'mespeak-wav' = 'natural-mp3';
 
     if (wantsPiperModel) {
-      buf = await synthesizePiperNeuralWav(chunk.text, wantsPiperModel, settings);
-      if (buf) audioKind = 'piper-wav';
+      const cacheKey = `piper:v2:${wantsPiperModel}:${norm}`;
+      buf = ttsMp3Cache.get(cacheKey) ?? (await ttsCacheGet(cacheKey)) ?? null;
+      if (buf) {
+        ttsMp3Cache.set(cacheKey, buf);
+        audioKind = 'piper-wav';
+      } else {
+        buf = await synthesizePiperNeuralWav(chunk.text, wantsPiperModel, settings);
+        if (buf) {
+          audioKind = 'piper-wav';
+        } else {
+          buf = await synthesizeOfflineWav(chunk.text, settings, voiceURI, lang);
+          audioKind = 'mespeak-wav';
+        }
+      }
     }
 
     if (!buf && !forceInstantOffline && !voiceURI.startsWith('bridge:natural-')) {
@@ -1258,27 +1459,39 @@ async function runFallbackAudioSpeech(
         storedList.find((m) => m.toLowerCase().startsWith(langPrefix + '_')) ??
         (langPrefix === 'en' ? storedList[0] : undefined);
       if (storedMatch) {
-        buf = await synthesizePiperNeuralWav(chunk.text, storedMatch, settings);
-        if (buf) audioKind = 'piper-wav';
+        const cacheKey = `piper:v2:${storedMatch}:${norm}`;
+        buf = ttsMp3Cache.get(cacheKey) ?? (await ttsCacheGet(cacheKey)) ?? null;
+        if (buf) {
+          ttsMp3Cache.set(cacheKey, buf);
+          audioKind = 'piper-wav';
+        } else {
+          buf = await synthesizePiperNeuralWav(chunk.text, storedMatch, settings);
+          if (buf) {
+            audioKind = 'piper-wav';
+          }
+        }
       }
     }
 
     if (!buf && !forceInstantOffline) {
-      buf = await fetchNaturalAudioBuffer(chunk.text, lang);
-      if (buf) audioKind = 'natural-mp3';
-    }
-
-    if (!buf && !forceInstantOffline) {
-      if (!cachedStoredNeuralModels) {
-        await getDownloadedNeuralVoices();
-      }
-      const storedList = cachedStoredNeuralModels ? Array.from(cachedStoredNeuralModels) : [];
-      const storedMatch =
-        storedList.find((m) => m.toLowerCase().startsWith(langPrefix + '_')) ??
-        (langPrefix === 'en' ? storedList[0] : undefined);
-      if (storedMatch) {
-        buf = await synthesizePiperNeuralWav(chunk.text, storedMatch, settings);
-        if (buf) audioKind = 'piper-wav';
+      const netKey = `natural:${lang}:${norm}`;
+      buf = ttsMp3Cache.get(netKey) ?? (await ttsCacheGet(netKey)) ?? null;
+      if (buf) {
+        audioKind = 'natural-mp3';
+      } else {
+        const netPromise = fetchNaturalAudioBuffer(chunk.text, lang);
+        const timeoutPromise = new Promise<null>((r) => setTimeout(() => r(null), 240));
+        buf = await Promise.race([netPromise, timeoutPromise]);
+        if (buf) {
+          audioKind = 'natural-mp3';
+        } else {
+          void netPromise.then(async (freshBuf) => {
+            if (freshBuf && freshBuf.byteLength > 100) {
+              ttsMp3Cache.set(netKey, freshBuf);
+              await ttsCachePut(netKey, freshBuf);
+            }
+          });
+        }
       }
     }
 

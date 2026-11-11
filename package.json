@@ -26,7 +26,8 @@
     "ios:build": "npm run ios:sync && xtool dev build",
     "ios:ipa": "npm run ios:sync && xtool dev build -c release --ipa",
     "ios:run": "npm run ios:sync && xtool dev run",
-    "store:assets": "node scripts/generate-store-assets.mjs"
+    "store:assets": "node scripts/generate-store-assets.mjs",
+    "wiki:sync": "node scripts/sync-wiki.mjs"
   },
   "dependencies": {
     "@diffusionstudio/vits-web": "^1.0.3",
@@ -45,5 +46,9 @@
   },
   "devDependencies": {
     "playwright-core": "^1.65.0"
+  },
+  "overrides": {
+    "glob": "^14.0.4",
+    "minimatch": "^11.0.7"
   }
 }

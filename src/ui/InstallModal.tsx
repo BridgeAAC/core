@@ -593,6 +593,35 @@ export function InstallModal() {
                 🐧 Ubuntu / Debian (.deb)
               </a>
             </div>
+
+            <div
+              style={{
+                marginTop: '14px',
+                padding: '10px 14px',
+                borderRadius: '10px',
+                background: 'var(--bg-msg)',
+                border: '1px solid var(--border-subtle)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '8px',
+              }}
+            >
+              <div>
+                <strong style={{ fontSize: '0.88rem' }}>Immediate Support for Families & Autism Parents</strong>
+                <p class="hint" style={{ margin: '2px 0 0', fontSize: '0.8rem' }}>
+                  Need an urgent fix, custom accommodation, or help setting up?
+                </p>
+              </div>
+              <a
+                href="mailto:support@bridgeaac.org?subject=Urgent%20Family%20Support%20-%20BridgeAAC"
+                class="btn primary sm"
+                style={{ textDecoration: 'none' }}
+              >
+                ✉️ support@bridgeaac.org
+              </a>
+            </div>
           </div>
 
           <div class="modal-footer" style={{ marginTop: '16px' }}>

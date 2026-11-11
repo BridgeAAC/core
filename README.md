@@ -134,6 +134,24 @@ npm run build
 
 ---
 
+## Immediate Support for Autism Parents & Families
+
+If you are an autism parent, caregiver, special education teacher, or therapist experiencing any bug, crash, or accessibility roadblock affecting a communicator:
+
+- **Direct Family Support Email**: **[support@bridgeaac.org](mailto:support@bridgeaac.org?subject=Urgent%20Family%20Support%20-%20BridgeAAC)**
+- **Our Commitment**: We understand that an AAC device is a communicator's voice. We treat issues affecting autistic and non-speaking individuals with top priority and work to fix them immediately.
+
+---
+
+## Legal & Medical Disclaimer
+
+- **Not a Medical Device**: BridgeAAC is an open-source assistive communication application. It is **NOT** a medical device, has not been evaluated or approved by the FDA or any medical authority, and is not a substitute for professional medical, clinical, psychological, or speech-language pathology advice.
+- **No Emergency Services / 911**: BridgeAAC cannot place emergency phone calls or contact emergency dispatchers. Caregivers must maintain an independent telephone or emergency device at all times.
+- **Limitation of Liability**: Provided **"AS IS"** under the MIT License without warranty of any kind. In no event shall the authors or contributors be liable for any damages, communication disruptions, device malfunctions, or data loss.
+- **Full Legal Terms**: See **[DISCLAIMER.md](DISCLAIMER.md)** for complete liability waivers, clinical disclaimers, and trademark notices.
+
+---
+
 ## License
 
 BridgeAAC is free and open-source software licensed under the **[MIT License](LICENSE)**.

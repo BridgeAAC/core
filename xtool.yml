@@ -1,0 +1,6 @@
+version: 1
+bundleID: org.bridgeaac.app
+infoPath: Info.plist
+entitlementsPath: BridgeAAC.entitlements
+iconPath: AppIcon.png
+skipLSP: true

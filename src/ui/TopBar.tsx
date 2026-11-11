@@ -153,7 +153,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             aria-label="Daily Planner, Mood Tracker, Games, About Me, and Caregiver Notes"
           >
             <Icon name="star" />
-            <span class="nav-label">Hub</span>
+            <span class="nav-label">{t.tools || 'Tools'}</span>
           </button>
           <button
             type="button"

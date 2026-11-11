@@ -55,6 +55,7 @@ export interface UiStrings {
   vocabularies: string;
   keyboard: string;
   phrases: string;
+  tools: string;
   edit: string;
   done: string;
   install: string;
@@ -80,6 +81,7 @@ const UI_TRANSLATIONS: Record<LangCode, UiStrings> = {
     vocabularies: 'Vocabularies',
     keyboard: 'Keyboard',
     phrases: 'Phrases',
+    tools: 'Tools',
     edit: 'Edit',
     done: 'Done',
     install: 'Install',
@@ -103,6 +105,7 @@ const UI_TRANSLATIONS: Record<LangCode, UiStrings> = {
     vocabularies: 'Tableros',
     keyboard: 'Teclado',
     phrases: 'Frases',
+    tools: 'Herramientas',
     edit: 'Editar',
     done: 'Listo',
     install: 'Instalar',
@@ -126,6 +129,7 @@ const UI_TRANSLATIONS: Record<LangCode, UiStrings> = {
     vocabularies: 'Tableaux',
     keyboard: 'Clavier',
     phrases: 'Phrases',
+    tools: 'Outils',
     edit: 'Modifier',
     done: 'Terminé',
     install: 'Installer',
@@ -149,6 +153,7 @@ const UI_TRANSLATIONS: Record<LangCode, UiStrings> = {
     vocabularies: 'Vokabulare',
     keyboard: 'Tastatur',
     phrases: 'Sätze',
+    tools: 'Tools',
     edit: 'Bearbeiten',
     done: 'Fertig',
     install: 'App',
@@ -172,6 +177,7 @@ const UI_TRANSLATIONS: Record<LangCode, UiStrings> = {
     vocabularies: 'Pranchas',
     keyboard: 'Teclado',
     phrases: 'Frases',
+    tools: 'Ferramentas',
     edit: 'Editar',
     done: 'Pronto',
     install: 'Instalar',
@@ -195,6 +201,7 @@ const UI_TRANSLATIONS: Record<LangCode, UiStrings> = {
     vocabularies: 'Tabelle',
     keyboard: 'Tastiera',
     phrases: 'Frasi',
+    tools: 'Strumenti',
     edit: 'Modifica',
     done: 'Fatto',
     install: 'Installa',
@@ -218,6 +225,7 @@ const UI_TRANSLATIONS: Record<LangCode, UiStrings> = {
     vocabularies: 'اللوحات',
     keyboard: 'لوحة المفاتيح',
     phrases: 'عبارات',
+    tools: 'أدوات',
     edit: 'تعديل',
     done: 'تم',
     install: 'تثبيت',
@@ -241,6 +249,7 @@ const UI_TRANSLATIONS: Record<LangCode, UiStrings> = {
     vocabularies: '词库',
     keyboard: '键盘',
     phrases: '常用语',
+    tools: '工具',
     edit: '编辑',
     done: '完成',
     install: '安装',
@@ -264,6 +273,7 @@ const UI_TRANSLATIONS: Record<LangCode, UiStrings> = {
     vocabularies: 'शब्दावली',
     keyboard: 'कीबोर्ड',
     phrases: 'वाक्य',
+    tools: 'उपकरण',
     edit: 'बदलें',
     done: 'पूर्ण',
     install: 'इंस्टॉल',
@@ -287,6 +297,7 @@ const UI_TRANSLATIONS: Record<LangCode, UiStrings> = {
     vocabularies: 'Bokabularyo',
     keyboard: 'Tipaan',
     phrases: 'Parirala',
+    tools: 'Kagamitan',
     edit: 'Baguhin',
     done: 'Tapos',
     install: 'I-install',
