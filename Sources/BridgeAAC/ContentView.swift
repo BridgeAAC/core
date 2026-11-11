@@ -333,7 +333,19 @@ final class BridgeBundleSchemeHandler: NSObject, WKURLSchemeHandler {
         let candidateURL = bundleRoot.appendingPathComponent(relativePath).standardizedFileURL
         var targetURL = candidateURL
         var isDir: ObjCBool = false
+
+        let assetExtensions: Set<String> = [
+            "js", "mjs", "wasm", "css", "json", "webmanifest",
+            "png", "svg", "ico", "jpg", "jpeg", "webp", "woff2",
+            "wav", "mp3", "onnx", "data"
+        ]
+        let isAssetRequest = assetExtensions.contains(candidateURL.pathExtension.lowercased())
+
         if !targetURL.path.hasPrefix(bundleCanonical) || !FileManager.default.fileExists(atPath: targetURL.path, isDirectory: &isDir) || isDir.boolValue {
+            if isAssetRequest {
+                sendStatus(404, url: url, task: urlSchemeTask)
+                return
+            }
             targetURL = bundleRoot.appendingPathComponent("index.html")
         }
 
@@ -906,6 +918,7 @@ private func createConfiguredWebView(coordinator: BridgeNativeCoordinator) -> WK
 
     let webView = WKWebView(frame: .zero, configuration: config)
     #if os(iOS)
+    webView.scrollView.isScrollEnabled = false
     webView.scrollView.bounces = false
     webView.scrollView.contentInsetAdjustmentBehavior = .never
     webView.isOpaque = false
