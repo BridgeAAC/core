@@ -158,11 +158,14 @@ export async function kvGet<T>(key: string): Promise<T | undefined> {
 
 export async function kvSet<T>(key: string, value: T): Promise<void> {
   memKv.set(key, value);
-  try {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(`bridgeaac.kv.${key}`, JSON.stringify(value));
-    }
-  } catch {}
+  const isSensitive = /pass(word|code)|secret|token|credential|pin/i.test(key);
+  if (!isSensitive) {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(`bridgeaac.kv.${key}`, JSON.stringify(value));
+      }
+    } catch {}
+  }
   try {
     if (typeof indexedDB !== 'undefined') {
       const db = await openDb();

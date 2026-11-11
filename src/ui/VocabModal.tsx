@@ -241,6 +241,16 @@ export function VocabModal() {
                 <button
                   type="button"
                   class="sm-btn"
+                  onClick={() => {
+                    panel.value = 'pageset';
+                  }}
+                  title="Choose between BridgeWords 42, 60, 84, or 108"
+                >
+                  Choose Page Set
+                </button>
+                <button
+                  type="button"
+                  class="sm-btn"
                   onClick={async () => {
                     const id = await installStarter(starterLocale);
                     await openVocab(id);

@@ -13,6 +13,7 @@ interface Item {
   m?: string;
   go?: string;
   a?: Action[];
+  img?: string;
 }
 
 function it(spec: string, defKind: Kind): Item {
@@ -30,7 +31,7 @@ function it(spec: string, defKind: Kind): Item {
 function toButton(pageKey: string, idx: number, item: Item, row: number, col: number, big = false): Button {
   const sw = WORD_CLASS[item.k ?? 'misc'];
   const actions: Action[] = item.a ?? (item.go ? [{ type: 'navigate', pageId: item.go }] : []);
-  const image = (item.e ? `emoji:${item.e}` : undefined) ?? resolveIconForButton(item.l, item.m, actions);
+  const image = item.img ?? (item.e ? `emoji:${item.e}` : undefined) ?? resolveIconForButton(item.l, item.m, actions);
   return {
     id: `${pageKey}-${idx}`,
     label: item.l,
@@ -64,34 +65,250 @@ function folder(label: string, emoji: string, go: string): Item {
   return { l: label, e: emoji, k: 'folder', go };
 }
 
-export function createStarterVocabulary(locale = 'en'): { vocab: Vocabulary; assets: AssetBlob[] } {
+function ara(label: string, id: number, kind: Kind, message?: string): Item {
+  return { l: label, img: `arasaac:${id}`, k: kind, m: message };
+}
+
+function araFolder(label: string, id: number, go: string): Item {
+  return { l: label, img: `arasaac:${id}`, k: 'folder', go };
+}
+
+export type PageSetSize = 42 | 50 | 60 | 84 | 108;
+
+export interface PageSetInfo {
+  size: PageSetSize;
+  name: string;
+  grid: string;
+  rows: number;
+  cols: number;
+  description: string;
+  category: 'bridgewords' | 'arasaac';
+  badge?: string;
+}
+
+export const PAGE_SETS: PageSetInfo[] = [
+  {
+    size: 42,
+    name: 'BridgeWords 42',
+    grid: '6×7',
+    rows: 6,
+    cols: 7,
+    description: 'Core vocabulary with 42 buttons. Ideal for beginning communicators.',
+    category: 'bridgewords',
+  },
+  {
+    size: 60,
+    name: 'BridgeWords 60',
+    grid: '6×10',
+    rows: 6,
+    cols: 10,
+    description: 'A robust 60-location core vocabulary.',
+    category: 'bridgewords',
+  },
+  {
+    size: 84,
+    name: 'BridgeWords 84',
+    grid: '7×12',
+    rows: 7,
+    cols: 12,
+    description: 'A robust 84-location core vocabulary.',
+    category: 'bridgewords',
+  },
+  {
+    size: 108,
+    name: 'BridgeWords 108',
+    grid: '9×12',
+    rows: 9,
+    cols: 12,
+    description: 'A robust 108-location core vocabulary.',
+    category: 'bridgewords',
+  },
+  {
+    size: 50,
+    name: 'ARASAAC Core 50',
+    grid: '5×10',
+    rows: 5,
+    cols: 10,
+    description: 'Strict ARASAAC core vocabulary with standardized pictograms and Fitzgerald color coding.',
+    category: 'arasaac',
+    badge: 'ARASAAC',
+  },
+];
+
+export function createStarterVocabulary(
+  locale = 'en',
+  size: PageSetSize = 60,
+): { vocab: Vocabulary; assets: AssetBlob[] } {
   const P = (s: string, kind: Kind = 'pronoun') => it(s, kind);
 
-  const home = grid(
-    'home',
-    'Home',
-    10,
-    'misc',
-    [
-      P('I|🙋'), P('me'), P('you|👉'), P('he'), P('she'), P('it'), P('we'), P('they'), P('my'), P('your'),
-      P('want|🤲', 'verb'), P('go|🏃', 'verb'), P('like|❤️', 'verb'), P('have', 'verb'), P('get', 'verb'), P('make|🔨', 'verb'), P('do', 'verb'), P('can|💪', 'verb'), P('see|👁️', 'verb'), P('help|🆘', 'verb'),
-      P('stop|🛑', 'negation'), P('look|👀', 'verb'), P('eat|🍽️', 'verb'), P('play|🎮', 'verb'), P('put', 'verb'), P('give|🎁', 'verb'), P('come|👋', 'verb'), P('need', 'verb'), P('open|📂', 'verb'), P('turn|🔄', 'verb'),
-      P('more|➕', 'descriptor'), P('finished|✅', 'descriptor'), P('good|👍', 'descriptor'), P('bad|👎', 'descriptor'), P('big|🐘', 'descriptor'), P('little|🐭', 'descriptor'), P('hot|🔥', 'descriptor'), P('cold|🥶', 'descriptor'), P('happy|😊', 'descriptor'), P('sad|😢', 'descriptor'),
-      P('in', 'preposition'), P('on', 'preposition'), P('up|⬆️', 'preposition'), P('down|⬇️', 'preposition'), P('out', 'preposition'), P('off', 'preposition'), P('to', 'preposition'), P('with', 'preposition'), P('for', 'preposition'), P('at', 'preposition'),
-      P('yes|👍', 'social'), P('no|🙅', 'negation'), P('not', 'negation'), P('a', 'misc'), P('the', 'misc'), P('this', 'misc'), P('that', 'misc'), P('and', 'misc'), P('is', 'misc'), P('here|📍', 'preposition'),
-      folder('Questions', '❓', 'questions'),
-      folder('Social', '💬', 'social'),
-      folder('People', '👪', 'people'),
-      folder('Food', '🍎', 'food'),
-      folder('Feelings', '🙂', 'feelings'),
-      folder('Places', '🏠', 'places'),
-      folder('Time', '⏰', 'time'),
-      folder('Numbers', '🔢', 'numbers'),
-      folder('Quick Chat', '⚡', 'quick'),
-      { l: 'Keyboard', e: '⌨️', k: 'control', a: [{ type: 'keyboard' }] },
-    ],
-    { rows: 7 },
-  );
+  let home: Page;
+
+  if (size === 50) {
+    home = grid(
+      'home',
+      'Home',
+      10,
+      'misc',
+      [
+        ara('I', 6009, 'pronoun'),
+        ara('you', 6010, 'pronoun'),
+        ara('he', 6011, 'pronoun'),
+        ara('she', 6012, 'pronoun'),
+        ara('it', 2448, 'pronoun'),
+        ara('we', 6013, 'pronoun'),
+        ara('they', 6014, 'pronoun'),
+        ara('who', 2481, 'question'),
+        ara('what', 2479, 'question'),
+        ara('where', 2480, 'question'),
+
+        ara('want', 2451, 'verb'),
+        ara('go', 2841, 'verb'),
+        ara('like', 2453, 'verb'),
+        ara('have', 2454, 'verb'),
+        ara('see', 2455, 'verb'),
+        ara('help', 5985, 'verb'),
+        ara('stop', 5986, 'negation'),
+        ara('eat', 2458, 'verb'),
+        ara('play', 2460, 'verb'),
+        ara('need', 2461, 'verb'),
+
+        ara('make', 2462, 'verb'),
+        ara('do', 2462, 'verb'),
+        ara('look', 2463, 'verb'),
+        ara('come', 2464, 'verb'),
+        ara('open', 2496, 'verb'),
+        ara('close', 2497, 'verb'),
+        ara('put', 2498, 'verb'),
+        ara('give', 2499, 'verb'),
+        ara('turn', 2500, 'verb'),
+        ara('say', 2501, 'verb'),
+
+        ara('more', 5990, 'descriptor'),
+        ara('finished', 2466, 'descriptor'),
+        ara('good', 2467, 'descriptor'),
+        ara('bad', 2468, 'descriptor'),
+        ara('big', 2469, 'descriptor'),
+        ara('little', 2470, 'descriptor'),
+        ara('in', 2475, 'preposition'),
+        ara('on', 2476, 'preposition'),
+        ara('yes', 2473, 'social'),
+        ara('no', 2474, 'negation'),
+
+        araFolder('Questions', 2487, 'questions'),
+        araFolder('Social', 2488, 'social'),
+        araFolder('People', 2489, 'people'),
+        araFolder('Food', 2490, 'food'),
+        araFolder('Feelings', 2491, 'feelings'),
+        araFolder('Places', 2492, 'places'),
+        araFolder('Time', 2493, 'time'),
+        araFolder('Numbers', 2494, 'numbers'),
+        araFolder('Quick Chat', 2509, 'quick'),
+        { l: 'Keyboard', img: 'arasaac:2495', k: 'control', a: [{ type: 'keyboard' }] },
+      ],
+      { rows: 5 },
+    );
+  } else if (size === 42) {
+    home = grid(
+      'home',
+      'Home',
+      7,
+      'misc',
+      [
+        P('I|🙋'), P('you|👉'), P('he'), P('she'), P('it'), P('we'), P('they'),
+        P('want|🤲', 'verb'), P('go|🏃', 'verb'), P('like|❤️', 'verb'), P('have', 'verb'), P('see|👁️', 'verb'), P('help|🆘', 'verb'), P('stop|🛑', 'negation'),
+        P('eat|🍽️', 'verb'), P('play|🎮', 'verb'), P('need', 'verb'), P('make|🔨', 'verb'), P('do', 'verb'), P('look|👀', 'verb'), P('come|👋', 'verb'),
+        P('more|➕', 'descriptor'), P('finished|✅', 'descriptor'), P('good|👍', 'descriptor'), P('bad|👎', 'descriptor'), P('big|🐘', 'descriptor'), P('little|🐭', 'descriptor'), P('happy|😊', 'descriptor'),
+        P('in', 'preposition'), P('on', 'preposition'), P('up|⬆️', 'preposition'), P('down|⬇️', 'preposition'), P('yes|👍', 'social'), P('no|🙅', 'negation'), P('not', 'negation'),
+        folder('Questions', '❓', 'questions'),
+        folder('Social', '💬', 'social'),
+        folder('People', '👪', 'people'),
+        folder('Food', '🍎', 'food'),
+        folder('Feelings', '🙂', 'feelings'),
+        folder('Places', '🏠', 'places'),
+        { l: 'Keyboard', e: '⌨️', k: 'control', a: [{ type: 'keyboard' }] },
+      ],
+      { rows: 6 },
+    );
+  } else if (size === 84) {
+    home = grid(
+      'home',
+      'Home',
+      12,
+      'misc',
+      [
+        P('I|🙋'), P('me'), P('my'), P('you|👉'), P('your'), P('he'), P('she'), P('it'), P('we'), P('they'), P('who|🧑', 'question'), P('what|❔', 'question'),
+        P('want|🤲', 'verb'), P('go|🏃', 'verb'), P('like|❤️', 'verb'), P('have', 'verb'), P('get', 'verb'), P('make|🔨', 'verb'), P('do', 'verb'), P('can|💪', 'verb'), P('see|👁️', 'verb'), P('help|🆘', 'verb'), P('where|📍', 'question'), P('when|🕒', 'question'),
+        P('stop|🛑', 'negation'), P('look|👀', 'verb'), P('eat|🍽️', 'verb'), P('drink|🥤', 'verb'), P('play|🎮', 'verb'), P('put', 'verb'), P('give|🎁', 'verb'), P('come|👋', 'verb'), P('need', 'verb'), P('say|🗣️', 'verb'), P('why|🤔', 'question'), P('how|🛠️', 'question'),
+        P('open|📂', 'verb'), P('close|🚪', 'verb'), P('turn|🔄', 'verb'), P('feel|❤️', 'verb'), P('know|🧠', 'verb'), P('think|💭', 'verb'), P('read|📖', 'verb'), P('write|✏️', 'verb'), P('listen|👂', 'verb'), P('wait|✋', 'verb'), P('work|💼', 'verb'), P('find|🔍', 'verb'),
+        P('more|➕', 'descriptor'), P('finished|✅', 'descriptor'), P('good|👍', 'descriptor'), P('bad|👎', 'descriptor'), P('big|🐘', 'descriptor'), P('little|🐭', 'descriptor'), P('hot|🔥', 'descriptor'), P('cold|🥶', 'descriptor'), P('happy|😊', 'descriptor'), P('sad|😢', 'descriptor'), P('fast|⚡', 'descriptor'), P('slow|🐢', 'descriptor'),
+        P('in', 'preposition'), P('on', 'preposition'), P('up|⬆️', 'preposition'), P('down|⬇️', 'preposition'), P('out', 'preposition'), P('off', 'preposition'), P('to', 'preposition'), P('with', 'preposition'), P('for', 'preposition'), P('at', 'preposition'), P('and', 'misc'), P('but', 'misc'),
+        P('yes|👍', 'social'), P('no|🙅', 'negation'), P('not', 'negation'),
+        folder('Questions', '❓', 'questions'),
+        folder('Social', '💬', 'social'),
+        folder('People', '👪', 'people'),
+        folder('Food', '🍎', 'food'),
+        folder('Feelings', '🙂', 'feelings'),
+        folder('Places', '🏠', 'places'),
+        folder('Time', '⏰', 'time'),
+        folder('Numbers', '🔢', 'numbers'),
+        { l: 'Keyboard', e: '⌨️', k: 'control', a: [{ type: 'keyboard' }] },
+      ],
+      { rows: 7 },
+    );
+  } else if (size === 108) {
+    home = grid(
+      'home',
+      'Home',
+      12,
+      'misc',
+      [
+        P('I|🙋'), P('me'), P('my'), P('mine'), P('you|👉'), P('your'), P('yours'), P('he'), P('she'), P('it'), P('we'), P('they'),
+        P('who|🧑', 'question'), P('what|❔', 'question'), P('where|📍', 'question'), P('when|🕒', 'question'), P('why|🤔', 'question'), P('how|🛠️', 'question'), P('which', 'question'), P('is', 'misc'), P('are', 'misc'), P('was', 'misc'), P('were', 'misc'), P('will', 'misc'),
+        P('want|🤲', 'verb'), P('go|🏃', 'verb'), P('like|❤️', 'verb'), P('have', 'verb'), P('get', 'verb'), P('make|🔨', 'verb'), P('do', 'verb'), P('can|💪', 'verb'), P('see|👁️', 'verb'), P('help|🆘', 'verb'), P('give|🎁', 'verb'), P('take', 'verb'),
+        P('stop|🛑', 'negation'), P('look|👀', 'verb'), P('eat|🍽️', 'verb'), P('drink|🥤', 'verb'), P('play|🎮', 'verb'), P('put', 'verb'), P('come|👋', 'verb'), P('need', 'verb'), P('say|🗣️', 'verb'), P('tell', 'verb'), P('call|📞', 'verb'), P('ask', 'verb'),
+        P('open|📂', 'verb'), P('close|🚪', 'verb'), P('turn|🔄', 'verb'), P('feel|❤️', 'verb'), P('know|🧠', 'verb'), P('think|💭', 'verb'), P('read|📖', 'verb'), P('write|✏️', 'verb'), P('listen|👂', 'verb'), P('wait|✋', 'verb'), P('work|💼', 'verb'), P('find|🔍', 'verb'),
+        P('more|➕', 'descriptor'), P('finished|✅', 'descriptor'), P('good|👍', 'descriptor'), P('bad|👎', 'descriptor'), P('big|🐘', 'descriptor'), P('little|🐭', 'descriptor'), P('hot|🔥', 'descriptor'), P('cold|🥶', 'descriptor'), P('happy|😊', 'descriptor'), P('sad|😢', 'descriptor'), P('same', 'descriptor'), P('different', 'descriptor'),
+        P('fast|⚡', 'descriptor'), P('slow|🐢', 'descriptor'), P('new', 'descriptor'), P('old', 'descriptor'), P('clean', 'descriptor'), P('dirty', 'descriptor'), P('in', 'preposition'), P('on', 'preposition'), P('up|⬆️', 'preposition'), P('down|⬇️', 'preposition'), P('out', 'preposition'), P('off', 'preposition'),
+        P('to', 'preposition'), P('from', 'preposition'), P('with', 'preposition'), P('without', 'preposition'), P('for', 'preposition'), P('at', 'preposition'), P('about', 'preposition'), P('and', 'misc'), P('or', 'misc'), P('but', 'misc'), P('yes|👍', 'social'), P('no|🙅', 'negation'),
+        P('not', 'negation'), P('please|🙏', 'social'), P('thank you|🙏', 'social'),
+        folder('Social', '💬', 'social'),
+        folder('People', '👪', 'people'),
+        folder('Food', '🍎', 'food'),
+        folder('Feelings', '🙂', 'feelings'),
+        folder('Places', '🏠', 'places'),
+        folder('Time', '⏰', 'time'),
+        folder('Numbers', '🔢', 'numbers'),
+        folder('Quick Chat', '⚡', 'quick'),
+        { l: 'Keyboard', e: '⌨️', k: 'control', a: [{ type: 'keyboard' }] },
+      ],
+      { rows: 9 },
+    );
+  } else {
+    home = grid(
+      'home',
+      'Home',
+      10,
+      'misc',
+      [
+        P('I|🙋'), P('you|👉'), P('he'), P('she'), P('it'), P('we'), P('they'), P('me'), P('my'), P('your'),
+        P('want|🤲', 'verb'), P('go|🏃', 'verb'), P('like|❤️', 'verb'), P('have', 'verb'), P('get', 'verb'), P('make|🔨', 'verb'), P('do', 'verb'), P('can|💪', 'verb'), P('see|👁️', 'verb'), P('help|🆘', 'verb'),
+        P('stop|🛑', 'negation'), P('look|👀', 'verb'), P('eat|🍽️', 'verb'), P('play|🎮', 'verb'), P('put', 'verb'), P('give|🎁', 'verb'), P('come|👋', 'verb'), P('need', 'verb'), P('open|📂', 'verb'), P('turn|🔄', 'verb'),
+        P('more|➕', 'descriptor'), P('finished|✅', 'descriptor'), P('good|👍', 'descriptor'), P('bad|👎', 'descriptor'), P('big|🐘', 'descriptor'), P('little|🐭', 'descriptor'), P('hot|🔥', 'descriptor'), P('cold|🥶', 'descriptor'), P('happy|😊', 'descriptor'), P('sad|😢', 'descriptor'),
+        P('in', 'preposition'), P('on', 'preposition'), P('up|⬆️', 'preposition'), P('down|⬇️', 'preposition'), P('to', 'preposition'), P('with', 'preposition'), P('yes|👍', 'social'), P('no|🙅', 'negation'), P('not', 'negation'), P('here|📍', 'preposition'),
+        folder('Questions', '❓', 'questions'),
+        folder('Social', '💬', 'social'),
+        folder('People', '👪', 'people'),
+        folder('Food', '🍎', 'food'),
+        folder('Feelings', '🙂', 'feelings'),
+        folder('Places', '🏠', 'places'),
+        folder('Time', '⏰', 'time'),
+        folder('Numbers', '🔢', 'numbers'),
+        folder('Quick Chat', '⚡', 'quick'),
+        { l: 'Keyboard', e: '⌨️', k: 'control', a: [{ type: 'keyboard' }] },
+      ],
+      { rows: 6 },
+    );
+  }
 
   const questions = grid('questions', 'Questions', 6, 'question', [
     'who|🧑', 'what|❔', 'where|📍', 'when|🕒', 'why|🤔', 'how|🛠️',
@@ -212,10 +429,11 @@ export function createStarterVocabulary(locale = 'en'): { vocab: Vocabulary; ass
 
   const now = Date.now();
   const lang = normalizeLangCode(locale);
+  const pageSet = PAGE_SETS.find((p) => p.size === size) ?? PAGE_SETS[1];
   const baseVocab: Vocabulary = {
-    id: 'starter-' + lang + '-' + now.toString(36),
-    name: 'Starter Vocabulary',
-    description: 'A free core-word board with folders for people, food, feelings, places, time and numbers. Edit anything!',
+    id: `starter-${size}-${lang}-${now.toString(36)}`,
+    name: pageSet.name,
+    description: pageSet.description,
     locale: 'en',
     source: { kind: 'builtin', importedAt: now },
     homePageId: 'home',
@@ -225,6 +443,10 @@ export function createStarterVocabulary(locale = 'en'): { vocab: Vocabulary; ass
     schema: 1,
   };
   const vocab = translateVocabularyToLocale(baseVocab, lang);
+  if (size === 50) {
+    vocab.name = lang === 'es' ? 'ARASAAC Núcleo 50' : 'ARASAAC Core 50';
+    vocab.description = pageSet.description;
+  }
   return { vocab, assets: [] };
 }
 

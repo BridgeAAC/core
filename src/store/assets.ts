@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals';
-import { getAsset } from './db';
-import type { ImageRef } from '../model';
+import { getAsset, putAssets } from './db';
+import type { ImageRef, Vocabulary } from '../model';
 
 export type ResolvedImage = { kind: 'emoji'; text: string } | { kind: 'src'; url: string } | null;
 
@@ -10,6 +10,122 @@ export const assetsVersion = signal(0);
 
 export function arasaacUrl(id: number | string, size: 300 | 500 = 300): string {
   return `https://static.arasaac.org/pictograms/${id}/${id}_${size}.png`;
+}
+
+export function loadArasaacUrl(id: number | string): Promise<string | undefined> {
+  const key = `arasaac:${id}`;
+  const cached = urlCache.get(key);
+  if (cached) return Promise.resolve(cached);
+
+  let p = pending.get(key);
+  if (!p) {
+    p = (async () => {
+      try {
+        const stored = await getAsset(key);
+        if (stored && stored.data) {
+          const blob = new Blob([stored.data as BlobPart], { type: stored.mime || 'image/png' });
+          const url = URL.createObjectURL(blob);
+          urlCache.set(key, url);
+          return url;
+        }
+
+        if (typeof caches !== 'undefined') {
+          try {
+            const cache = await caches.open('arasaac');
+            const match = await cache.match(arasaacUrl(id));
+            if (match) {
+              const buf = await match.arrayBuffer();
+              const uint8 = new Uint8Array(buf);
+              await putAssets([
+                {
+                  id: key,
+                  vocabId: '__arasaac__',
+                  kind: 'image',
+                  mime: 'image/png',
+                  data: uint8,
+                },
+              ]);
+              const blob = new Blob([uint8], { type: 'image/png' });
+              const url = URL.createObjectURL(blob);
+              urlCache.set(key, url);
+              return url;
+            }
+          } catch {}
+        }
+
+        if (typeof fetch !== 'undefined') {
+          const remoteUrl = arasaacUrl(id);
+          const res = await fetch(remoteUrl);
+          if (res.ok) {
+            const buf = await res.arrayBuffer();
+            const uint8 = new Uint8Array(buf);
+            await putAssets([
+              {
+                id: key,
+                vocabId: '__arasaac__',
+                kind: 'image',
+                mime: 'image/png',
+                data: uint8,
+              },
+            ]);
+            if (typeof caches !== 'undefined') {
+              try {
+                const cache = await caches.open('arasaac');
+                await cache.put(
+                  remoteUrl,
+                  new Response(buf.slice(0), {
+                    headers: { 'Content-Type': 'image/png' },
+                  }),
+                );
+              } catch {}
+            }
+            const blob = new Blob([uint8], { type: 'image/png' });
+            const url = URL.createObjectURL(blob);
+            urlCache.set(key, url);
+            return url;
+          }
+        }
+      } catch {}
+      return undefined;
+    })().finally(() => {
+      pending.delete(key);
+    });
+    pending.set(key, p);
+  }
+  return p;
+}
+
+export function cacheArasaacPictogram(id: number | string): Promise<string | undefined> {
+  return loadArasaacUrl(id);
+}
+
+export function collectArasaacIds(v: Vocabulary): string[] {
+  const ids = new Set<string>();
+  for (const p of v.pages) {
+    for (const b of p.buttons) {
+      if (b.image && b.image.startsWith('arasaac:')) {
+        ids.add(b.image.slice(8));
+      }
+      if (b.variants) {
+        for (const variant of Object.values(b.variants)) {
+          if (variant?.image && variant.image.startsWith('arasaac:')) {
+            ids.add(variant.image.slice(8));
+          }
+        }
+      }
+    }
+  }
+  return Array.from(ids);
+}
+
+export async function preloadArasaacForVocabulary(v: Vocabulary): Promise<void> {
+  const ids = collectArasaacIds(v);
+  if (!ids.length) return;
+  const BATCH_SIZE = 8;
+  for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+    const chunk = ids.slice(i, i + BATCH_SIZE);
+    await Promise.allSettled(chunk.map((id) => loadArasaacUrl(id)));
+  }
 }
 
 export function resolveImageSync(ref: ImageRef | undefined): ResolvedImage | 'loading' {
@@ -23,8 +139,12 @@ export function resolveImageSync(ref: ImageRef | undefined): ResolvedImage | 'lo
       return { kind: 'emoji', text: value };
     case 'url':
       return { kind: 'src', url: value };
-    case 'arasaac':
+    case 'arasaac': {
+      const cached = urlCache.get(`arasaac:${value}`);
+      if (cached) return { kind: 'src', url: cached };
+      void loadArasaacUrl(value);
       return { kind: 'src', url: arasaacUrl(value) };
+    }
     case 'img': {
       const cached = urlCache.get(value);
       return cached ? { kind: 'src', url: cached } : 'loading';

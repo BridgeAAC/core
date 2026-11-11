@@ -50,6 +50,7 @@ export interface Settings {
   soundFeedback: boolean;
   uiLanguage: string;
   pin: string;
+  useDeviceKeyboard?: boolean;
   onboarded: boolean;
 }
 

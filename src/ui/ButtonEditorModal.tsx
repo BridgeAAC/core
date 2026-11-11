@@ -6,6 +6,7 @@ import { EMOJI_GROUPS, SWATCHES, WORD_CLASS } from '../data/palette';
 import { ensureButtonImage, resolveIconForButton } from '../data/icons';
 import { getLanguageInfo } from '../i18n';
 import { putAssets } from '../store/db';
+import { cacheArasaacPictogram } from '../store/assets';
 import { ButtonPicture } from './ButtonPicture';
 
 interface ArasaacHit {
@@ -46,6 +47,16 @@ export function ButtonEditorModal() {
 
   function handleSave(e: Event) {
     e.preventDefault();
+    if (draft.image?.startsWith('arasaac:')) {
+      void cacheArasaacPictogram(draft.image.slice(8));
+    }
+    if (draft.variants) {
+      for (const variant of Object.values(draft.variants)) {
+        if (variant?.image?.startsWith('arasaac:')) {
+          void cacheArasaacPictogram(variant.image.slice(8));
+        }
+      }
+    }
     saveButton(page!.id, draft);
     toast(existing ? 'Button updated' : 'Button added', 'success');
     close();
@@ -134,7 +145,11 @@ export function ButtonEditorModal() {
       );
       if (!resp.ok) throw new Error('No symbols found');
       const data = (await resp.json()) as ArasaacHit[];
-      setArasaacResults(Array.isArray(data) ? data.slice(0, 24) : []);
+      const hits = Array.isArray(data) ? data.slice(0, 24) : [];
+      setArasaacResults(hits);
+      for (const hit of hits.slice(0, 8)) {
+        void cacheArasaacPictogram(hit._id);
+      }
     } catch {
       setArasaacResults([]);
     } finally {
@@ -430,7 +445,10 @@ export function ButtonEditorModal() {
                           class={`arasaac-item ${
                             draft.image === `arasaac:${hit._id}` ? 'selected' : ''
                           }`}
-                          onClick={() => setDraft({ ...draft, image: `arasaac:${hit._id}` })}
+                          onClick={() => {
+                            setDraft({ ...draft, image: `arasaac:${hit._id}` });
+                            void cacheArasaacPictogram(hit._id);
+                          }}
                         >
                           <img
                             src={`https://static.arasaac.org/pictograms/${hit._id}/${hit._id}_300.png`}

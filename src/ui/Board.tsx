@@ -416,8 +416,8 @@ export function Board() {
               <span
                 class="btn-label"
                 style={{
-                  fontSize: `clamp(0.54rem, ${(((15.5 / Math.max(4, page.cols)) * fontScale)).toFixed(2)}vw, ${((page.cols <= 5 ? 1.08 : page.cols <= 7 ? 0.98 : 0.92) * fontScale).toFixed(2)}rem)`,
-                  fontWeight: st.bold === false ? 500 : 700,
+                  fontSize: `clamp(0.68rem, ${(((16.5 / Math.max(4, page.cols)) * fontScale)).toFixed(2)}vw, ${((page.cols <= 5 ? 1.15 : page.cols <= 7 ? 1.05 : 0.96) * fontScale).toFixed(2)}rem)`,
+                  fontWeight: st.bold === false ? 600 : 700,
                   fontStyle: st.italic ? 'italic' : undefined,
                   textDecoration: st.underline ? 'underline' : undefined,
                 }}

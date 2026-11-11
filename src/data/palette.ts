@@ -55,7 +55,7 @@ export function readableText(bg: string | undefined): string {
   const g = (n >> 8) & 255;
   const b = n & 255;
   const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return lum > 0.55 ? '#111111' : '#ffffff';
+  return lum > 0.55 ? '#000000' : '#ffffff';
 }
 
 export const EMOJI_GROUPS: { name: string; emoji: string[] }[] = [

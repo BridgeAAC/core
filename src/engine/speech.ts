@@ -288,17 +288,21 @@ export function getAudioContext(): AudioContext | null {
   const e = env();
   const Ctx = e.AudioContext || e.webkitAudioContext;
   if (!Ctx) return null;
-  if (!sharedAudioCtx || sharedAudioCtx.state === 'closed') {
+  let ctx: AudioContext;
+  if (sharedAudioCtx && sharedAudioCtx.state !== 'closed') {
+    ctx = sharedAudioCtx;
+  } else {
     try {
-      sharedAudioCtx = new Ctx();
+      ctx = new Ctx();
+      sharedAudioCtx = ctx;
     } catch {
       return null;
     }
   }
-  if (sharedAudioCtx && sharedAudioCtx.state === 'suspended') {
-    void sharedAudioCtx.resume().catch(() => {});
+  if (ctx.state === 'suspended') {
+    void ctx.resume().catch(() => {});
   }
-  return sharedAudioCtx;
+  return ctx;
 }
 
 export function unlockAudio(): void {
@@ -564,33 +568,6 @@ export function chunkText(text: string, max = MAX_CHUNK_LENGTH): Chunk[] {
 let vitsModulePromise: Promise<typeof import('@diffusionstudio/vits-web')> | null = null;
 let cachedStoredNeuralModels: Set<string> | null = null;
 const opfsStoredModels = new Set<string>();
-
-function supportsMainThreadOpfsWrite(): boolean {
-  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
-  const ua = navigator.userAgent || '';
-  const isIOS =
-    /iPad|iPhone|iPod/.test(ua) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  if (isIOS) return false;
-  return (
-    typeof (window as any).FileSystemFileHandle !== 'undefined' &&
-    typeof (window as any).FileSystemFileHandle?.prototype?.createWritable === 'function'
-  );
-}
-
-function voiceVariantForModel(modelId: string): { voiceURI: string; lang: string } {
-  const info = NEURAL_OFFLINE_MODELS.find((m) => m.modelId === modelId);
-  const lang = info?.lang ?? 'en-US';
-  const langPrefix = lang.split('-')[0].toLowerCase();
-  if (lang === 'en-GB') return { voiceURI: 'bridge:offline-rp', lang };
-  if (/male|dave|thorsten|faber|riccardo|kareem|ald/i.test(modelId)) {
-    return { voiceURI: 'bridge:offline-m3', lang };
-  }
-  if (['es', 'fr', 'de', 'pt', 'it', 'zh'].includes(langPrefix)) {
-    return { voiceURI: `bridge:offline-${langPrefix}`, lang };
-  }
-  return { voiceURI: 'bridge:offline-f2', lang };
-}
 
 async function getVits(): Promise<typeof import('@diffusionstudio/vits-web') | null> {
   try {

@@ -461,19 +461,36 @@ export function ToolsModal() {
     speakText(intro);
   }
 
+  async function hashPasscode(p: string): Promise<string> {
+    if (!p) return '';
+    try {
+      if (typeof crypto !== 'undefined' && crypto.subtle) {
+        const enc = new TextEncoder().encode(p);
+        const buf = await crypto.subtle.digest('SHA-256', enc);
+        return Array.from(new Uint8Array(buf))
+          .map((b) => b.toString(16).padStart(2, '0'))
+          .join('');
+      }
+    } catch {}
+    return p;
+  }
+
   async function handleSetPasscode(e: Event) {
     e.preventDefault();
     const clean = newPasscode.trim();
-    setSavedPasscode(clean);
-    await kvSet('caregiver_passcode', clean);
+    const stored = clean ? await hashPasscode(clean) : '';
+    setSavedPasscode(stored);
+    await kvSet('caregiver_passcode', stored);
     setNewPasscode('');
     setNotesUnlocked(true);
     toast(clean ? 'Caregiver Notes passcode saved' : 'Passcode removed', 'success');
   }
 
-  function handleUnlockNotes(e: Event) {
+  async function handleUnlockNotes(e: Event) {
     e.preventDefault();
-    if (passInput.trim() === savedPasscode) {
+    const input = passInput.trim();
+    const hashed = await hashPasscode(input);
+    if (input === savedPasscode || hashed === savedPasscode) {
       setNotesUnlocked(true);
       setPassInput('');
       setPassError(false);

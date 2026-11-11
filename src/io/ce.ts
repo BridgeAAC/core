@@ -549,7 +549,6 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
 
       if (!emittedInsert && hasCode60 && !hasExplicitInsert && !hasNav && (message || trimmedLabel)) {
         out.unshift({ type: 'insert', attach: true });
-        emittedInsert = true;
       }
 
       const actionable = out.filter((a) => a.type !== 'unsupported');
