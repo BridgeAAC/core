@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import { installStarter, openVocab, panel, toast, vocab } from '../state';
-import { settings, updateSettings } from '../settings';
+import { updateSettings } from '../settings';
 import { PAGE_SETS, type PageSetSize } from '../data/starter';
 import { SUPPORTED_LANGUAGES, type LangCode, resolveActiveLang } from '../i18n';
 
