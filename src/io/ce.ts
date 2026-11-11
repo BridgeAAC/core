@@ -572,6 +572,7 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
     const buttonById = new Map<number, RawButtonRow>();
     const buttonByResourceId = new Map<number, RawButtonRow>();
     let missingSymbolRefs = 0;
+    let autoMappedArasaac = 0;
 
     {
       const res = db.exec(
@@ -726,9 +727,13 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
         const baseEntry = modList.find((m) => m.modifier === FORM_DEFAULT) ?? modList[0];
         const baseRaw = baseEntry.button;
         const baseActions = convertButtonActions(baseRaw.resourceId, baseRaw.label, baseRaw.message);
+        const directImg = resolveSymbolImage(baseRaw.symbolLinkId);
         const baseImage =
-          resolveSymbolImage(baseRaw.symbolLinkId) ??
+          directImg ??
           resolveIconForButton(baseRaw.label, baseRaw.message, baseActions);
+        if (!directImg && baseImage && !baseImage.startsWith('badge:word:')) {
+          autoMappedArasaac++;
+        }
         const baseStyle = buttonStyles.get(baseRaw.styleId) ?? {};
         const baseSig = JSON.stringify({
           l: baseRaw.label,
@@ -782,9 +787,13 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
 
       if (directBtn) {
         const actions = convertButtonActions(directBtn.resourceId, directBtn.label, directBtn.message);
+        const directImg = resolveSymbolImage(directBtn.symbolLinkId);
         const image =
-          resolveSymbolImage(directBtn.symbolLinkId) ??
+          directImg ??
           resolveIconForButton(directBtn.label, directBtn.message, actions);
+        if (!directImg && image && !image.startsWith('badge:word:')) {
+          autoMappedArasaac++;
+        }
         const style = buttonStyles.get(directBtn.styleId) ?? {};
         const rInfo = resourceById.get(resourceId);
         return {
@@ -901,9 +910,15 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
     }
 
     if (missingSymbolRefs > 0) {
-      warnings.push(
-        `${missingSymbolRefs.toLocaleString()} button symbols referenced external symbol libraries (e.g. SymbolStix / PCS) that are not embedded in .ce files, so those buttons display text only.`,
-      );
+      if (autoMappedArasaac > 0) {
+        warnings.push(
+          `${missingSymbolRefs.toLocaleString()} button symbols referenced external symbol libraries not embedded in the file. Automatically mapped ${autoMappedArasaac.toLocaleString()} buttons to open ARASAAC pictograms. Use "Auto-Enrich with ARASAAC" to fetch online matches for remaining buttons.`,
+        );
+      } else {
+        warnings.push(
+          `${missingSymbolRefs.toLocaleString()} button symbols referenced external symbol libraries not embedded in the file. Use "Auto-Enrich with ARASAAC" in Vocabulary settings to match open pictograms.`,
+        );
+      }
     }
     if (unsupportedSymbolFormats > 0) {
       warnings.push(
