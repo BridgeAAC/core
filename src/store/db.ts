@@ -5,28 +5,65 @@ const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
+const memVocabs = new Map<string, Vocabulary>();
+const memAssets = new Map<string, AssetBlob>();
+const memKv = new Map<string, unknown>();
+
+function initFallbackStorage(): void {
+  try {
+    if (typeof localStorage === 'undefined') return;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('bridgeaac.vocab.')) {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const v = JSON.parse(raw) as Vocabulary;
+          if (v && v.id) memVocabs.set(v.id, v);
+        }
+      }
+    }
+  } catch {}
+}
+initFallbackStorage();
+
 function openDb(): Promise<IDBDatabase> {
+  if (typeof indexedDB === 'undefined') {
+    return Promise.reject(new Error('IndexedDB is not available in this environment.'));
+  }
   if (dbPromise) return dbPromise;
-  dbPromise = new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains('vocabs')) db.createObjectStore('vocabs', { keyPath: 'id' });
-      if (!db.objectStoreNames.contains('assets')) {
-        const s = db.createObjectStore('assets', { keyPath: 'id' });
-        s.createIndex('vocabId', 'vocabId', { unique: false });
-      }
-      if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
-      if (!db.objectStoreNames.contains('tts_cache')) {
-        db.createObjectStore('tts_cache', { keyPath: 'key' });
-      }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error ?? new Error('Could not open the local database'));
-    req.onblocked = () =>
-      reject(
-        new Error('The local database is blocked by another tab. Close other BridgeAAC tabs and reload.'),
-      );
+  dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
+    try {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('vocabs')) db.createObjectStore('vocabs', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('assets')) {
+          const s = db.createObjectStore('assets', { keyPath: 'id' });
+          s.createIndex('vocabId', 'vocabId', { unique: false });
+        }
+        if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+        if (!db.objectStoreNames.contains('tts_cache')) {
+          db.createObjectStore('tts_cache', { keyPath: 'key' });
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => {
+        dbPromise = null;
+        reject(req.error ?? new Error('Could not open the local database'));
+      };
+      req.onblocked = () => {
+        dbPromise = null;
+        reject(
+          new Error('The local database is blocked by another tab. Close other BridgeAAC tabs and reload.'),
+        );
+      };
+    } catch (err) {
+      dbPromise = null;
+      reject(err instanceof Error ? err : new Error(String(err)));
+    }
+  }).catch((err) => {
+    dbPromise = null;
+    throw err;
   });
   return dbPromise;
 }
@@ -75,69 +112,116 @@ export function summarize(v: Vocabulary): VocabSummary {
 }
 
 export async function listVocabs(): Promise<VocabSummary[]> {
-  const db = await openDb();
-  const all = (await wrap(db.transaction('vocabs').objectStore('vocabs').getAll())) as Vocabulary[];
-  return all.map(summarize).sort((a, b) => b.updatedAt - a.updatedAt);
+  try {
+    const db = await openDb();
+    const all = (await wrap(db.transaction('vocabs').objectStore('vocabs').getAll())) as Vocabulary[];
+    for (const v of all) memVocabs.set(v.id, v);
+    return all.map(summarize).sort((a, b) => b.updatedAt - a.updatedAt);
+  } catch {
+    return Array.from(memVocabs.values()).map(summarize).sort((a, b) => b.updatedAt - a.updatedAt);
+  }
 }
 
 export async function loadVocab(id: string): Promise<Vocabulary | undefined> {
-  const db = await openDb();
-  return wrap(db.transaction('vocabs').objectStore('vocabs').get(id)) as Promise<
-    Vocabulary | undefined
-  >;
+  try {
+    const db = await openDb();
+    const v = (await wrap(db.transaction('vocabs').objectStore('vocabs').get(id))) as
+      | Vocabulary
+      | undefined;
+    if (v) {
+      memVocabs.set(v.id, v);
+      return v;
+    }
+  } catch {}
+  return memVocabs.get(id);
 }
 
 export async function saveVocab(v: Vocabulary): Promise<void> {
-  const db = await openDb();
-  const tx = db.transaction('vocabs', 'readwrite');
-  tx.objectStore('vocabs').put(v);
-  await txDone(tx);
+  memVocabs.set(v.id, v);
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(`bridgeaac.vocab.${v.id}`, JSON.stringify(v));
+    }
+  } catch {}
+  try {
+    const db = await openDb();
+    const tx = db.transaction('vocabs', 'readwrite');
+    tx.objectStore('vocabs').put(v);
+    await txDone(tx);
+  } catch {}
 }
 
 export async function deleteVocab(id: string): Promise<void> {
-  const db = await openDb();
-  const tx = db.transaction(['vocabs', 'assets'], 'readwrite');
-  tx.objectStore('vocabs').delete(id);
-  const idx = tx.objectStore('assets').index('vocabId');
-  const keys = await wrap(idx.getAllKeys(id));
-  for (const k of keys) tx.objectStore('assets').delete(k);
-  await txDone(tx);
+  memVocabs.delete(id);
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(`bridgeaac.vocab.${id}`);
+    }
+  } catch {}
+  for (const [aid, asset] of memAssets) {
+    if (asset.vocabId === id) memAssets.delete(aid);
+  }
+  try {
+    const db = await openDb();
+    const tx = db.transaction(['vocabs', 'assets'], 'readwrite');
+    tx.objectStore('vocabs').delete(id);
+    const idx = tx.objectStore('assets').index('vocabId');
+    const keys = await wrap(idx.getAllKeys(id));
+    for (const k of keys) tx.objectStore('assets').delete(k);
+    await txDone(tx);
+  } catch {}
 }
 
 export async function putAssets(assets: AssetBlob[]): Promise<void> {
   if (!assets.length) return;
-  const db = await openDb();
-  const CHUNK = 200;
-  for (let i = 0; i < assets.length; i += CHUNK) {
-    const tx = db.transaction('assets', 'readwrite');
-    const store = tx.objectStore('assets');
-    for (const a of assets.slice(i, i + CHUNK)) store.put(a);
-    await txDone(tx);
-  }
+  for (const a of assets) memAssets.set(a.id, a);
+  try {
+    const db = await openDb();
+    const CHUNK = 200;
+    for (let i = 0; i < assets.length; i += CHUNK) {
+      const tx = db.transaction('assets', 'readwrite');
+      const store = tx.objectStore('assets');
+      for (const a of assets.slice(i, i + CHUNK)) store.put(a);
+      await txDone(tx);
+    }
+  } catch {}
 }
 
 export async function getAsset(id: string): Promise<AssetBlob | undefined> {
-  const db = await openDb();
-  return wrap(db.transaction('assets').objectStore('assets').get(id)) as Promise<
-    AssetBlob | undefined
-  >;
+  try {
+    const db = await openDb();
+    const asset = (await wrap(db.transaction('assets').objectStore('assets').get(id))) as
+      | AssetBlob
+      | undefined;
+    if (asset) {
+      memAssets.set(asset.id, asset);
+      return asset;
+    }
+  } catch {}
+  return memAssets.get(id);
 }
 
 export async function getAssetsForVocab(vocabId: string): Promise<AssetBlob[]> {
-  const db = await openDb();
-  return wrap(
-    db.transaction('assets').objectStore('assets').index('vocabId').getAll(vocabId),
-  ) as Promise<AssetBlob[]>;
+  try {
+    const db = await openDb();
+    const assets = (await wrap(
+      db.transaction('assets').objectStore('assets').index('vocabId').getAll(vocabId),
+    )) as AssetBlob[];
+    for (const a of assets) memAssets.set(a.id, a);
+    return assets;
+  } catch {}
+  return Array.from(memAssets.values()).filter((a) => a.vocabId === vocabId);
 }
 
 export async function deleteAsset(id: string): Promise<void> {
-  const db = await openDb();
-  const tx = db.transaction('assets', 'readwrite');
-  tx.objectStore('assets').delete(id);
-  await txDone(tx);
+  memAssets.delete(id);
+  try {
+    const db = await openDb();
+    const tx = db.transaction('assets', 'readwrite');
+    tx.objectStore('assets').delete(id);
+    await txDone(tx);
+  } catch {}
 }
-
-const memKv = new Map<string, unknown>();
 
 export async function kvGet<T>(key: string): Promise<T | undefined> {
   try {
@@ -230,6 +314,8 @@ export async function ttsCacheClear(): Promise<void> {
 
 export async function resetAllLocalData(): Promise<void> {
   memKv.clear();
+  memVocabs.clear();
+  memAssets.clear();
   try {
     if (typeof localStorage !== 'undefined') {
       const keysToRemove: string[] = [];
