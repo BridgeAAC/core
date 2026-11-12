@@ -271,12 +271,28 @@ export function setVoiceMirrorUrl(url: string): void {
   } catch {}
 }
 
+let synthPrimed = false;
+function primeSpeechSynth(): void {
+  if (synthPrimed || typeof window === 'undefined') return;
+  synthPrimed = true;
+  const synth = getSynth();
+  const Utter = env().SpeechSynthesisUtterance as typeof SpeechSynthesisUtterance | undefined;
+  if (!synth || !Utter) return;
+  try {
+    if ((synth as any).paused) synth.resume?.();
+    const blank = new Utter('');
+    blank.volume = 0;
+    synth.speak(blank);
+  } catch {}
+}
+
 function bindGestureAudioUnlock(): void {
   if (gestureListenersBound || typeof window === 'undefined') return;
   gestureListenersBound = true;
   const onGesture = () => {
     unlockAudio();
     primeAudioElement();
+    primeSpeechSynth();
   };
   window.addEventListener('pointerdown', onGesture, { capture: true, passive: true });
   window.addEventListener('touchstart', onGesture, { capture: true, passive: true });
@@ -308,6 +324,7 @@ export function getAudioContext(): AudioContext | null {
 export function unlockAudio(): void {
   bindGestureAudioUnlock();
   primeAudioElement();
+  primeSpeechSynth();
   const ctx = getAudioContext();
   if (!ctx) return;
   if (ctx.state === 'suspended') {
@@ -1729,7 +1746,7 @@ export function speak(text: string, opts: SpeakOptions): void {
           } catch {}
           void runFallbackAudioSpeech(chunks, processed, text, opts, me);
         }
-      }, 450);
+      }, 1500);
     }
   };
 

@@ -370,12 +370,16 @@ export function speakText(
     onEnd: (completed) => {
       speaking.value = isSpeaking();
       spokenRange.value = null;
+      if (!completed) isMessageSpeaking = false;
       if (completed) opts.onDone?.();
     },
   });
 }
 
+let isMessageSpeaking = false;
+
 export function stopAllSpeech(): void {
+  isMessageSpeaking = false;
   stopSpeaking();
   stopAudio();
   speaking.value = false;
@@ -395,14 +399,17 @@ function pushHistory(text: string): void {
 export function speakMessage(): void {
   const text = message.value;
   if (!text.trim()) return;
-  if (speaking.value) {
+  if (speaking.value && isMessageSpeaking) {
     stopAllSpeech();
     return;
   }
+  stopAllSpeech();
+  isMessageSpeaking = true;
   pushHistory(text);
   speakText(text, {
     highlight: true,
     onDone: () => {
+      isMessageSpeaking = false;
       if (settings.value.clearAfterSpeak) clearMessage();
     },
   });
