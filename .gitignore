@@ -8,9 +8,6 @@ ios/
 .swiftpm/
 xtool/
 *.xcodeproj/
-Sources/BridgeAAC/Resources/WebBundle/*
-!Sources/BridgeAAC/Resources/WebBundle/.gitkeep
-!Sources/BridgeAAC/Resources/WebBundle/index.html
 coverage/
 fixtures/
 .DS_Store

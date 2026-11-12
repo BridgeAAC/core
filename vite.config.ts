@@ -117,7 +117,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,wasm,woff2,json}'],
         maximumFileSizeToCacheInBytes: 30 * 1024 * 1024,
         navigateFallback: 'index.html',
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [/^\/api\//, /\.[a-zA-Z0-9]+$/],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => /(^|\.)arasaac\.org$/.test(url.hostname),
