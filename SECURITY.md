@@ -30,7 +30,7 @@ BridgeAAC is **local-first**. The full, feature-by-feature list of network use i
 2. **Local storage.**
    - Vocabularies, imported archives (`.ce`, `.obf`, `.bridge`), recorded audio, planner and mood data, and Caregiver Notes are stored in local storage on the device (IndexedDB, localStorage or OPFS in the browser, or the app sandbox on iOS and desktop).
 3. **Online features that send text are opt-in and off by default.**
-   - *Online speech* sends the text being spoken to the bridgeaac.org `/api/tts` proxy, which forwards it to Google's text-to-speech service.
+   - *Online speech* sends the text being spoken to Google's text-to-speech service, either directly from the device or through the bridgeaac.org `/api/tts` proxy.
    - *Online symbol search* sends search words and button labels to `api.arasaac.org`.
    - With both off, speech runs on the device (Piper neural voices, system voices or the bundled meSpeak voice), and no communication text is transmitted by the app.
 4. **PIN and Caregiver Notes.**

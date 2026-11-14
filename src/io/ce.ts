@@ -1,4 +1,4 @@
-import { unzipSync, zipSync } from 'fflate';
+import { zipSync } from 'fflate';
 import type { Database } from 'sql.js';
 import {
   type Action,
@@ -22,6 +22,7 @@ import {
   newId,
   sniffSound,
   tick,
+  safeUnzip,
 } from './util';
 import { resolveIconForButton } from '../data/icons';
 
@@ -90,40 +91,53 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
   if (isZip(data)) {
     let entries: Record<string, Uint8Array>;
     try {
-      entries = unzipSync(data, {
-        filter: (file) => {
-          const lower = file.name.toLowerCase();
-          return lower.endsWith('.c4v') || lower.endsWith('.c4s');
-        },
-      });
+      entries = safeUnzip(data, (name) => name.endsWith('.c4v') || name.endsWith('.c4s'));
     } catch (e) {
       throw new Error(
         `Could not read archive (${e instanceof Error ? e.message : 'corrupt ZIP file'}).`,
       );
     }
+    let sawDamagedC4v = false;
     for (const [name, bytes] of Object.entries(entries)) {
       const lower = name.toLowerCase();
-      if (lower.endsWith('.c4v') && !c4vBytes) {
+      if (lower.includes('__macosx/')) continue;
+      if (!isSqliteHeader(bytes)) {
+        if (lower.endsWith('.c4v')) sawDamagedC4v = true;
+        continue;
+      }
+      if (lower.endsWith('.c4v') && (!c4vBytes || bytes.byteLength > c4vBytes.byteLength)) {
         c4vBytes = bytes;
         c4vEntryName = name;
-      } else if (lower.endsWith('images.c4s') || (lower.endsWith('.c4s') && !imagesBytes)) {
+      } else if (
+        lower.endsWith('.c4s') &&
+        (!imagesBytes || lower.endsWith('images.c4s') || bytes.byteLength > imagesBytes.byteLength)
+      ) {
         imagesBytes = bytes;
       }
     }
+    if (!c4vBytes && sawDamagedC4v) {
+      throw new Error(
+        'The vocabulary inside this file is damaged. Try exporting it again from the original app.',
+      );
+    }
     if (!c4vBytes) {
-      throw new Error('This archive does not contain a vocabulary (.c4v) database.');
+      throw new Error(
+        "This file doesn't have a vocabulary inside it. Export it again from the original app, using the full backup option, and try that file.",
+      );
     }
   } else if (isSqliteHeader(data)) {
     c4vBytes = data;
     c4vEntryName = opts.filename ?? 'Vocabulary.c4v';
   } else {
     throw new Error(
-      'Not a valid (.ce / .c4v) file. Expected a valid ZIP archive or SQLite vocabulary database.',
+      "This doesn't look like a .ce file. It may have been damaged while copying. Try sending it to the device again.",
     );
   }
 
   if (!isSqliteHeader(c4vBytes)) {
-    throw new Error('The vocabulary database inside this file is corrupt or not a SQLite 3 file.');
+    throw new Error(
+      'The vocabulary inside this file is damaged. Try exporting it again from the original app.',
+    );
   }
 
   progress(0.15, 'Initializing SQLite engine…');
@@ -194,12 +208,18 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
         if (symTable) {
           const symCols = columnSet(imgDb, symTable);
           const hasCompressed = symCols.has('compressed');
-          const res = imgDb.exec(
+          const stmt = imgDb.prepare(
             `SELECT rid, ${hasCompressed ? 'compressed' : '0'}, data FROM "${symTable}" WHERE data IS NOT NULL`,
           );
-          if (res[0]) {
+          try {
             let imgCounter = 0;
-            for (const row of res[0].values) {
+            let seen = 0;
+            while (stmt.step()) {
+              const row = stmt.get();
+              if (++seen % 500 === 0) {
+                progress(0.25 + Math.min(0.2, seen / 50000), `Reading pictures (${seen.toLocaleString()})…`);
+                await tick();
+              }
               const rid = typeof row[0] === 'string' ? row[0] : '';
               const compressed = Boolean(Number(row[1] ?? 0));
               const raw = row[2];
@@ -223,10 +243,12 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
               });
               imageAssetBySymbolRid.set(rid, assetId);
             }
+          } finally {
+            stmt.free();
           }
         }
       } catch {
-        warnings.push('Could not read embedded Images.c4s symbol database.');
+        warnings.push("Some pictures in this file couldn't be read, so those buttons show text only.");
       } finally {
         imgDb?.close();
       }
@@ -912,11 +934,11 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
     if (missingSymbolRefs > 0) {
       if (autoMappedArasaac > 0) {
         warnings.push(
-          `${missingSymbolRefs.toLocaleString()} button symbols referenced external symbol libraries not embedded in the file. Automatically mapped ${autoMappedArasaac.toLocaleString()} buttons to open ARASAAC pictograms. Use "Auto-Enrich with ARASAAC" to fetch online matches for remaining buttons.`,
+          `${missingSymbolRefs.toLocaleString()} buttons used symbols that aren't included in the file. ${autoMappedArasaac.toLocaleString()} of them were matched to ARASAAC pictures. Use "Add ARASAAC pictures" to look up the rest.`,
         );
       } else {
         warnings.push(
-          `${missingSymbolRefs.toLocaleString()} button symbols referenced external symbol libraries not embedded in the file. Use "Auto-Enrich with ARASAAC" in Vocabulary settings to match open pictograms.`,
+          `${missingSymbolRefs.toLocaleString()} buttons used symbols that aren't included in the file. Use "Add ARASAAC pictures" in Vocabularies to fill them in.`,
         );
       }
     }

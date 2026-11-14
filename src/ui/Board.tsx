@@ -307,7 +307,7 @@ export function Board() {
           );
           const bg = st.transparent ? 'transparent' : st.bg || 'var(--btn-default-bg)';
           const fg = st.fg || readableText(st.bg) || 'var(--btn-default-fg)';
-          const borderWidth = cfg.showButtonBorders ? (st.borderWidth ?? 2) : 0;
+          const borderWidth = cfg.showButtonBorders ? (st.borderWidth ?? 1.5) : 0;
           const borderColor = st.border || 'var(--btn-default-border)';
           const fontScale = (st.fontScale ?? 1) * cfg.labelScale;
           const labelOnTop =

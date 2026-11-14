@@ -6,7 +6,10 @@ import {
   decryptJsonWithPasscode,
   deriveEncryptionKey,
   encryptJson,
+  clearFailedAttempts,
   isEncryptedEnvelope,
+  lockoutSeconds,
+  recordFailedAttempt,
   verifySecret,
   type DerivedKey,
   type EncryptedEnvelope,
@@ -284,14 +287,13 @@ export function ToolsModal() {
   const [editingAbout, setEditingAbout] = useState(false);
 
   const [notes, setNotes] = useState<CaregiverNote[]>([]);
-  // Non-empty when notes are protected: 'encrypted', or a legacy gate (old passcode / settings PIN).
   const [savedPasscode, setSavedPasscode] = useState<string>('');
   const [notesUnlocked, setNotesUnlocked] = useState<boolean>(false);
   const [notesKey, setNotesKey] = useState<DerivedKey | null>(null);
   const [notesEnv, setNotesEnv] = useState<EncryptedEnvelope | null>(null);
   const [notesBusy, setNotesBusy] = useState(false);
   const [passInput, setPassInput] = useState('');
-  const [passError, setPassError] = useState(false);
+  const [passError, setPassError] = useState('');
   const [newPasscode, setNewPasscode] = useState('');
   const [noteCategory, setNoteCategory] = useState<CaregiverNote['category']>('Communication');
   const [noteText, setNoteText] = useState('');
@@ -326,14 +328,11 @@ export function ToolsModal() {
       if (Array.isArray(savedMoods)) setMoodLogs(savedMoods);
       if (savedAbout) setAboutMe({ ...DEFAULT_ABOUT_ME, ...savedAbout });
       if (isEncryptedEnvelope(savedEnc)) {
-        // Encrypted notes: nothing readable until the passcode is entered.
         setNotesEnv(savedEnc);
         setSavedPasscode('encrypted');
         setNotesUnlocked(false);
       } else {
         if (Array.isArray(savedNotes)) setNotes(savedNotes);
-        // Legacy (pre-encryption) installs: notes were gated by a notes passcode or the settings
-        // PIN. They are encrypted with that secret on the next successful unlock.
         const gate = savedPass || (notesOpen ? '' : settings.value.pin) || '';
         setSavedPasscode(gate);
         setNotesUnlocked(!gate);
@@ -389,7 +388,7 @@ export function ToolsModal() {
     setTasks(next);
     await kvSet('planner_tasks', next);
     setNewTaskTitle('');
-    toast(`Added "${title}" to Daily Planner`, 'success');
+    toast(`Added "${title}"`, 'success');
   }
 
   async function handleDeleteTask(id: string) {
@@ -402,7 +401,7 @@ export function ToolsModal() {
     const next = tasks.map((t) => ({ ...t, done: false }));
     setTasks(next);
     await kvSet('planner_tasks', next);
-    toast('Reset schedule for a fresh day!', 'info');
+    toast('Schedule reset', 'info');
   }
 
   async function handleLogMood(m: MoodDefinition) {
@@ -476,7 +475,7 @@ export function ToolsModal() {
     e.preventDefault();
     await kvSet('about_me_profile', aboutMe);
     setEditingAbout(false);
-    toast('Saved "About Me" profile', 'success');
+    toast('About me saved', 'success');
   }
 
   function speakFullAboutMe() {
@@ -494,7 +493,6 @@ export function ToolsModal() {
     speakText(intro);
   }
 
-  /** Persist notes: encrypted when a passcode key is active, otherwise plaintext. */
   async function persistNotes(next: CaregiverNote[], key: DerivedKey | null = notesKey) {
     if (key) {
       const env = await encryptJson(next, key);
@@ -519,7 +517,7 @@ export function ToolsModal() {
         await kvSet('caregiver_notes_open', false);
         setNotesKey(key);
         setSavedPasscode('encrypted');
-        toast('Passcode saved. Caregiver Notes are now encrypted on this device.', 'success');
+        toast('Passcode set. Notes are encrypted now.', 'success');
       } else {
         await kvSet('caregiver_notes', notes);
         await kvSet('caregiver_notes_enc', null);
@@ -528,12 +526,12 @@ export function ToolsModal() {
         setNotesKey(null);
         setNotesEnv(null);
         setSavedPasscode('');
-        toast('Passcode removed. Caregiver Notes are no longer encrypted.', 'info');
+        toast("Passcode removed. Notes aren't encrypted anymore.", 'info');
       }
       setNewPasscode('');
       setNotesUnlocked(true);
     } catch {
-      toast('Could not update the passcode on this browser.', 'error');
+      toast("Couldn't change the passcode in this browser.", 'error');
     } finally {
       setNotesBusy(false);
     }
@@ -543,32 +541,42 @@ export function ToolsModal() {
     e.preventDefault();
     if (notesBusy) return;
     const input = passInput.trim();
+    const wait = lockoutSeconds('notes');
+    if (wait) {
+      setPassError(`Too many tries. Wait ${wait} seconds.`);
+      return;
+    }
+    const fail = () => {
+      const locked = recordFailedAttempt('notes');
+      setPassInput('');
+      setPassError(locked ? `Too many tries. Wait ${locked} seconds.` : "That's not the passcode.");
+    };
     setNotesBusy(true);
     try {
       if (notesEnv) {
         const res = await decryptJsonWithPasscode<CaregiverNote[]>(notesEnv, input);
         if (!res) {
-          setPassError(true);
+          fail();
           return;
         }
         setNotes(Array.isArray(res.value) ? res.value : []);
         setNotesKey(res.dk);
       } else if (savedPasscode) {
         if (!(await verifySecret(input, savedPasscode))) {
-          setPassError(true);
+          fail();
           return;
         }
-        // Migrate legacy plaintext notes to encrypted storage using the passcode just entered.
         const key = await deriveEncryptionKey(input);
         await persistNotes(notes, key);
         await kvSet('caregiver_passcode', '');
         setNotesKey(key);
         setSavedPasscode('encrypted');
-        toast('Caregiver Notes are now encrypted with this passcode.', 'success');
+        toast('Notes are encrypted with this passcode now.', 'success');
       }
+      clearFailedAttempts('notes');
       setNotesUnlocked(true);
       setPassInput('');
-      setPassError(false);
+      setPassError('');
     } finally {
       setNotesBusy(false);
     }
@@ -596,7 +604,7 @@ export function ToolsModal() {
     setNotes(next);
     await persistNotes(next);
     setNoteText('');
-    toast('Saved caregiver observation note', 'success');
+    toast('Note saved', 'success');
   }
 
   async function handleDeleteNote(id: string) {
@@ -642,12 +650,12 @@ export function ToolsModal() {
         class="modal-card modal-lg"
         role="dialog"
         aria-modal="true"
-        aria-label="Daily Planner, Mood, Games, About Me, and Caregiver Notes"
+        aria-label="Planner, moods, games, about me and notes"
         onClick={(e) => e.stopPropagation()}
       >
         <div class="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <h2>Life & Learning Hub</h2>
+            <h2>Tools</h2>
             <span
               style={{
                 background: '#fef08a',
@@ -692,35 +700,35 @@ export function ToolsModal() {
               class={`tab-btn ${tab === 'planner' ? 'active' : ''}`}
               onClick={() => setTab('planner')}
             >
-              📅 Daily Planner
+              Planner
             </button>
             <button
               type="button"
               class={`tab-btn ${tab === 'mood' ? 'active' : ''}`}
               onClick={() => setTab('mood')}
             >
-              💛 Mood & Analytics
+              Moods
             </button>
             <button
               type="button"
               class={`tab-btn ${tab === 'games' ? 'active' : ''}`}
               onClick={() => setTab('games')}
             >
-              🎮 Learning Games
+              Games
             </button>
             <button
               type="button"
               class={`tab-btn ${tab === 'aboutme' ? 'active' : ''}`}
               onClick={() => setTab('aboutme')}
             >
-              🪪 About Me
+              About me
             </button>
             <button
               type="button"
               class={`tab-btn ${tab === 'notes' ? 'active' : ''}`}
               onClick={() => setTab('notes')}
             >
-              🔒 Caregiver Notes
+              Notes
             </button>
           </div>
 
@@ -738,7 +746,7 @@ export function ToolsModal() {
                 >
                   <div style={{ flex: 1, minWidth: '220px' }}>
                     <strong>
-                      Today's Progress: {completedTasks} of {tasks.length} steps complete
+                      {completedTasks} of {tasks.length} done today
                     </strong>
                     <div
                       class="progress-bar-track"
@@ -752,19 +760,19 @@ export function ToolsModal() {
                       />
                     </div>
                     <div class="hint" style={{ marginTop: '6px' }}>
-                      🎁 <strong>Reward Goal:</strong> {rewardGoal}
+                      🎁 <strong>Reward:</strong> {rewardGoal}
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '6px' }}>
                     <button type="button" class="btn secondary sm" onClick={() => void resetPlannerDay()}>
-                      New Day Reset
+                      Start a new day
                     </button>
                   </div>
                 </div>
               </div>
 
               <form class="section-box" onSubmit={(e) => void handleAddTask(e)}>
-                <strong>Add Activity (Drag and drop rows below to reorder your schedule)</strong>
+                <strong>Add an activity (drag rows to reorder)</strong>
                 <div class="inline-row" style={{ marginTop: '8px', flexWrap: 'wrap' }}>
                   <input
                     type="text"
@@ -793,7 +801,7 @@ export function ToolsModal() {
                     <option value="Evening">Evening</option>
                   </select>
                   <button type="submit" class="btn primary sm">
-                    + Add Step
+                    Add
                   </button>
                 </div>
               </form>
@@ -887,7 +895,7 @@ export function ToolsModal() {
           {tab === 'mood' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div class="section-box">
-                <strong>How Are You Feeling Right Now?</strong>
+                <strong>How are you feeling?</strong>
                 <div class="inline-row" style={{ margin: '8px 0 12px', flexWrap: 'wrap' }}>
                   <span class="hint">What is happening around you?</span>
                   <select
@@ -964,10 +972,10 @@ export function ToolsModal() {
               )}
 
               <div class="section-box">
-                <strong>Mood Analytics & Patterns ({moodLogs.length} check-ins)</strong>
+                <strong>Mood history ({moodLogs.length} check-ins)</strong>
                 {moodLogs.length === 0 ? (
                   <p class="hint" style={{ marginTop: '6px' }}>
-                    Tap an emotion above to log how you feel and see your mood patterns over time.
+                    Tap a feeling above to log it. Your history shows up here.
                   </p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
@@ -1231,10 +1239,9 @@ export function ToolsModal() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                 <div>
-                  <strong>"About Me" Communication Passport</strong>
+                  <strong>About me</strong>
                   <p class="hint" style={{ margin: '2px 0 0' }}>
-                    Share likes, dislikes, allergies, and communication tips with teachers, nurses,
-                    or caregivers.
+                    A quick page for teachers, nurses and sitters: likes, dislikes, allergies and how I communicate.
                   </p>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -1361,7 +1368,7 @@ export function ToolsModal() {
                 >
                   <div class="section-box">
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <strong>👋 Who I Am & How I Communicate</strong>
+                      <strong>Who I am</strong>
                       <button
                         type="button"
                         class="sm-btn"
@@ -1391,7 +1398,7 @@ export function ToolsModal() {
                     style={{ borderColor: 'rgba(220, 38, 38, 0.45)', background: 'rgba(254, 226, 226, 0.2)' }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <strong>⚕️ Allergies & Medical Needs</strong>
+                      <strong>Allergies and medical</strong>
                       <button
                         type="button"
                         class="sm-btn"
@@ -1405,7 +1412,7 @@ export function ToolsModal() {
 
                   <div class="section-box">
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <strong>💚 Things I Love (Likes)</strong>
+                      <strong>Things I like</strong>
                       <button
                         type="button"
                         class="sm-btn"
@@ -1419,7 +1426,7 @@ export function ToolsModal() {
 
                   <div class="section-box">
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <strong>🚫 Dislikes & Sensory Triggers</strong>
+                      <strong>Things I don't like</strong>
                       <button
                         type="button"
                         class="sm-btn"
@@ -1433,7 +1440,7 @@ export function ToolsModal() {
 
                   <div class="section-box">
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <strong>🌿 What Helps Me Calm Down</strong>
+                      <strong>What helps me calm down</strong>
                       <button
                         type="button"
                         class="sm-btn"
@@ -1448,7 +1455,7 @@ export function ToolsModal() {
                   </div>
 
                   <div class="section-box">
-                    <strong>📞 Caregiver & Emergency Contacts</strong>
+                    <strong>Contacts</strong>
                     <p style={{ margin: '6px 0 0', fontSize: '0.92rem' }}>{aboutMe.contacts}</p>
                   </div>
                 </div>
@@ -1464,9 +1471,9 @@ export function ToolsModal() {
                   onSubmit={(e) => void handleUnlockNotes(e)}
                   style={{ maxWidth: '400px' }}
                 >
-                  <strong>🔒 Passcode-Protected Caregiver Notes</strong>
+                  <strong>Caregiver notes are locked</strong>
                   <p class="hint" style={{ margin: '4px 0 10px' }}>
-                    Enter the caregiver passcode to view or add private observations.
+                    Enter the passcode to open them.
                   </p>
                   <div class="inline-row">
                     <input
@@ -1475,7 +1482,7 @@ export function ToolsModal() {
                       value={passInput}
                       onInput={(e) => {
                         setPassInput((e.target as HTMLInputElement).value);
-                        setPassError(false);
+                        setPassError('');
                       }}
                       autoFocus
                     />
@@ -1485,7 +1492,7 @@ export function ToolsModal() {
                   </div>
                   {passError && (
                     <p class="alert-box error" style={{ marginTop: '8px' }}>
-                      Incorrect passcode. Try again.
+                      {passError}
                     </p>
                   )}
                 </form>
@@ -1502,10 +1509,9 @@ export function ToolsModal() {
                       }}
                     >
                       <div>
-                        <strong>Caregiver, Teacher & SLP Observation Log</strong>
+                        <strong>Caregiver notes</strong>
                         <p class="hint" style={{ margin: '2px 0 0' }}>
-                          Keep private timestamped observations on communication progress, sensory
-                          triggers, or daily notes.
+                          Private, dated notes for parents, teachers and therapists.
                         </p>
                       </div>
                       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
@@ -1515,7 +1521,7 @@ export function ToolsModal() {
                             class="btn secondary sm"
                             onClick={lockNotes}
                           >
-                            🔒 Lock Notes
+                            Lock
                           </button>
                         )}
                         {notes.length > 0 && (
@@ -1524,7 +1530,7 @@ export function ToolsModal() {
                             class="btn secondary sm"
                             onClick={() => exportCaregiverNotes()}
                           >
-                            Export Log (.txt)
+                            Export (.txt)
                           </button>
                         )}
                       </div>
@@ -1539,8 +1545,8 @@ export function ToolsModal() {
                         type="password"
                         placeholder={
                           savedPasscode
-                            ? 'Change passcode (blank to remove)'
-                            : 'Set passcode to lock Caregiver Notes'
+                            ? 'New passcode (blank to remove)'
+                            : 'Set a passcode'
                         }
                         value={newPasscode}
                         onInput={(e) => setNewPasscode((e.target as HTMLInputElement).value)}
@@ -1552,15 +1558,14 @@ export function ToolsModal() {
                     </form>
                     <p class="hint" style={{ margin: '8px 0 0', lineHeight: 1.5 }}>
                       {savedPasscode
-                        ? 'Notes are encrypted on this device (AES-256-GCM) with a key derived from your passcode. '
-                        : 'Notes are not encrypted. Set a passcode to encrypt them on this device. '}
-                      A longer passcode (8+ characters) is much harder to guess than a short PIN. If
-                      you forget the passcode, encrypted notes cannot be recovered.
+                        ? 'Notes are encrypted with your passcode. '
+                        : 'Notes aren\'t encrypted yet. Set a passcode to lock and encrypt them. '}
+                      Use 8 or more characters if you can. If you forget it, the notes can't be recovered.
                     </p>
                   </div>
 
                   <form class="section-box" onSubmit={(e) => void handleAddNote(e)}>
-                    <strong>Add Observation Note</strong>
+                    <strong>New note</strong>
                     <div class="inline-row" style={{ marginTop: '8px', flexWrap: 'wrap' }}>
                       <select
                         value={noteCategory}

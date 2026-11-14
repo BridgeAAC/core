@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -44,41 +44,73 @@ function sendFileToRenderer(filePath) {
   } catch {}
 }
 
+const NO_STORE = { 'Cache-Control': 'private, no-store' };
+
+function readBody(req, limit) {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    const chunks = [];
+    req.on('data', (chunk) => {
+      size += chunk.length;
+      if (size > limit) {
+        reject(new Error('too large'));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    req.on('error', reject);
+  });
+}
+
+async function handleTts(req, res, port) {
+  const origin = req.headers.origin;
+  if (req.method !== 'POST' || (origin && origin !== `http://127.0.0.1:${port}`)) {
+    res.writeHead(403, NO_STORE);
+    res.end();
+    return;
+  }
+  try {
+    const body = JSON.parse((await readBody(req, 4096)) || '{}');
+    const q = String(body.q || '').trim().slice(0, 200);
+    const tl = String(body.tl || 'en-US').trim().slice(0, 16);
+    if (!q || !/^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(tl)) {
+      res.writeHead(400, NO_STORE);
+      res.end();
+      return;
+    }
+    const target = `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${encodeURIComponent(
+      tl,
+    )}&q=${encodeURIComponent(q)}`;
+    const upstream = await fetch(target, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      },
+    });
+    if (!upstream.ok) {
+      res.writeHead(204, NO_STORE);
+      res.end();
+      return;
+    }
+    const buf = Buffer.from(await upstream.arrayBuffer());
+    res.writeHead(200, { 'Content-Type': 'audio/mpeg', ...NO_STORE });
+    res.end(buf);
+  } catch {
+    res.writeHead(204, NO_STORE);
+    res.end();
+  }
+}
+
 function startLocalServer(distDir) {
   return new Promise((resolve) => {
+    let port = 0;
     const server = http.createServer(async (req, res) => {
       const urlStr = req.url || '/';
       if (urlStr.startsWith('/api/tts')) {
-        try {
-          const u = new URL(urlStr, 'http://127.0.0.1');
-          const q = (u.searchParams.get('q') || '').trim().slice(0, 200);
-          const tl = (u.searchParams.get('tl') || 'en-US').trim();
-          const target = `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${encodeURIComponent(
-            tl,
-          )}&q=${encodeURIComponent(q)}`;
-          const upstream = await fetch(target, {
-            headers: {
-              'User-Agent':
-                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            },
-          });
-          if (!upstream.ok) {
-            res.writeHead(204);
-            res.end();
-            return;
-          }
-          const buf = Buffer.from(await upstream.arrayBuffer());
-          res.writeHead(200, {
-            'Content-Type': 'audio/mpeg',
-            'Cache-Control': 'public, max-age=604800, immutable',
-          });
-          res.end(buf);
-          return;
-        } catch {
-          res.writeHead(204);
-          res.end();
-          return;
-        }
+        handleTts(req, res, port);
+        return;
       }
 
       const rawPath = urlStr.split('?')[0];
@@ -96,13 +128,14 @@ function startLocalServer(distDir) {
       const ext = path.extname(filePath).toLowerCase();
       res.writeHead(200, {
         'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
+        'X-Content-Type-Options': 'nosniff',
       });
       fs.createReadStream(filePath).pipe(res);
     });
 
     server.listen(0, '127.0.0.1', () => {
-      const addr = server.address();
-      resolve(addr.port);
+      port = server.address().port;
+      resolve(port);
     });
   });
 }
@@ -123,7 +156,26 @@ async function createWindow() {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
+      sandbox: true,
+      webSecurity: true,
     },
+  });
+
+  const appOrigin = `http://127.0.0.1:${port}`;
+  const openOutside = (url) => {
+    if (/^(https?:|mailto:)/i.test(url)) void shell.openExternal(url);
+  };
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    openOutside(url);
+    return { action: 'deny' };
+  });
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (new URL(url).origin === appOrigin) return;
+    event.preventDefault();
+    openOutside(url);
+  });
+  mainWindow.webContents.session.setPermissionRequestHandler((_wc, permission, callback) => {
+    callback(permission === 'clipboard-sanitized-write');
   });
 
   await mainWindow.loadURL(`http://127.0.0.1:${port}/`);

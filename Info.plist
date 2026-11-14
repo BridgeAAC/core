@@ -32,10 +32,6 @@
 	<false/>
 	<key>UIFileSharingEnabled</key>
 	<true/>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>audio</string>
-	</array>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>
@@ -56,22 +52,19 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>BridgeAAC lets you choose custom photos from your library to use as symbols on communication buttons.</string>
+	<string>Choose a photo from your library to use as a picture on a button.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>BridgeAAC lets you take photos of everyday items, people, and places to use on communication buttons.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>BridgeAAC uses the microphone only when recording custom voice clips for buttons.</string>
+	<string>Take a photo of a person, place or thing to use as a picture on a button.</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleTypeName</key>
-			<string>AAC Vocabulary File</string>
+			<string>Vocabulary File</string>
 			<key>LSHandlerRank</key>
 			<string>Alternate</string>
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>org.bridgeaac.aac-ce</string>
-				<string>public.data</string>
 			</array>
 		</dict>
 		<dict>
@@ -96,7 +89,7 @@
 				<string>public.archive</string>
 			</array>
 			<key>UTTypeDescription</key>
-			<string>AAC Vocabulary File (.ce, .c4v, .wf)</string>
+			<string>Vocabulary File</string>
 			<key>UTTypeIdentifier</key>
 			<string>org.bridgeaac.aac-ce</string>
 			<key>UTTypeTagSpecification</key>
@@ -115,7 +108,7 @@
 				<string>public.data</string>
 			</array>
 			<key>UTTypeDescription</key>
-			<string>Open Board / BridgeAAC Vocabulary (.obf, .obz, .bridge)</string>
+			<string>Open Board Vocabulary</string>
 			<key>UTTypeIdentifier</key>
 			<string>org.bridgeaac.openboard</string>
 			<key>UTTypeTagSpecification</key>

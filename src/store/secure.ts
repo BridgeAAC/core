@@ -1,15 +1,3 @@
-/**
- * Local secret handling for BridgeAAC.
- *
- * - PINs / passcodes are stored as salted PBKDF2-SHA256 hashes, never as plaintext.
- * - Caregiver notes are encrypted with AES-256-GCM using a key derived from the
- *   caregiver passcode (PBKDF2-SHA256), so the stored data is unreadable without it.
- *
- * Limits (documented in the wiki): a short numeric passcode can be brute-forced offline by
- * someone who copies the browser storage. Longer passcodes and OS-level device encryption
- * give real protection; the app-level lock mainly stops casual access on a shared device.
- */
-
 export const PBKDF2_ITERATIONS = 310_000;
 const HASH_PREFIX = 'pbkdf2-sha256';
 
@@ -61,12 +49,10 @@ function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
   return diff === 0;
 }
 
-/** True if the stored value is already a salted hash produced by {@link hashSecret}. */
 export function isHashedSecret(stored: string | undefined | null): boolean {
   return typeof stored === 'string' && stored.startsWith(HASH_PREFIX + '$');
 }
 
-/** Produce a salted PBKDF2 hash string: `pbkdf2-sha256$<iterations>$<salt>$<hash>`. */
 export async function hashSecret(secret: string): Promise<string> {
   if (!secret) return '';
   const salt = randomBytes(16);
@@ -83,11 +69,6 @@ async function legacySha256Hex(secret: string): Promise<string> {
     .join('');
 }
 
-/**
- * Verify an entered secret against a stored value. Accepts the current PBKDF2 format, plus the
- * two legacy formats (unsalted SHA-256 hex and plaintext) so existing installs can unlock once
- * and be migrated.
- */
 export async function verifySecret(entered: string, stored: string | undefined | null): Promise<boolean> {
   if (!stored) return false;
   if (isHashedSecret(stored)) {
@@ -175,10 +156,6 @@ export async function encryptJson(value: unknown, dk: DerivedKey): Promise<Encry
   };
 }
 
-/**
- * Decrypt an envelope with a passcode. Returns the derived key (for re-encrypting later saves)
- * and the value, or `null` if the passcode is wrong or the data was tampered with (GCM auth).
- */
 export async function decryptJsonWithPasscode<T>(
   env: EncryptedEnvelope,
   passcode: string,
@@ -196,4 +173,26 @@ export async function decryptJsonWithPasscode<T>(
   } catch {
     return null;
   }
+}
+
+const failedAttempts = new Map<string, { count: number; until: number }>();
+
+export function lockoutSeconds(key: string): number {
+  const f = failedAttempts.get(key);
+  if (!f || f.until <= Date.now()) return 0;
+  return Math.ceil((f.until - Date.now()) / 1000);
+}
+
+export function recordFailedAttempt(key: string): number {
+  const f = failedAttempts.get(key) ?? { count: 0, until: 0 };
+  f.count++;
+  if (f.count >= 5) {
+    f.until = Date.now() + Math.min(300, 30 * 2 ** (f.count - 5)) * 1000;
+  }
+  failedAttempts.set(key, f);
+  return lockoutSeconds(key);
+}
+
+export function clearFailedAttempts(key: string): void {
+  failedAttempts.delete(key);
 }

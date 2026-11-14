@@ -361,7 +361,7 @@ export function PageSettingsModal() {
         onClick={(e) => e.stopPropagation()}
       >
         <div class="modal-header">
-          <h2>Page & Grid Settings</h2>
+          <h2>Page settings</h2>
           <button type="button" class="icon-close" onClick={close} aria-label="Close">
             ×
           </button>

@@ -21,13 +21,13 @@ They leave the device only when you export a file yourself (`.bridge`, `.obz`, `
 
 | Feature | Default | What is sent | Sent to |
 | :--- | :---: | :--- | :--- |
-| **Online Natural voices** ("Online Natural (US/UK English)") | **Off** | The text being spoken | The bridgeaac.org `/api/tts` proxy, which forwards it to Google's text-to-speech service |
+| **Online Natural voices** ("Online Natural (US/UK English)") | **Off** | The text being spoken | Google's text-to-speech service, directly or through the bridgeaac.org `/api/tts` proxy |
 | **Online symbol search** (button editor search and "Auto-Enrich with ARASAAC") | **Off** | Your search words, or the labels of buttons that have no picture | `api.arasaac.org` |
 | ARASAAC pictogram images | On | A numeric pictogram ID only (no text) | `static.arasaac.org` |
 | Piper neural voice downloads | Only when you tap Download | The name of the voice model | The voice CDN, or the custom mirror you configure |
 | Loading or updating the web app | On (web/PWA) | Standard web requests for the app's files | The bridgeaac.org web host |
 
-Both online features that send text are **off by default** and can be switched on or off in **Settings → PIN Lock → Online Features**. Online speech is also in **Settings → Speech**. When online speech is off, the Online Natural voices are disabled, and any existing selection of one is spoken by an on-device voice instead.
+Both online features that send text are **off by default** and can be switched on or off in **Settings → Privacy → Online features**. Online speech is also in **Settings → Speech**. When online speech is off, the Online Natural voices are disabled, and any existing selection of one is spoken by an on-device voice instead.
 
 Like any website, the web host can see standard request information such as IP addresses when the app is loaded. To avoid this, install the desktop or iOS app, or use the installed PWA offline.
 
@@ -45,7 +45,7 @@ With online speech off, all speech is generated on the device:
 
 ## 4. PIN lock and Caregiver Notes
 
-**Settings PIN.** The PIN in Settings → PIN Lock stops Edit Mode, Vocabularies and Settings from being opened by accident. It is stored as a salted PBKDF2-SHA256 hash, not as plaintext. It is an **access lock, not encryption**. Anyone with full access to the browser's storage (for example through developer tools on an unlocked computer) can remove it. It does not protect boards or settings from someone with that level of access.
+**Settings PIN.** The PIN in Settings → Privacy stops Edit Mode, Vocabularies and Settings from being opened by accident. It is stored as a salted PBKDF2-SHA256 hash, not as plaintext. It is an **access lock, not encryption**. Anyone with full access to the browser's storage (for example through developer tools on an unlocked computer) can remove it. It does not protect boards or settings from someone with that level of access.
 
 **Caregiver Notes.** When a Caregiver Notes passcode is set, the notes are **encrypted on the device** with AES-256-GCM, using a key derived from the passcode with PBKDF2-SHA256 (310,000 iterations). The stored data cannot be read without the passcode.
 

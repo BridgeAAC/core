@@ -706,7 +706,6 @@ export async function fetchArasaacIdOnline(word: string, locale = 'en'): Promise
   } catch {}
 
   if (typeof fetch === 'undefined') return undefined;
-  // Privacy gate: words are only sent to api.arasaac.org if online symbol search is enabled.
   if (!settings.value.onlineSymbolSearch) return undefined;
 
   try {

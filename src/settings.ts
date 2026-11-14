@@ -50,17 +50,8 @@ export interface Settings {
   showButtonBorders: boolean;
   soundFeedback: boolean;
   uiLanguage: string;
-  /** Salted PBKDF2 hash of the settings PIN (never plaintext). Empty = no PIN. */
   pin: string;
-  /**
-   * Opt-in: allow the "Online Natural" voices, which send the text being spoken to the
-   * bridgeaac.org /api/tts proxy and on to Google's text-to-speech service. Off by default.
-   */
   onlineSpeech: boolean;
-  /**
-   * Opt-in: allow ARASAAC symbol search and Auto-Enrich, which send search words / button
-   * labels to api.arasaac.org. Off by default.
-   */
   onlineSymbolSearch: boolean;
   useDeviceKeyboard?: boolean;
   onboarded: boolean;
@@ -96,7 +87,7 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'auto',
   fontFamily: 'system',
   accentColor: '#2563eb',
-  buttonRadius: 10,
+  buttonRadius: 12,
   iconScale: 1,
   labelPosition: 'auto',
   colorCoding: 'default',
@@ -133,7 +124,6 @@ effect(() => {
   } catch {}
 });
 
-// Migrate any plaintext PIN (older versions, or a restored settings backup) to a salted hash.
 let migratingPin = '';
 effect(() => {
   const pin = settings.value.pin;
@@ -149,7 +139,6 @@ effect(() => {
     });
 });
 
-/** Set (or clear, with an empty string) the settings PIN. Stores only a salted hash. */
 export async function setSettingsPin(plain: string): Promise<void> {
   const clean = plain.trim();
   updateSettings({ pin: clean ? await hashSecret(clean) : '' });

@@ -47,6 +47,17 @@ function detectPlatform(): PlatformTab {
   return 'windows';
 }
 
+export function isStoreApp(): boolean {
+  if (typeof window === 'undefined') return false;
+  const w = window as any;
+  return (
+    Boolean(w.Capacitor?.isNativePlatform?.()) ||
+    Boolean(w.bridgeSwift) ||
+    Boolean(w.webkit?.messageHandlers?.bridgeSwift) ||
+    window.location?.protocol === 'bridgeaac:'
+  );
+}
+
 export function isRunningStandalone(): boolean {
   if (typeof window === 'undefined') return false;
   return (
@@ -66,6 +77,7 @@ export function InstallModal() {
   const [platformTab, setPlatformTab] = useState<PlatformTab>(detectPlatform);
   const [canPromptInstall, setCanPromptInstall] = useState<boolean>(() => !!deferredInstallPrompt);
   const [standalone] = useState<boolean>(isRunningStandalone);
+  const storeApp = isStoreApp();
   const [cachedCount, setCachedCount] = useState<number>(0);
   const [caching, setCaching] = useState<{ done: number; total: number } | null>(null);
 
@@ -107,7 +119,7 @@ export function InstallModal() {
       toast(`Saved ${res.cached} voice clips for offline use.`, 'success');
       speakText('Offline voice audio is ready.');
     } catch {
-      toast('Could not finish caching all words. Try again when online.', 'error');
+      toast("Couldn't save audio for every word. Try again.", 'error');
     } finally {
       setCaching(null);
     }
@@ -123,7 +135,7 @@ export function InstallModal() {
         onClick={(e) => e.stopPropagation()}
       >
         <div class="modal-header">
-          <h2>Install BridgeAAC & Offline Setup</h2>
+          <h2>{storeApp ? 'Offline setup' : 'Install'}</h2>
           <button type="button" class="icon-close" onClick={close} aria-label="Close">
             ×
           </button>
@@ -148,11 +160,11 @@ export function InstallModal() {
               }}
             >
               <div>
-                <strong>Offline Setup</strong>
+                <strong>Offline setup</strong>
                 <p class="hint" style={{ margin: '3px 0 0' }}>
                   {standalone
                     ? 'Running as an installed app on this device.'
-                    : 'Add BridgeAAC to your Home Screen or desktop and save voice audio for offline use.'}{' '}
+                    : 'Add BridgeAAC to your home screen and save audio for offline use.'}{' '}
                   ({cachedCount} phrases cached)
                 </p>
               </div>
@@ -183,12 +195,14 @@ export function InstallModal() {
                     panel.value = 'vocabs';
                   }}
                 >
-                  Import Archive (.ce)
+                  Import a board
                 </button>
               </div>
             </div>
           </div>
 
+          {!storeApp && (
+            <>
           <div class="tab-strip" style={{ marginBottom: '14px' }}>
             <button
               type="button"
@@ -230,9 +244,9 @@ export function InstallModal() {
           {platformTab === 'ios' && (
             <div class="settings-section">
               <div class="section-box">
-                <strong>Installing on iPad or iPhone (No App Store Required)</strong>
+                <strong>iPad and iPhone</strong>
                 <p class="hint" style={{ margin: '6px 0 10px' }}>
-                  You can install BridgeAAC directly from Safari as a full-screen offline app:
+                  No App Store needed. In Safari:
                 </p>
                 <ol style={{ margin: '0 0 10px 18px', lineHeight: 1.65 }}>
                   <li>
@@ -252,7 +266,7 @@ export function InstallModal() {
               </div>
 
               <div class="section-box">
-                <strong>Downloading Higher Quality iPad Voices</strong>
+                <strong>Better iPad voices</strong>
                 <p class="hint" style={{ margin: '4px 0 0' }}>
                   To use Apple's higher quality offline voices on iPad, open{' '}
                   <strong>
@@ -264,7 +278,7 @@ export function InstallModal() {
               </div>
 
               <div class="section-box">
-                <strong>Locking the iPad to BridgeAAC (Guided Access)</strong>
+                <strong>Locking the iPad to BridgeAAC</strong>
                 <p class="hint" style={{ margin: '4px 0 0' }}>
                   To keep the user inside BridgeAAC, turn on{' '}
                   <strong>Settings &gt; Accessibility &gt; Guided Access</strong> in iPadOS, then
@@ -277,10 +291,9 @@ export function InstallModal() {
           {platformTab === 'android' && (
             <div class="settings-section">
               <div class="section-box">
-                <strong>Direct Download — Latest Android Release</strong>
+                <strong>Android</strong>
                 <p class="hint" style={{ margin: '4px 0 10px' }}>
-                  Download the standalone Android APK directly from the latest GitHub Release or
-                  install right from Chrome:
+                  Grab the APK from the latest GitHub release, or install from Chrome:
                 </p>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
                   <a
@@ -330,10 +343,9 @@ export function InstallModal() {
           {platformTab === 'windows' && (
             <div class="settings-section">
               <div class="section-box">
-                <strong>Direct Download — Latest Windows Release</strong>
+                <strong>Windows</strong>
                 <p class="hint" style={{ margin: '4px 0 10px' }}>
-                  Download the standalone Windows desktop installer or portable app from the latest
-                  GitHub Release:
+                  From the latest GitHub release:
                 </p>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
                   <a
@@ -382,8 +394,7 @@ export function InstallModal() {
                     with BridgeAAC.
                   </li>
                   <li>
-                    <strong>Windows Portable (.exe):</strong> Runs directly without installation
-                    (ideal for school or clinic computers).
+                    <strong>Windows Portable (.exe):</strong> No install needed, handy on school or clinic computers.
                   </li>
                 </ol>
               </div>
@@ -393,9 +404,9 @@ export function InstallModal() {
           {platformTab === 'mac' && (
             <div class="settings-section">
               <div class="section-box">
-                <strong>Direct Download — Latest macOS Release</strong>
+                <strong>Mac</strong>
                 <p class="hint" style={{ margin: '4px 0 10px' }}>
-                  Download the standalone macOS desktop app from the latest GitHub Release:
+                  From the latest GitHub release:
                 </p>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
                   <a
@@ -446,10 +457,9 @@ export function InstallModal() {
           {platformTab === 'linux' && (
             <div class="settings-section">
               <div class="section-box">
-                <strong>Direct Download — Latest Linux Release</strong>
+                <strong>Linux</strong>
                 <p class="hint" style={{ margin: '4px 0 10px' }}>
-                  Download the universal Linux AppImage or Debian/Ubuntu package from the latest
-                  GitHub Release:
+                  From the latest GitHub release:
                 </p>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
                   <a
@@ -493,8 +503,7 @@ export function InstallModal() {
                 </div>
                 <ol style={{ margin: '4px 0 0 18px', lineHeight: 1.65 }}>
                   <li>
-                    <strong>AppImage / Debian Package:</strong> Includes built-in offline voices so
-                    speech works even without <code>speech-dispatcher</code> installed.
+                    <strong>AppImage / Debian Package:</strong> Has its own offline voice, so speech works without <code>speech-dispatcher</code>.
                   </li>
                   <li>
                     <strong>Chromebook / Chromium:</strong> Open <strong>https://bridgeaac.org</strong>{' '}
@@ -505,7 +514,12 @@ export function InstallModal() {
             </div>
           )}
 
+            </>
+          )}
+
           <div class="section-box" style={{ marginTop: '12px' }}>
+            {!storeApp && (
+              <>
             <div
               style={{
                 display: 'flex',
@@ -516,7 +530,7 @@ export function InstallModal() {
                 marginBottom: '8px',
               }}
             >
-              <strong>All Direct Downloads (Latest GitHub Release)</strong>
+              <strong>All downloads on GitHub</strong>
               <a
                 href={RELEASES_PAGE_URL}
                 target="_blank"
@@ -583,9 +597,11 @@ export function InstallModal() {
               </a>
             </div>
 
+              </>
+            )}
             <div
               style={{
-                marginTop: '14px',
+                marginTop: storeApp ? '0' : '14px',
                 padding: '10px 14px',
                 borderRadius: '10px',
                 background: 'var(--bg-msg)',
@@ -598,17 +614,17 @@ export function InstallModal() {
               }}
             >
               <div>
-                <strong style={{ fontSize: '0.88rem' }}>Immediate Support for Families & Autism Parents</strong>
+                <strong style={{ fontSize: '0.88rem' }}>Need help?</strong>
                 <p class="hint" style={{ margin: '2px 0 0', fontSize: '0.8rem' }}>
-                  Need an urgent fix, custom accommodation, or help setting up?
+                  Found a bug, stuck on setup, or need a board laid out a certain way? Email and I'll help.
                 </p>
               </div>
               <a
-                href="mailto:support@bridgeaac.org?subject=Urgent%20Family%20Support%20-%20BridgeAAC"
+                href="mailto:support@bridgeaac.org?subject=BridgeAAC%20help"
                 class="btn primary sm"
                 style={{ textDecoration: 'none' }}
               >
-                ✉️ support@bridgeaac.org
+                support@bridgeaac.org
               </a>
             </div>
           </div>

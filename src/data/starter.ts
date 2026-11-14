@@ -93,7 +93,7 @@ export const PAGE_SETS: PageSetInfo[] = [
     grid: '6×7',
     rows: 6,
     cols: 7,
-    description: 'Core vocabulary with 42 buttons. Ideal for beginning communicators.',
+    description: 'Bigger buttons and fewer choices. A good place to start.',
     category: 'bridgewords',
   },
   {
@@ -102,7 +102,7 @@ export const PAGE_SETS: PageSetInfo[] = [
     grid: '6×10',
     rows: 6,
     cols: 10,
-    description: 'A robust 60-location core vocabulary.',
+    description: 'The everyday set. Room to grow without crowding the screen.',
     category: 'bridgewords',
   },
   {
@@ -111,7 +111,7 @@ export const PAGE_SETS: PageSetInfo[] = [
     grid: '7×12',
     rows: 7,
     cols: 12,
-    description: 'A robust 84-location core vocabulary.',
+    description: 'More words on the home page for confident communicators.',
     category: 'bridgewords',
   },
   {
@@ -120,7 +120,7 @@ export const PAGE_SETS: PageSetInfo[] = [
     grid: '9×12',
     rows: 9,
     cols: 12,
-    description: 'A robust 108-location core vocabulary.',
+    description: 'The most words per page. Best on larger tablets.',
     category: 'bridgewords',
   },
   {
@@ -129,7 +129,7 @@ export const PAGE_SETS: PageSetInfo[] = [
     grid: '5×10',
     rows: 5,
     cols: 10,
-    description: 'Strict ARASAAC core vocabulary with standardized pictograms and Fitzgerald color coding.',
+    description: 'Every button uses an ARASAAC picture, color-coded by word type.',
     category: 'arasaac',
     badge: 'ARASAAC',
   },

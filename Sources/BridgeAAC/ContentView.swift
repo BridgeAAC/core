@@ -279,6 +279,23 @@ final class BridgeBundleSchemeHandler: NSObject, WKURLSchemeHandler {
         "zh_CN-huayan-x_low.onnx.json"
     ]
 
+    private static let importLock = NSLock()
+    private static var importedFiles: [String: URL] = [:]
+
+    static func registerImport(_ fileURL: URL) -> String {
+        let token = UUID().uuidString
+        importLock.lock()
+        importedFiles[token] = fileURL
+        importLock.unlock()
+        return token
+    }
+
+    static func takeImport(_ token: String) -> URL? {
+        importLock.lock()
+        defer { importLock.unlock() }
+        return importedFiles.removeValue(forKey: token)
+    }
+
     static func safePiperFileName(_ name: String) -> String? {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
@@ -317,6 +334,18 @@ final class BridgeBundleSchemeHandler: NSObject, WKURLSchemeHandler {
 
         let rawPath = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         let relativePath = rawPath.isEmpty ? "index.html" : rawPath
+
+        if relativePath.hasPrefix("__import__/") {
+            let token = String(relativePath.dropFirst("__import__/".count))
+            guard let fileURL = Self.takeImport(token),
+                  let data = try? Data(contentsOf: fileURL) else {
+                sendStatus(404, url: url, task: urlSchemeTask)
+                return
+            }
+            try? FileManager.default.removeItem(at: fileURL)
+            sendData(data, mime: "application/octet-stream", url: url, task: urlSchemeTask)
+            return
+        }
 
         if relativePath.hasPrefix("__piper_cache__/") {
             let fileName = String(relativePath.dropFirst("__piper_cache__/".count))
@@ -472,7 +501,7 @@ final class BridgeNativeCoordinator: NSObject, ObservableObject, WKScriptMessage
     private let synthesizer = AVSpeechSynthesizer()
     private var audioPlayer: AVAudioPlayer?
     private var activeSpeechId: Int = 0
-    private var pendingFiles: [(name: String, base64: String)] = []
+    private var pendingFiles: [(name: String, path: String)] = []
     private var isWebReady = false
 
     override init() {
@@ -503,32 +532,45 @@ final class BridgeNativeCoordinator: NSObject, ObservableObject, WKScriptMessage
                 "default": v.language == AVSpeechSynthesisVoice.currentLanguageCode()
             ]
         }
+        #if os(iOS)
+        let pickerFlag = " window.__bridgeNativePicker = true;"
+        #else
+        let pickerFlag = ""
+        #endif
         guard let data = try? JSONSerialization.data(withJSONObject: voices) else {
-            return "window.__bridgeSwiftVoices = []; window.bridgeSwift = true;"
+            return "window.__bridgeSwiftVoices = []; window.bridgeSwift = true;" + pickerFlag
         }
         let b64 = data.base64EncodedString()
-        return "try { window.__bridgeSwiftVoices = JSON.parse(decodeURIComponent(escape(atob('\(b64)')))); } catch (_) { window.__bridgeSwiftVoices = []; } window.bridgeSwift = true;"
+        return "try { window.__bridgeSwiftVoices = JSON.parse(decodeURIComponent(escape(atob('\(b64)')))); } catch (_) { window.__bridgeSwiftVoices = []; } window.bridgeSwift = true;" + pickerFlag
     }
 
     func handleIncomingFile(url: URL) {
+        let name = url.lastPathComponent
         let accessed = url.startAccessingSecurityScopedResource()
         defer {
             if accessed { url.stopAccessingSecurityScopedResource() }
         }
-        guard let data = try? Data(contentsOf: url) else { return }
-        let base64 = data.base64EncodedString()
-        let filename = url.lastPathComponent
+        let fm = FileManager.default
+        let dir = fm.temporaryDirectory.appendingPathComponent("BridgeImports", isDirectory: true)
+        try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        let dest = dir.appendingPathComponent(UUID().uuidString)
+        var copied = false
+        var coordinationError: NSError?
+        NSFileCoordinator().coordinate(readingItemAt: url, options: [.withoutChanges], error: &coordinationError) { readURL in
+            copied = (try? fm.copyItem(at: readURL, to: dest)) != nil
+        }
+        let path = copied ? "/__import__/\(BridgeBundleSchemeHandler.registerImport(dest))" : ""
         if isWebReady, let webView = webView {
-            sendFileToWeb(webView: webView, name: filename, base64: base64)
+            sendFileToWeb(webView: webView, name: name, path: path)
         } else {
-            pendingFiles.append((name: filename, base64: base64))
+            pendingFiles.append((name: name, path: path))
         }
     }
 
-    private func sendFileToWeb(webView: WKWebView, name: String, base64: String) {
+    private func sendFileToWeb(webView: WKWebView, name: String, path: String) {
         webView.callAsyncJavaScript(
-            "if (window.__bridgeOpenFileFromNative) { window.__bridgeOpenFileFromNative(name, base64); }",
-            arguments: ["name": name, "base64": base64],
+            "if (window.__bridgeImportFromNative) { window.__bridgeImportFromNative(name, path); }",
+            arguments: ["name": name, "path": path],
             in: nil,
             in: .page,
             completionHandler: nil
@@ -545,7 +587,7 @@ final class BridgeNativeCoordinator: NSObject, ObservableObject, WKScriptMessage
             isWebReady = true
             if let webView = webView {
                 for item in pendingFiles {
-                    sendFileToWeb(webView: webView, name: item.name, base64: item.base64)
+                    sendFileToWeb(webView: webView, name: item.name, path: item.path)
                 }
                 pendingFiles.removeAll()
             }
@@ -616,6 +658,11 @@ final class BridgeNativeCoordinator: NSObject, ObservableObject, WKScriptMessage
                   !rawFilename.contains(".."),
                   let validName = BridgeBundleSchemeHandler.safePiperFileName(rawFilename) else { return }
             deletePiperFileNative(filename: validName)
+
+        case "pickFile":
+            #if os(iOS)
+            presentFilePicker()
+            #endif
 
         case "haptic":
             #if os(iOS)
@@ -709,9 +756,7 @@ final class BridgeNativeCoordinator: NSObject, ObservableObject, WKScriptMessage
                         var mutableDest = destURL
                         try? mutableDest.setResourceValues(rv)
                         let capturedSize = fileSize
-                        await MainActor.run {
-                            self?.emitPiperDownloadEvent(reqId: reqId, ok: true, size: capturedSize, error: nil)
-                        }
+                        await self?.emitPiperDownloadEvent(reqId: reqId, ok: true, size: capturedSize, error: nil)
                         return
                     } catch {
                         lastError = error.localizedDescription
@@ -722,9 +767,7 @@ final class BridgeNativeCoordinator: NSObject, ObservableObject, WKScriptMessage
                 }
             }
             let finalError = lastError
-            await MainActor.run {
-                self?.emitPiperDownloadEvent(reqId: reqId, ok: false, size: 0, error: finalError)
-            }
+            await self?.emitPiperDownloadEvent(reqId: reqId, ok: false, size: 0, error: finalError)
         }
     }
 
@@ -866,6 +909,34 @@ final class BridgeNativeCoordinator: NSObject, ObservableObject, WKScriptMessage
 }
 
 #if os(iOS)
+extension BridgeNativeCoordinator: UIDocumentPickerDelegate {
+    func presentFilePicker() {
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.item], asCopy: true)
+        picker.delegate = self
+        picker.allowsMultipleSelection = false
+        picker.shouldShowFileExtensions = true
+        guard let presenter = topViewController() else { return }
+        presenter.present(picker, animated: true)
+    }
+
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        guard let url = urls.first else { return }
+        handleIncomingFile(url: url)
+        try? FileManager.default.removeItem(at: url)
+    }
+
+    private func topViewController() -> UIViewController? {
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        let scene = scenes.first { $0.activationState == .foregroundActive } ?? scenes.first
+        let window = scene?.windows.first { $0.isKeyWindow } ?? scene?.windows.first
+        var top = window?.rootViewController
+        while let presented = top?.presentedViewController {
+            top = presented
+        }
+        return top
+    }
+}
+
 struct ContentView: UIViewRepresentable {
     @ObservedObject var coordinator: BridgeNativeCoordinator
 
@@ -879,11 +950,29 @@ struct ContentView: UIViewRepresentable {
     func updateUIView(_ uiView: WKWebView, context: Context) {}
 }
 #elseif os(macOS)
+extension BridgeNativeCoordinator: WKUIDelegate {
+    func webView(
+        _ webView: WKWebView,
+        runOpenPanelWith parameters: WKOpenPanelParameters,
+        initiatedByFrame frame: WKFrameInfo,
+        completionHandler: @escaping ([URL]?) -> Void
+    ) {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = parameters.allowsMultipleSelection
+        panel.begin { response in
+            completionHandler(response == .OK ? panel.urls : nil)
+        }
+    }
+}
+
 struct ContentView: NSViewRepresentable {
     @ObservedObject var coordinator: BridgeNativeCoordinator
 
     func makeNSView(context: Context) -> WKWebView {
         let webView = createConfiguredWebView(coordinator: coordinator)
+        webView.uiDelegate = coordinator
         coordinator.webView = webView
         loadInitialBundle(into: webView)
         return webView

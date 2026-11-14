@@ -347,7 +347,7 @@ export function ButtonEditorModal() {
             <div class="editor-col">
               <div class="section-box">
                 <div class="section-head">
-                  <strong>Picture / Symbol</strong>
+                  <strong>Picture</strong>
                   <div class="edit-actions">
                     <button
                       type="button"
@@ -425,21 +425,19 @@ export function ButtonEditorModal() {
                     {!settings.value.onlineSymbolSearch ? (
                       <div class="section-box">
                         <p class="hint" style={{ margin: '0 0 8px', lineHeight: 1.5 }}>
-                          Symbol search is an online feature. Your search words are sent to the
-                          ARASAAC service (api.arasaac.org) to find pictograms. Nothing is sent
-                          unless you turn this on.
+                          Symbol search looks words up on ARASAAC (api.arasaac.org), so whatever you type gets sent there. It's off until you turn it on.
                         </p>
                         <button
                           type="button"
                           class="sm-btn"
                           onClick={() => updateSettings({ onlineSymbolSearch: true })}
                         >
-                          Turn on online symbol search
+                          Turn on symbol search
                         </button>
                       </div>
                     ) : (
                     <p class="hint" style={{ margin: '0 0 6px' }}>
-                      Searches are sent to ARASAAC (api.arasaac.org).
+                      Searches go to ARASAAC.
                     </p>
                     )}
                     <div class="inline-row">
@@ -505,7 +503,7 @@ export function ButtonEditorModal() {
               </div>
 
               <div class="section-box">
-                <strong>Color & Word Class</strong>
+                <strong>Color</strong>
                 <div class="wordclass-grid">
                   {Object.entries(WORD_CLASS).map(([k, sw]) => (
                     <button

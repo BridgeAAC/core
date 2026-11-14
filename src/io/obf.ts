@@ -1,4 +1,4 @@
-import { unzipSync, zipSync } from 'fflate';
+import { zipSync } from 'fflate';
 import type {
   Action,
   AssetBlob,
@@ -18,6 +18,7 @@ import {
   newId,
   parseCssColor,
   parseDataUrl,
+  safeUnzip,
 } from './util';
 
 interface ObfButton {
@@ -326,7 +327,7 @@ export async function importObz(data: Uint8Array, opts: ImportOptions = {}): Pro
   const vocabId = opts.vocabId ?? `obz-${newId()}`;
   let entries: Record<string, Uint8Array>;
   try {
-    entries = unzipSync(data);
+    entries = safeUnzip(data);
   } catch (e) {
     throw new Error(`Could not unpack .obz archive (${e instanceof Error ? e.message : 'corrupt zip'}).`);
   }

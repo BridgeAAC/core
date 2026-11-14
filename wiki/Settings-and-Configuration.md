@@ -62,19 +62,19 @@ The **Display** tab tailors the visual appearance to accommodate cortical visual
 
 ---
 
-## 4. Caregiver & Editor PIN Lock
+## 4. PIN lock
 
-The **PIN Lock** tab provides administrator security to prevent accidental vocabulary deletion, unwanted modifications, or tampering by students in classroom and therapy settings.
+The **Privacy** tab provides administrator security to prevent accidental vocabulary deletion, unwanted modifications, or tampering by students in classroom and therapy settings.
 
 ### How It Works:
-1. Open **Settings** &rarr; **PIN Lock**.
-2. Enter your desired 4-digit code in the **PIN Code** field (e.g. `1234`).
+1. Open **Settings** &rarr; **Privacy**.
+2. Type a PIN in **New PIN** and tap **Set PIN**.
 3. Once set, the following administrative actions are instantly secured:
    - Tapping the **Edit Mode** pencil icon in the top bar.
    - Tapping the **Vocab** manager icon to switch, import, or delete boards.
    - Tapping the **Settings** gear icon.
 4. When a communicator attempts to access an administrative feature, a secure PIN keypad modal appears requiring the passcode.
-5. To disable the lock, navigate to **Settings** &rarr; **PIN Lock** and clear the PIN field so it reads `None`.
+5. To turn the lock off, open **Settings** &rarr; **Privacy**, leave **New PIN** blank and tap **Remove PIN**.
 
 ---
 

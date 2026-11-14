@@ -1,5 +1,6 @@
 import { useRef, useState } from 'preact/hooks';
 import {
+  importBoardFile,
   installStarter,
   openVocab,
   panel,
@@ -12,12 +13,11 @@ import {
   deleteVocab,
   getAssetsForVocab,
   loadVocab,
-  putAssets,
   saveVocab,
 } from '../store/db';
 import { forgetAssetsWithPrefix } from '../store/assets';
 import { createBlankVocabulary } from '../data/starter';
-import { importAnyFile } from '../io/detect';
+import { boardFileAccept, pickBoardFile } from '../io/pick';
 import { exportBridge } from '../io/bridge';
 import { exportObz } from '../io/obf';
 import { exportCe } from '../io/ce';
@@ -68,27 +68,17 @@ export function VocabModal() {
     setLastImport(null);
     setImporting(true);
     setProgressFrac(0.02);
-    setProgressMsg(`Reading ${file.name}...`);
-
+    setProgressMsg(`Reading ${file.name}…`);
     try {
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      const res = await importAnyFile(
-        { name: file.name, bytes },
-        {
-          filename: file.name,
-          onProgress: (frac, msg) => {
-            setProgressFrac(frac);
-            setProgressMsg(msg);
-          },
+      const res = await importBoardFile(
+        { name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) },
+        (frac, msg) => {
+          setProgressFrac(frac);
+          setProgressMsg(msg);
         },
       );
-      setProgressMsg('Saving vocabulary...');
-      await putAssets(res.assets);
-      await saveVocab(res.vocab);
-      await refreshVocabList();
-      await openVocab(res.vocab.id);
       setLastImport(res);
-      toast(`Imported "${res.vocab.name}" (${res.stats.pages} pages)`, 'success');
+      toast(`Opened "${res.vocab.name}" (${res.stats.pages} pages)`, 'success');
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : String(e));
     } finally {
@@ -122,7 +112,7 @@ export function VocabModal() {
   async function handleEnrich(id: string) {
     if (!settings.value.onlineSymbolSearch) {
       toast(
-        'Auto-Enrich is an online feature: it sends your button labels to ARASAAC (api.arasaac.org) to find symbols. Turn on online symbol search to continue.',
+        'This looks up your button labels on ARASAAC (api.arasaac.org). Turn on symbol search to use it.',
         'info',
         {
           label: 'Turn on',
@@ -148,7 +138,7 @@ export function VocabModal() {
         await openVocab(id);
       }
       toast(
-        `Auto-Enrich complete: matched ${res.newlyMatched.toLocaleString()} symbols for offline use!`,
+        `Added pictures to ${res.newlyMatched.toLocaleString()} buttons`,
         'success',
       );
     } catch (e) {
@@ -185,7 +175,7 @@ export function VocabModal() {
         onClick={(e) => e.stopPropagation()}
       >
         <div class="modal-header">
-          <h2>Vocabularies & File Formats</h2>
+          <h2>Vocabularies</h2>
           <button type="button" class="icon-close" onClick={close} aria-label="Close">
             ×
           </button>
@@ -205,21 +195,20 @@ export function VocabModal() {
               const f = e.dataTransfer?.files?.[0];
               if (f) void handleFile(f);
             }}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => pickBoardFile(fileInputRef.current)}
           >
             <input
               ref={fileInputRef}
               type="file"
-              accept=".ce,.wf,.c4v,.obz,.obf,.bridge,.zip"
+              accept={boardFileAccept()}
               style={{ display: 'none' }}
               onChange={(e) => void handleFile((e.target as HTMLInputElement).files?.[0])}
             />
             <div class="drop-title">
-              <strong>Import compatible archive (.ce, .wf, .c4v)</strong>, Open Board (.obf, .obz), or
-              BridgeAAC (.bridge)
+              <strong>Import a board</strong>
             </div>
             <div class="drop-sub">
-              Click to select a file or drag and drop it here. Files stay on your device.
+              .ce, .wf, .c4v, .obf, .obz or .bridge. Tap to choose a file, or drag one here.
             </div>
           </div>
 
@@ -283,7 +272,7 @@ export function VocabModal() {
                   disabled={enriching}
                   onClick={() => void handleEnrich(lastImport.vocab.id)}
                 >
-                  {enriching ? 'Enriching...' : 'Auto-Enrich with ARASAAC Symbols'}
+                  {enriching ? 'Adding pictures…' : 'Add ARASAAC pictures'}
                 </button>
               </div>
             </div>
@@ -291,7 +280,7 @@ export function VocabModal() {
 
           <div class="section-box">
             <div class="section-head" style={{ flexWrap: 'wrap', gap: '8px' }}>
-              <strong>Installed Vocabularies ({list.length})</strong>
+              <strong>On this device ({list.length})</strong>
               <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <select
                   aria-label="Starter board language"
@@ -313,9 +302,9 @@ export function VocabModal() {
                   onClick={() => {
                     panel.value = 'pageset';
                   }}
-                  title="Choose between BridgeWords 42, 60, 84, or 108"
+                  title="BridgeWords 42, 60, 84 or 108, or ARASAAC Core"
                 >
-                  Choose Page Set
+                  Choose starting board
                 </button>
                 <button
                   type="button"
@@ -368,9 +357,9 @@ export function VocabModal() {
                         class="sm-btn"
                         disabled={enriching}
                         onClick={() => void handleEnrich(item.id)}
-                        title="Automatically match text buttons to open ARASAAC pictograms and save offline"
+                        title="Find ARASAAC pictures for buttons that don't have one (uses the internet)"
                       >
-                        Enrich ARASAAC
+                        Add pictures
                       </button>
                       <button
                         type="button"
@@ -422,7 +411,7 @@ export function VocabModal() {
           </div>
 
           <form class="section-box" onSubmit={(e) => void handleCreateBlank(e)}>
-            <strong>New Blank Vocabulary</strong>
+            <strong>New blank vocabulary</strong>
             <div class="inline-row" style={{ marginTop: '8px', flexWrap: 'wrap' }}>
               <input
                 type="text"

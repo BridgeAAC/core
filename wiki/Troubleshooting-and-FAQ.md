@@ -65,7 +65,7 @@ Find clear answers to setup, speech audio, AAC Backup file migrations, and acces
 ### Q: How do I prevent a student from exiting BridgeAAC to play games or watch videos?
 - **On iPad**: Use Apple’s built-in **Guided Access** feature. Go to iPad `Settings > Accessibility > Guided Access`, turn it on, set a passcode, and triple-click the top button inside BridgeAAC.
 - **On Android**: Use **App Pinning**. Go to Android `Settings > Security > App Pinning`, open BridgeAAC, swipe to recent apps, and tap the pin icon.
-- **Inside BridgeAAC**: Go to `Settings > System > Security & PIN Lock` and set a 4-digit PIN to prevent unauthorized access to Edit Mode or Settings.
+- **Inside BridgeAAC**: Go to **Settings → Privacy** and set a PIN to prevent unauthorized access to Edit Mode or Settings.
 
 ---
 

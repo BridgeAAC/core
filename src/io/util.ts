@@ -1,4 +1,26 @@
-import { gunzipSync, inflateSync, unzlibSync } from 'fflate';
+import { gunzipSync, inflateSync, unzipSync, unzlibSync } from 'fflate';
+
+const MAX_ZIP_ENTRIES = 50_000;
+const MAX_ZIP_ENTRY_BYTES = 512 * 1024 * 1024;
+const MAX_ZIP_TOTAL_BYTES = 1024 * 1024 * 1024;
+
+export function safeUnzip(
+  data: Uint8Array,
+  keep?: (lowerName: string) => boolean,
+): Record<string, Uint8Array> {
+  let count = 0;
+  let total = 0;
+  return unzipSync(data, {
+    filter: (file) => {
+      if (++count > MAX_ZIP_ENTRIES) throw new Error('archive has too many files');
+      if (keep && !keep(file.name.toLowerCase())) return false;
+      if (file.originalSize > MAX_ZIP_ENTRY_BYTES) throw new Error(`${file.name} is too large`);
+      total += file.originalSize;
+      if (total > MAX_ZIP_TOTAL_BYTES) throw new Error('archive is too large once unpacked');
+      return true;
+    },
+  });
+}
 
 export function newId(): string {
   const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;

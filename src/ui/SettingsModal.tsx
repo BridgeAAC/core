@@ -16,6 +16,7 @@ import {
   getCachedDownloadedNeuralVoices,
   getDownloadedNeuralVoices,
   getVoiceMirrorUrl,
+  isValidMirrorUrl,
   listVoices,
   NEURAL_OFFLINE_MODELS,
   precacheVocabularyAudio,
@@ -48,7 +49,21 @@ export function SettingsModal() {
   const [mirrorUrl, setMirrorUrlState] = useState<string>(() => getVoiceMirrorUrl());
   const [testingMirror, setTestingMirror] = useState<boolean>(false);
   const [newPin, setNewPin] = useState('');
+  const [confirmErase, setConfirmErase] = useState(false);
   const [savingPin, setSavingPin] = useState(false);
+
+  function setOnlineSpeech(on: boolean) {
+    if (on) {
+      const uk = /^en-GB$/i.test(getLanguageInfo(v?.locale).bcp47 || '');
+      updateSettings({ onlineSpeech: true, voiceURI: uk ? 'bridge:natural-en-gb' : 'bridge:natural-en' });
+      toast('Switched to the Online Natural voice.', 'success');
+    } else {
+      updateSettings({
+        onlineSpeech: false,
+        voiceURI: s.voiceURI.startsWith('bridge:natural-') ? '' : s.voiceURI,
+      });
+    }
+  }
 
   async function handleSavePin(e: Event) {
     e.preventDefault();
@@ -59,7 +74,7 @@ export function SettingsModal() {
       toast(newPin.trim() ? 'PIN saved' : 'PIN removed', 'success');
       setNewPin('');
     } catch {
-      toast('Could not save PIN on this browser.', 'error');
+      toast("Couldn't save the PIN in this browser.", 'error');
     } finally {
       setSavingPin(false);
     }
@@ -78,7 +93,11 @@ export function SettingsModal() {
   async function handleTestMirror() {
     const url = mirrorUrl.trim();
     if (!url) {
-      toast('Using default distributed voice CDN mirrors.', 'info');
+      toast('Using the default voice download servers.', 'info');
+      return;
+    }
+    if (!isValidMirrorUrl(url)) {
+      toast('That needs to be a full http:// or https:// address.', 'error');
       return;
     }
     setTestingMirror(true);
@@ -87,9 +106,9 @@ export function SettingsModal() {
       const testUrl = `${clean}/en_US-amy-medium.onnx.json`;
       const res = await fetch(testUrl, { method: 'GET', cache: 'no-store' });
       if (res.ok) {
-        toast('Custom voice server connected successfully!', 'success');
+        toast('Voice server is reachable.', 'success');
       } else {
-        toast(`Server returned HTTP ${res.status}. Check URL and CORS headers.`, 'error');
+        toast(`The server answered with HTTP ${res.status}. Check the URL and its CORS headers.`, 'error');
       }
     } catch (err: any) {
       toast(`Could not reach server: ${err?.message || 'Network error'}`, 'error');
@@ -111,7 +130,7 @@ export function SettingsModal() {
       setCachedPhrases(count);
       toast(`Cached ${res.cached} voice clips for "${v.name}".`, 'success');
     } catch {
-      toast('Could not finish caching all phrases. Check your connection and try again.', 'error');
+      toast("Couldn't save audio for every phrase. Try again.", 'error');
     } finally {
       setPrecacheProgress(null);
     }
@@ -137,7 +156,7 @@ export function SettingsModal() {
       toast(`Downloaded ${label}`, 'success');
       speakText('Hello, this offline voice is ready to use.');
     } else {
-      toast('Could not download voice model. Check your internet connection.', 'error');
+      toast("Couldn't download that voice. Check your connection.", 'error');
     }
   }
 
@@ -148,7 +167,7 @@ export function SettingsModal() {
     if (s.voiceURI === voiceURI) {
       updateSettings({ voiceURI: '' });
     }
-    toast('Removed downloaded voice model', 'info');
+    toast('Voice removed', 'info');
   }
 
   return (
@@ -194,14 +213,14 @@ export function SettingsModal() {
               class={`tab-btn ${tab === 'speech' ? 'active' : ''}`}
               onClick={() => setTab('speech')}
             >
-              Speech & Voice
+              Speech
             </button>
             <button
               type="button"
               class={`tab-btn ${tab === 'access' ? 'active' : ''}`}
               onClick={() => setTab('access')}
             >
-              Touch & Scanning
+              Access
             </button>
             <button
               type="button"
@@ -215,7 +234,7 @@ export function SettingsModal() {
               class={`tab-btn ${tab === 'pin' ? 'active' : ''}`}
               onClick={() => setTab('pin')}
             >
-              PIN Lock
+              Privacy
             </button>
           </div>
 
@@ -332,33 +351,24 @@ export function SettingsModal() {
                     checked={s.onlineSpeech}
                     onChange={(e) => {
                       const on = (e.target as HTMLInputElement).checked;
-                      updateSettings(
-                        on
-                          ? { onlineSpeech: true }
-                          : {
-                              onlineSpeech: false,
-                              voiceURI: s.voiceURI.startsWith('bridge:natural-') ? '' : s.voiceURI,
-                            },
-                      );
+                      setOnlineSpeech(on);
                     }}
                   />
                   <span>
-                    <strong>Allow online speech (off by default)</strong>
+                    <strong>Allow online speech</strong>
                     <span class="hint" style={{ display: 'block', marginTop: '2px' }}>
-                      Turning this on enables the "Online Natural" voices.{' '}
+                      Unlocks the "Online Natural" voices.{' '}
                       <strong>
-                        The words being spoken are sent over the internet to the bridgeaac.org
-                        speech proxy and on to Google's text-to-speech service.
+                        Everything they say is sent to Google's text-to-speech service.
                       </strong>{' '}
-                      Leave it off to keep all speech on this device (Piper neural voices, system
-                      voices, and the built-in voice never send text anywhere).
+                      With this off, speech never leaves the device.
                     </span>
                   </span>
                 </label>
                 {!s.onlineSpeech && s.voiceURI.startsWith('bridge:natural-') && (
                   <p class="alert-box" style={{ marginTop: '8px' }}>
-                    Your selected voice is an online voice, but online speech is off, so an
-                    on-device voice is being used instead.
+                    You picked an online voice but online speech is off, so an offline voice is
+                    speaking instead.
                   </p>
                 )}
               </div>
@@ -374,11 +384,11 @@ export function SettingsModal() {
                   }}
                 >
                   <div>
-                    <strong>Offline Audio Cache</strong>
+                    <strong>Offline audio</strong>
                     <p class="hint" style={{ margin: '2px 0 0' }}>
-                      Preload spoken audio for buttons in{' '}
-                      <strong>{v?.name ?? 'current vocabulary'}</strong> ({cachedPhrases} phrases
-                      saved on device).
+                      Save audio for every button in{' '}
+                      <strong>{v?.name ?? 'current vocabulary'}</strong> ({cachedPhrases} saved so
+                      far).
                     </p>
                   </div>
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
@@ -399,7 +409,7 @@ export function SettingsModal() {
                         onClick={async () => {
                           await ttsCacheClear();
                           setCachedPhrases(0);
-                          toast('Cleared offline audio cache', 'info');
+                          toast('Saved audio cleared', 'info');
                         }}
                       >
                         Clear ({cachedPhrases})
@@ -410,10 +420,9 @@ export function SettingsModal() {
               </div>
 
               <div class="section-box" style={{ marginTop: '6px' }}>
-                <strong>Offline Neural Voices (Piper VITS)</strong>
+                <strong>Piper voices</strong>
                 <p class="hint" style={{ margin: '2px 0 8px' }}>
-                  Download a voice model to speak any typed sentence offline without an internet
-                  connection.
+                  These run on the device and work offline once downloaded.
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {NEURAL_OFFLINE_MODELS.map((m) => {
@@ -504,9 +513,9 @@ export function SettingsModal() {
               <div class="section-box" style={{ marginTop: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                   <div>
-                    <strong>Voice Download Server / Mirror</strong>
+                    <strong>Voice download server</strong>
                     <p class="hint" style={{ margin: '2px 0 0' }}>
-                      Optional custom HTTP(S) server to host neural voice ONNX files for fast local network downloads.
+                      If your school or clinic hosts the Piper voice files, put that address here.
                     </p>
                   </div>
                 </div>
@@ -538,7 +547,7 @@ export function SettingsModal() {
                       onClick={() => {
                         setMirrorUrlState('');
                         setVoiceMirrorUrl('');
-                        toast('Reset to default voice mirrors.', 'info');
+                        toast('Back to the default servers.', 'info');
                       }}
                     >
                       Reset
@@ -613,9 +622,9 @@ export function SettingsModal() {
               </div>
 
               <div class="section-box" style={{ marginTop: '10px' }}>
-                <strong>Custom Pronunciations</strong>
+                <strong>Pronunciations</strong>
                 <p class="hint" style={{ margin: '2px 0 8px' }}>
-                  Teach the voice how to pronounce names, places, or abbreviations.
+                  Fix how the voice says names, places or abbreviations.
                 </p>
                 <div class="inline-row">
                   <input
@@ -701,7 +710,7 @@ export function SettingsModal() {
 
               {s.access === 'touch' ? (
                 <div class="section-box">
-                  <strong>Touch & Dwell Timing</strong>
+                  <strong>Touch timing</strong>
                   <div class="inline-row" style={{ marginTop: '8px' }}>
                     <label class="field" style={{ flex: 1 }}>
                       <span>Hold Duration ({s.holdMs} ms)</span>
@@ -760,7 +769,7 @@ export function SettingsModal() {
                 </div>
               ) : (
                 <div class="section-box">
-                  <strong>Switch Scanning Options</strong>
+                  <strong>Switch scanning</strong>
                   <div class="inline-row" style={{ marginTop: '8px' }}>
                     <label class="field" style={{ flex: 1 }}>
                       <span>Scan Pattern</span>
@@ -851,10 +860,9 @@ export function SettingsModal() {
                 </div>
               )}
               <div class="section-box" style={{ marginTop: '8px' }}>
-                <strong>Keyboard & Visual Focus Accessibility</strong>
+                <strong>Keyboard navigation</strong>
                 <p class="hint" style={{ margin: '2px 0 8px' }}>
-                  Use Tab and Arrow Keys (Up, Down, Left, Right) to navigate between board buttons,
-                  and Enter or Space to activate.
+                  Tab and the arrow keys move between buttons. Enter or Space presses one.
                 </p>
                 <div class="check-grid">
                   <label class="check-label">
@@ -1146,10 +1154,9 @@ export function SettingsModal() {
               </div>
 
               <div class="section-box" style={{ marginTop: '10px' }}>
-                <strong>Settings Backup & Open Source</strong>
+                <strong>Backup</strong>
                 <p class="hint" style={{ margin: '2px 0 8px' }}>
-                  Export or restore your custom settings, or view the BridgeAAC source code and
-                  releases on GitHub.
+                  Save your settings to a file or load them back. The source code is on GitHub.
                 </p>
                 <div class="inline-row" style={{ gap: '8px', flexWrap: 'wrap' }}>
                   <button
@@ -1165,7 +1172,7 @@ export function SettingsModal() {
                       a.download = 'bridgeaac-settings.json';
                       a.click();
                       URL.revokeObjectURL(url);
-                      toast('Exported settings backup', 'success');
+                      toast('Settings saved to a file', 'success');
                     }}
                   >
                     Export Settings JSON
@@ -1183,10 +1190,10 @@ export function SettingsModal() {
                           const parsed = JSON.parse(await file.text());
                           if (parsed && typeof parsed === 'object') {
                             updateSettings(parsed);
-                            toast('Restored settings from backup', 'success');
+                            toast('Settings restored', 'success');
                           }
                         } catch {
-                          toast('Invalid settings JSON file', 'error');
+                          toast("That file isn't a BridgeAAC settings backup.", 'error');
                         }
                       }}
                     />
@@ -1217,7 +1224,7 @@ export function SettingsModal() {
           {tab === 'pin' && (
             <div class="settings-section">
               <div class="section-box">
-                <strong>Caregiver & Editor PIN Lock</strong>
+                <strong>PIN lock</strong>
                 <p class="hint" style={{ margin: '4px 0 10px' }}>
                   Require a PIN before opening Edit Mode, Vocabularies, or Settings.{' '}
                   {s.pin ? 'A PIN is currently set.' : 'No PIN is set.'}
@@ -1242,35 +1249,26 @@ export function SettingsModal() {
                   </button>
                 </form>
                 <p class="hint" style={{ margin: '8px 0 0', lineHeight: 1.5 }}>
-                  This PIN is an access lock that stops the communicator or others from changing
-                  the board by accident. It is <strong>not encryption</strong>: the PIN is stored
-                  as a salted hash, but someone with full access to this browser's storage could
-                  still remove it. Use your device's screen lock and storage encryption to protect
-                  the device itself.
+                  This keeps the board from being changed by accident. It isn't{' '}
+                  <strong>encryption</strong>. Someone with full access to this browser could
+                  still get around it, so keep a screen lock on the device too.
                 </p>
               </div>
 
               <div class="section-box">
-                <strong>Online Features (all off by default)</strong>
+                <strong>Online features</strong>
                 <label style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginTop: '8px' }}>
                   <input
                     type="checkbox"
                     checked={s.onlineSpeech}
                     onChange={(e) => {
                       const on = (e.target as HTMLInputElement).checked;
-                      updateSettings(
-                        on
-                          ? { onlineSpeech: true }
-                          : {
-                              onlineSpeech: false,
-                              voiceURI: s.voiceURI.startsWith('bridge:natural-') ? '' : s.voiceURI,
-                            },
-                      );
+                      setOnlineSpeech(on);
                     }}
                   />
                   <span class="hint">
-                    <strong>Online speech</strong>: sends the words being spoken to the
-                    bridgeaac.org proxy and Google's text-to-speech service.
+                    <strong>Online speech</strong>. What's spoken goes to Google's text-to-speech
+                    service.
                   </span>
                 </label>
                 <label style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginTop: '8px' }}>
@@ -1284,22 +1282,18 @@ export function SettingsModal() {
                     }
                   />
                   <span class="hint">
-                    <strong>Online symbol search</strong>: sends search words and button labels
-                    (for Auto-Enrich) to the ARASAAC API at api.arasaac.org.
+                    <strong>Symbol search</strong>. Search words, and button labels when you use Add ARASAAC pictures, go to ARASAAC (api.arasaac.org).
                   </span>
                 </label>
               </div>
 
               <div class="section-box">
-                <strong>Privacy & Local Data Guarantee</strong>
+                <strong>Your data</strong>
                 <p class="hint" style={{ margin: '4px 0 8px', lineHeight: 1.5 }}>
-                  BridgeAAC has no accounts, analytics, trackers, or telemetry. Your vocabularies,
-                  photos, mood logs, planner tasks, and caregiver notes are stored only on this
-                  device and are not uploaded anywhere unless you export a file. Spoken text and
-                  symbol searches stay on this device unless you turn on the online features
-                  above. The app does download things it needs: the app itself, optional voice
-                  models, and ARASAAC pictogram images (requested by symbol number, not by
-                  text).
+                  No accounts, no analytics, no tracking. Boards, photos, moods, planner tasks and
+                  notes stay on this device unless you export them. The app only goes online to
+                  update itself, download voices you pick, and fetch ARASAAC pictures by number,
+                  plus the two features above if you turn them on.
                 </p>
                 <div class="inline-row" style={{ gap: '8px', flexWrap: 'wrap' }}>
                   <a
@@ -1312,7 +1306,7 @@ export function SettingsModal() {
                     Website (bridgeaac.org)
                   </a>
                   <a
-                    href="mailto:support@bridgeaac.org?subject=Urgent%20Family%20Support%20-%20BridgeAAC"
+                    href="mailto:support@bridgeaac.org?subject=BridgeAAC%20help"
                     class="btn secondary sm"
                     style={{ textDecoration: 'none' }}
                   >
@@ -1327,25 +1321,45 @@ export function SettingsModal() {
                   >
                     Legal & Disclaimer
                   </a>
-                  <button
-                    type="button"
-                    class="btn danger sm"
-                    onClick={async () => {
-                      if (
-                        typeof window !== 'undefined' &&
-                        window.confirm(
-                          'Erase all locally saved custom boards, cached voices, and settings on this device?',
-                        )
-                      ) {
-                        await resetAllLocalData();
-                        resetSettings();
-                        window.location.reload();
-                      }
-                    }}
+                  <a
+                    href="https://bridgeaac.org/privacy.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn secondary sm"
+                    style={{ textDecoration: 'none' }}
                   >
-                    Erase All Local Data
-                  </button>
+                    Privacy Policy
+                  </a>
+                  {!confirmErase && (
+                    <button type="button" class="btn danger sm" onClick={() => setConfirmErase(true)}>
+                      Erase All Local Data
+                    </button>
+                  )}
                 </div>
+                {confirmErase && (
+                  <div class="alert-box error" style={{ marginTop: '10px' }}>
+                    <p style={{ margin: '0 0 8px' }}>
+                      This deletes every board, photo, note and saved voice on this device. It can't
+                      be undone. Export anything you want to keep first.
+                    </p>
+                    <div class="inline-row" style={{ gap: '8px' }}>
+                      <button type="button" class="btn secondary sm" onClick={() => setConfirmErase(false)}>
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        class="btn danger sm"
+                        onClick={async () => {
+                          await resetAllLocalData();
+                          resetSettings();
+                          window.location.reload();
+                        }}
+                      >
+                        Erase Everything
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div
@@ -1356,14 +1370,12 @@ export function SettingsModal() {
                   borderLeft: '4px solid #22c55e',
                 }}
               >
-                <strong>Immediate Support for Families & Autism Parents</strong>
+                <strong>Need help?</strong>
                 <p class="hint" style={{ margin: '4px 0 8px' }}>
-                  If you are an autism parent, caregiver, or educator needing an immediate bug fix,
-                  custom grid layout, or accessibility adjustment, reach out directly. We prioritize
-                  urgent family assistance.
+                  Found a bug, stuck on setup, or need a board laid out a certain way? Email and I'll help.
                 </p>
                 <a
-                  href="mailto:support@bridgeaac.org?subject=Urgent%20Family%20Support%20-%20BridgeAAC"
+                  href="mailto:support@bridgeaac.org?subject=BridgeAAC%20help"
                   class="btn primary sm"
                   style={{ textDecoration: 'none', display: 'inline-block' }}
                 >
@@ -1380,10 +1392,9 @@ export function SettingsModal() {
                   lineHeight: '1.4',
                 }}
               >
-                <strong>Legal & Clinical Disclaimer</strong>
+                <strong>Disclaimer</strong>
                 <p style={{ margin: '4px 0' }}>
-                  BridgeAAC is an assistive communication software tool, NOT an FDA-approved medical
-                  device. It does not provide medical or clinical advice and has no emergency call
+                  BridgeAAC is communication software, not an FDA-approved medical device. It does not provide medical or clinical advice and has no emergency call
                   (911) connectivity. Provided "AS IS" without warranty of any kind.
                 </p>
                 <a
@@ -1404,7 +1415,7 @@ export function SettingsModal() {
               class="btn secondary"
               onClick={() => {
                 resetSettings();
-                toast('Settings reset to defaults', 'info');
+                toast('Settings reset', 'info');
               }}
             >
               Reset Defaults
