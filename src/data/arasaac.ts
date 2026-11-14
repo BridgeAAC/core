@@ -1,6 +1,7 @@
 import type { Vocabulary } from '../model';
 import { saveVocab } from '../store/db';
 import { preloadArasaacForVocabulary } from '../store/assets';
+import { settings } from '../settings';
 
 export const ARASAAC_CORE_DICTIONARY: Record<string, number> = {
   i: 6009,
@@ -705,6 +706,8 @@ export async function fetchArasaacIdOnline(word: string, locale = 'en'): Promise
   } catch {}
 
   if (typeof fetch === 'undefined') return undefined;
+  // Privacy gate: words are only sent to api.arasaac.org if online symbol search is enabled.
+  if (!settings.value.onlineSymbolSearch) return undefined;
 
   try {
     const url = `https://api.arasaac.org/v1/pictograms/${encodeURIComponent(locale)}/bestsearch/${encodeURIComponent(norm)}`;

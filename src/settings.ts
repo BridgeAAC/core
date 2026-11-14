@@ -1,4 +1,5 @@
 import { signal, effect } from '@preact/signals';
+import { hashSecret, isHashedSecret } from './store/secure';
 
 export type ThemeSetting = 'auto' | 'light' | 'dark' | 'calm' | 'contrast';
 export type ScanPatternSetting = 'linear' | 'row-column' | 'column-row';
@@ -49,7 +50,18 @@ export interface Settings {
   showButtonBorders: boolean;
   soundFeedback: boolean;
   uiLanguage: string;
+  /** Salted PBKDF2 hash of the settings PIN (never plaintext). Empty = no PIN. */
   pin: string;
+  /**
+   * Opt-in: allow the "Online Natural" voices, which send the text being spoken to the
+   * bridgeaac.org /api/tts proxy and on to Google's text-to-speech service. Off by default.
+   */
+  onlineSpeech: boolean;
+  /**
+   * Opt-in: allow ARASAAC symbol search and Auto-Enrich, which send search words / button
+   * labels to api.arasaac.org. Off by default.
+   */
+  onlineSymbolSearch: boolean;
   useDeviceKeyboard?: boolean;
   onboarded: boolean;
 }
@@ -98,6 +110,8 @@ export const DEFAULT_SETTINGS: Settings = {
   soundFeedback: false,
   uiLanguage: 'auto',
   pin: '',
+  onlineSpeech: false,
+  onlineSymbolSearch: false,
   onboarded: false,
 };
 
@@ -118,6 +132,28 @@ effect(() => {
     localStorage.setItem(KEY, JSON.stringify(settings.value));
   } catch {}
 });
+
+// Migrate any plaintext PIN (older versions, or a restored settings backup) to a salted hash.
+let migratingPin = '';
+effect(() => {
+  const pin = settings.value.pin;
+  if (!pin || isHashedSecret(pin) || migratingPin === pin) return;
+  migratingPin = pin;
+  void hashSecret(pin)
+    .then((hashed) => {
+      if (hashed && settings.value.pin === pin) updateSettings({ pin: hashed });
+    })
+    .catch(() => {})
+    .finally(() => {
+      migratingPin = '';
+    });
+});
+
+/** Set (or clear, with an empty string) the settings PIN. Stores only a salted hash. */
+export async function setSettingsPin(plain: string): Promise<void> {
+  const clean = plain.trim();
+  updateSettings({ pin: clean ? await hashSecret(clean) : '' });
+}
 
 export function updateSettings(patch: Partial<Settings>): void {
   settings.value = { ...settings.value, ...patch };

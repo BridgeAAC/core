@@ -5,7 +5,9 @@ A communication device that cannot speak is useless. BridgeAAC is engineered wit
 ![Speech and Customization Settings](images/06-offline-voices-customization.png)
 
 > [!NOTE]
-> **100% On-Device & Private**: Speech synthesis runs entirely within your device’s WebAssembly runtime and local audio hardware. No words, sentences, or voice recordings are ever transmitted over the network.
+> **On-device by default**: With the default settings, speech is generated on your device (Piper neural voices, the bundled meSpeak voice, or your operating system's voices). BridgeAAC does not send what you say anywhere.
+>
+> The optional **Online Natural** voices are the exception. They are **off by default**, and when turned on (Settings → Speech → *Allow online speech*) they send the text being spoken to the bridgeaac.org speech proxy, which forwards it to Google's text-to-speech service. See [Privacy & Security](Privacy-HIPAA-and-Security).
 
 ---
 

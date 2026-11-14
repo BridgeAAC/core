@@ -5,6 +5,7 @@ import { addPage, deleteButton, newButton, saveButton, uid } from '../edit';
 import { EMOJI_GROUPS, SWATCHES, WORD_CLASS } from '../data/palette';
 import { ensureButtonImage, resolveIconForButton } from '../data/icons';
 import { getLanguageInfo } from '../i18n';
+import { settings, updateSettings } from '../settings';
 import { putAssets } from '../store/db';
 import { cacheArasaacPictogram } from '../store/assets';
 import { ButtonPicture } from './ButtonPicture';
@@ -137,6 +138,7 @@ export function ButtonEditorModal() {
   async function searchArasaac() {
     const q = (arasaacQuery || draft.label).trim();
     if (!q) return;
+    if (!settings.value.onlineSymbolSearch) return;
     setArasaacBusy(true);
     try {
       const arasaacLang = getLanguageInfo(v?.locale).arasaac;
@@ -420,6 +422,26 @@ export function ButtonEditorModal() {
 
                 {picTab === 'arasaac' && (
                   <div class="arasaac-Pane">
+                    {!settings.value.onlineSymbolSearch ? (
+                      <div class="section-box">
+                        <p class="hint" style={{ margin: '0 0 8px', lineHeight: 1.5 }}>
+                          Symbol search is an online feature. Your search words are sent to the
+                          ARASAAC service (api.arasaac.org) to find pictograms. Nothing is sent
+                          unless you turn this on.
+                        </p>
+                        <button
+                          type="button"
+                          class="sm-btn"
+                          onClick={() => updateSettings({ onlineSymbolSearch: true })}
+                        >
+                          Turn on online symbol search
+                        </button>
+                      </div>
+                    ) : (
+                    <p class="hint" style={{ margin: '0 0 6px' }}>
+                      Searches are sent to ARASAAC (api.arasaac.org).
+                    </p>
+                    )}
                     <div class="inline-row">
                       <input
                         type="text"
@@ -433,7 +455,12 @@ export function ButtonEditorModal() {
                         }}
                         placeholder="Search ARASAAC symbols (e.g. eat, happy)..."
                       />
-                      <button type="button" class="sm-btn" onClick={() => void searchArasaac()}>
+                      <button
+                        type="button"
+                        class="sm-btn"
+                        disabled={!settings.value.onlineSymbolSearch}
+                        onClick={() => void searchArasaac()}
+                      >
                         {arasaacBusy ? '...' : 'Search'}
                       </button>
                     </div>

@@ -10,7 +10,7 @@ This document describes the software architecture, WebAssembly pipelines, offlin
 ## 1. Architectural Overview & Philosophy
 
 BridgeAAC is built to meet strict criteria critical for assistive communication:
-1. **Zero Cloud Dependence**: The application must function 100% offline. No telemetry, no external database calls, and no cloud-dependent speech synthesis.
+1. **No Cloud Dependence**: Core communication (boards, speech, editing, import/export) must work offline. No telemetry and no external database. Features that use the network, such as online speech and ARASAAC symbol search, are optional and opt-in.
 2. **Instant Response Latency**: When a button is tapped, speech and visual feedback must occur in under 50 milliseconds.
 3. **Low Memory Footprint**: Must run smoothly on 2GB RAM budget tablets and older iPads without crashing.
 

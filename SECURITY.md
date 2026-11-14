@@ -21,19 +21,23 @@ Security updates and patches are actively maintained and released for the latest
 
 ---
 
-## 2. Zero-ePHI & Security Architecture
+## 2. Privacy & Security Architecture
 
-BridgeAAC is architected upon a **Zero-Knowledge, Local-First, Offline-Always** security paradigm:
+BridgeAAC is **local-first**. The full, feature-by-feature list of network use is in the [Privacy & Security wiki page](https://github.com/BridgeAAC/core/wiki/Privacy-HIPAA-and-Security).
 
-1. **No External Protected Health Information (ePHI)**:
-   - BridgeAAC possesses **no cloud user accounts**, **no central databases**, and **no remote phrase logging**.
-   - No user identity, communication utterances, patient medical details, or vocabulary grids are ever transmitted across the network.
-2. **Local Client Sandboxing**:
-   - All custom vocabulary boards, imported archive files (`.ce`, `.obf`, `.bridge`), recorded audio clips, and Caregiver Notes reside strictly within client sandboxed storage on the user's physical device (IndexedDB / OPFS in the browser, sandboxed `Application Support` on native iOS, or local application directory on desktop).
-3. **On-Device Machine Learning & Synthesis**:
-   - Neural speech synthesis (Piper VITS ONNX) operates locally using client-side WebAssembly without sending speech queries to third-party cloud APIs.
-4. **Administrative PIN Protection**:
-   - Vocabulary editing and confidential Caregiver Notes can be protected behind an administrator passcode (configurable in Settings -> Security) to prevent unauthorized tampering in clinical, therapeutic, or classroom settings.
+1. **No accounts, no central database, no analytics.**
+   - BridgeAAC has no user accounts, no central databases, no remote phrase logging and no telemetry.
+2. **Local storage.**
+   - Vocabularies, imported archives (`.ce`, `.obf`, `.bridge`), recorded audio, planner and mood data, and Caregiver Notes are stored in local storage on the device (IndexedDB, localStorage or OPFS in the browser, or the app sandbox on iOS and desktop).
+3. **Online features that send text are opt-in and off by default.**
+   - *Online speech* sends the text being spoken to the bridgeaac.org `/api/tts` proxy, which forwards it to Google's text-to-speech service.
+   - *Online symbol search* sends search words and button labels to `api.arasaac.org`.
+   - With both off, speech runs on the device (Piper neural voices, system voices or the bundled meSpeak voice), and no communication text is transmitted by the app.
+4. **PIN and Caregiver Notes.**
+   - The settings PIN is stored as a salted PBKDF2-SHA256 hash. It is an access lock against accidental changes, **not encryption**, and does not protect against someone with full access to the browser's storage.
+   - Caregiver Notes are encrypted with AES-256-GCM (key derived from the notes passcode via PBKDF2-SHA256) once a notes passcode is set. A short passcode can be brute-forced offline, so longer passcodes and OS device encryption are recommended.
+5. **HIPAA.**
+   - BridgeAAC is not certified as HIPAA compliant, and the project does not sign BAAs. Organizations must do their own risk assessment.
 
 ---
 
@@ -76,9 +80,9 @@ When a security report is submitted through our private disclosure channels:
 ## 5. Dependency Management & Supply Chain Security
 
 BridgeAAC adheres to secure development practices:
-- Dependency trees are audited using automated dependency scanning and security analysis tools.
-- Pinned dependency overrides are enforced for any transitive vulnerabilities identified in third-party toolchains.
-- Code changes require passing automated continuous integration workflows including TypeScript verification and regression tests before merging into `main`.
+- GitHub CodeQL analysis and a CI workflow (TypeScript typecheck and `vitest` tests) are configured for the repository; see `.github/workflows/`.
+- Pinned dependency overrides are used for transitive vulnerabilities identified in third-party toolchains.
+- The file importers (`.ce`, `.obf`/`.obz`, `.bridge`) parse archives locally in the browser. They have regression tests but have not been formally fuzzed or audited against malicious files; reports in this area are especially welcome.
 
 ---
 

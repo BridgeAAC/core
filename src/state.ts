@@ -1,4 +1,4 @@
-import { signal, computed, batch } from '@preact/signals';
+import { signal, computed, batch, effect } from '@preact/signals';
 import {
   type Action,
   type Button,
@@ -23,6 +23,7 @@ import { playAsset, preloadArasaacForVocabulary, stopAudio } from './store/asset
 import { backspace, deleteWord, insertText } from './engine/message';
 import {
   isSpeaking,
+  setOnlineSpeechAllowed,
   speak as ttsSpeak,
   stopSpeaking,
   unlockAudio,
@@ -32,6 +33,12 @@ import { Predictor, type PredictorData } from './engine/predict';
 import { createStarterVocabulary, type PageSetSize } from './data/starter';
 import { ensureButtonImage } from './data/icons';
 import { putAssets } from './store/db';
+
+
+// Online speech is opt-in; keep the speech engine's network gate in sync with settings.
+effect(() => {
+  setOnlineSpeechAllowed(settings.value.onlineSpeech === true);
+});
 
 export type Panel =
   | null

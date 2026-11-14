@@ -2,6 +2,15 @@ import { useEffect, useState } from 'preact/hooks';
 import { panel, speakText, toast } from '../state';
 import { settings, updateSettings, type ThemeSetting } from '../settings';
 import { kvGet, kvSet } from '../store/db';
+import {
+  decryptJsonWithPasscode,
+  deriveEncryptionKey,
+  encryptJson,
+  isEncryptedEnvelope,
+  verifySecret,
+  type DerivedKey,
+  type EncryptedEnvelope,
+} from '../store/secure';
 
 export type ToolsTab = 'planner' | 'mood' | 'games' | 'aboutme' | 'notes';
 
@@ -275,8 +284,12 @@ export function ToolsModal() {
   const [editingAbout, setEditingAbout] = useState(false);
 
   const [notes, setNotes] = useState<CaregiverNote[]>([]);
+  // Non-empty when notes are protected: 'encrypted', or a legacy gate (old passcode / settings PIN).
   const [savedPasscode, setSavedPasscode] = useState<string>('');
   const [notesUnlocked, setNotesUnlocked] = useState<boolean>(false);
+  const [notesKey, setNotesKey] = useState<DerivedKey | null>(null);
+  const [notesEnv, setNotesEnv] = useState<EncryptedEnvelope | null>(null);
+  const [notesBusy, setNotesBusy] = useState(false);
   const [passInput, setPassInput] = useState('');
   const [passError, setPassError] = useState(false);
   const [newPasscode, setNewPasscode] = useState('');
@@ -286,8 +299,17 @@ export function ToolsModal() {
 
   useEffect(() => {
     void (async () => {
-      const [savedTasks, savedStars, savedGoal, savedMoods, savedAbout, savedNotes, savedPass] =
-        await Promise.all([
+      const [
+        savedTasks,
+        savedStars,
+        savedGoal,
+        savedMoods,
+        savedAbout,
+        savedNotes,
+        savedPass,
+        savedEnc,
+        notesOpen,
+      ] = await Promise.all([
           kvGet<PlannerTask[]>('planner_tasks'),
           kvGet<number>('gamified_stars'),
           kvGet<string>('planner_reward_goal'),
@@ -295,16 +317,27 @@ export function ToolsModal() {
           kvGet<AboutMeProfile>('about_me_profile'),
           kvGet<CaregiverNote[]>('caregiver_notes'),
           kvGet<string>('caregiver_passcode'),
+          kvGet<EncryptedEnvelope>('caregiver_notes_enc'),
+          kvGet<boolean>('caregiver_notes_open'),
         ]);
       if (Array.isArray(savedTasks) && savedTasks.length > 0) setTasks(savedTasks);
       if (typeof savedStars === 'number') setStars(savedStars);
       if (savedGoal) setRewardGoal(savedGoal);
       if (Array.isArray(savedMoods)) setMoodLogs(savedMoods);
       if (savedAbout) setAboutMe({ ...DEFAULT_ABOUT_ME, ...savedAbout });
-      if (Array.isArray(savedNotes)) setNotes(savedNotes);
-      const pin = savedPass || settings.value.pin || '';
-      setSavedPasscode(pin);
-      setNotesUnlocked(!pin);
+      if (isEncryptedEnvelope(savedEnc)) {
+        // Encrypted notes: nothing readable until the passcode is entered.
+        setNotesEnv(savedEnc);
+        setSavedPasscode('encrypted');
+        setNotesUnlocked(false);
+      } else {
+        if (Array.isArray(savedNotes)) setNotes(savedNotes);
+        // Legacy (pre-encryption) installs: notes were gated by a notes passcode or the settings
+        // PIN. They are encrypted with that secret on the next successful unlock.
+        const gate = savedPass || (notesOpen ? '' : settings.value.pin) || '';
+        setSavedPasscode(gate);
+        setNotesUnlocked(!gate);
+      }
     })();
   }, []);
 
@@ -461,42 +494,92 @@ export function ToolsModal() {
     speakText(intro);
   }
 
-  async function hashPasscode(p: string): Promise<string> {
-    if (!p) return '';
-    try {
-      if (typeof crypto !== 'undefined' && crypto.subtle) {
-        const enc = new TextEncoder().encode(p);
-        const buf = await crypto.subtle.digest('SHA-256', enc);
-        return Array.from(new Uint8Array(buf))
-          .map((b) => b.toString(16).padStart(2, '0'))
-          .join('');
-      }
-    } catch {}
-    return p;
+  /** Persist notes: encrypted when a passcode key is active, otherwise plaintext. */
+  async function persistNotes(next: CaregiverNote[], key: DerivedKey | null = notesKey) {
+    if (key) {
+      const env = await encryptJson(next, key);
+      setNotesEnv(env);
+      await kvSet('caregiver_notes_enc', env);
+      await kvSet('caregiver_notes', []);
+    } else {
+      await kvSet('caregiver_notes', next);
+    }
   }
 
   async function handleSetPasscode(e: Event) {
     e.preventDefault();
+    if (notesBusy) return;
     const clean = newPasscode.trim();
-    const stored = clean ? await hashPasscode(clean) : '';
-    setSavedPasscode(stored);
-    await kvSet('caregiver_passcode', stored);
-    setNewPasscode('');
-    setNotesUnlocked(true);
-    toast(clean ? 'Caregiver Notes passcode saved' : 'Passcode removed', 'success');
+    setNotesBusy(true);
+    try {
+      if (clean) {
+        const key = await deriveEncryptionKey(clean);
+        await persistNotes(notes, key);
+        await kvSet('caregiver_passcode', '');
+        await kvSet('caregiver_notes_open', false);
+        setNotesKey(key);
+        setSavedPasscode('encrypted');
+        toast('Passcode saved. Caregiver Notes are now encrypted on this device.', 'success');
+      } else {
+        await kvSet('caregiver_notes', notes);
+        await kvSet('caregiver_notes_enc', null);
+        await kvSet('caregiver_passcode', '');
+        await kvSet('caregiver_notes_open', true);
+        setNotesKey(null);
+        setNotesEnv(null);
+        setSavedPasscode('');
+        toast('Passcode removed. Caregiver Notes are no longer encrypted.', 'info');
+      }
+      setNewPasscode('');
+      setNotesUnlocked(true);
+    } catch {
+      toast('Could not update the passcode on this browser.', 'error');
+    } finally {
+      setNotesBusy(false);
+    }
   }
 
   async function handleUnlockNotes(e: Event) {
     e.preventDefault();
+    if (notesBusy) return;
     const input = passInput.trim();
-    const hashed = await hashPasscode(input);
-    if (input === savedPasscode || hashed === savedPasscode) {
+    setNotesBusy(true);
+    try {
+      if (notesEnv) {
+        const res = await decryptJsonWithPasscode<CaregiverNote[]>(notesEnv, input);
+        if (!res) {
+          setPassError(true);
+          return;
+        }
+        setNotes(Array.isArray(res.value) ? res.value : []);
+        setNotesKey(res.dk);
+      } else if (savedPasscode) {
+        if (!(await verifySecret(input, savedPasscode))) {
+          setPassError(true);
+          return;
+        }
+        // Migrate legacy plaintext notes to encrypted storage using the passcode just entered.
+        const key = await deriveEncryptionKey(input);
+        await persistNotes(notes, key);
+        await kvSet('caregiver_passcode', '');
+        setNotesKey(key);
+        setSavedPasscode('encrypted');
+        toast('Caregiver Notes are now encrypted with this passcode.', 'success');
+      }
       setNotesUnlocked(true);
       setPassInput('');
       setPassError(false);
-    } else {
-      setPassError(true);
+    } finally {
+      setNotesBusy(false);
     }
+  }
+
+  function lockNotes() {
+    if (notesEnv || notesKey) {
+      setNotes([]);
+      setNotesKey(null);
+    }
+    setNotesUnlocked(false);
   }
 
   async function handleAddNote(e: Event) {
@@ -511,7 +594,7 @@ export function ToolsModal() {
     };
     const next = [item, ...notes];
     setNotes(next);
-    await kvSet('caregiver_notes', next);
+    await persistNotes(next);
     setNoteText('');
     toast('Saved caregiver observation note', 'success');
   }
@@ -519,7 +602,7 @@ export function ToolsModal() {
   async function handleDeleteNote(id: string) {
     const next = notes.filter((n) => n.id !== id);
     setNotes(next);
-    await kvSet('caregiver_notes', next);
+    await persistNotes(next);
   }
 
   function exportCaregiverNotes() {
@@ -1376,7 +1459,11 @@ export function ToolsModal() {
           {tab === 'notes' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {!notesUnlocked ? (
-                <form class="section-box" onSubmit={handleUnlockNotes} style={{ maxWidth: '400px' }}>
+                <form
+                  class="section-box"
+                  onSubmit={(e) => void handleUnlockNotes(e)}
+                  style={{ maxWidth: '400px' }}
+                >
                   <strong>🔒 Passcode-Protected Caregiver Notes</strong>
                   <p class="hint" style={{ margin: '4px 0 10px' }}>
                     Enter the caregiver passcode to view or add private observations.
@@ -1392,8 +1479,8 @@ export function ToolsModal() {
                       }}
                       autoFocus
                     />
-                    <button type="submit" class="btn primary sm">
-                      Unlock
+                    <button type="submit" class="btn primary sm" disabled={notesBusy}>
+                      {notesBusy ? 'Unlocking…' : 'Unlock'}
                     </button>
                   </div>
                   {passError && (
@@ -1426,7 +1513,7 @@ export function ToolsModal() {
                           <button
                             type="button"
                             class="btn secondary sm"
-                            onClick={() => setNotesUnlocked(false)}
+                            onClick={lockNotes}
                           >
                             🔒 Lock Notes
                           </button>
@@ -1459,10 +1546,17 @@ export function ToolsModal() {
                         onInput={(e) => setNewPasscode((e.target as HTMLInputElement).value)}
                         style={{ maxWidth: '280px' }}
                       />
-                      <button type="submit" class="btn secondary sm">
+                      <button type="submit" class="btn secondary sm" disabled={notesBusy}>
                         {savedPasscode ? 'Update Passcode' : 'Set Passcode'}
                       </button>
                     </form>
+                    <p class="hint" style={{ margin: '8px 0 0', lineHeight: 1.5 }}>
+                      {savedPasscode
+                        ? 'Notes are encrypted on this device (AES-256-GCM) with a key derived from your passcode. '
+                        : 'Notes are not encrypted. Set a passcode to encrypt them on this device. '}
+                      A longer passcode (8+ characters) is much harder to guess than a short PIN. If
+                      you forget the passcode, encrypted notes cannot be recovered.
+                    </p>
                   </div>
 
                   <form class="section-box" onSubmit={(e) => void handleAddNote(e)}>
