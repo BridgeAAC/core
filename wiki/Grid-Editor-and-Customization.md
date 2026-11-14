@@ -55,7 +55,7 @@ BridgeAAC provides three methods for adding visuals to any button:
 
 ### Method 1: ARASAAC Open-Source Symbol Search
 1. In the Button Editor, tap **Search Symbols**.
-   - Symbol search is an **online, opt-in feature**. The first time, tap **Turn on online symbol search**. Your search words are sent to the ARASAAC API (`api.arasaac.org`). You can turn it off again in **Settings → PIN Lock → Online Features**.
+   - Symbol search is an **online, opt-in feature**. The first time, tap **Turn on symbol search**. Your search words are sent to the ARASAAC API (`api.arasaac.org`). You can turn it off again in **Settings → Privacy → Online features**.
 2. Type any keyword (e.g., `drink`, `swing`, `school`, `dog`).
 3. Select from over 10,000 standardized, high-contrast ARASAAC pictograms.
 4. The symbol is saved locally in IndexedDB and works completely offline.

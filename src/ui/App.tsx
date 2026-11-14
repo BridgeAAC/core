@@ -4,13 +4,12 @@ import {
   booted,
   editTarget,
   fatalError,
+  importBoardFileWithToasts,
   keyboardOpen,
   mode,
-  openVocab,
   panel,
   pinRequest,
   redo,
-  refreshVocabList,
   requireUnlock,
   toast,
   toasts,
@@ -18,10 +17,13 @@ import {
   vocab,
 } from '../state';
 import { settings } from '../settings';
-import { verifySecret } from '../store/secure';
+import {
+  clearFailedAttempts,
+  lockoutSeconds,
+  recordFailedAttempt,
+  verifySecret,
+} from '../store/secure';
 import { getLanguageInfo, resolveActiveLang } from '../i18n';
-import { importAnyFile } from '../io/detect';
-import { putAssets, saveVocab } from '../store/db';
 import { TopBar } from './TopBar';
 import { Board } from './Board';
 import { ButtonEditorModal } from './ButtonEditorModal';
@@ -37,23 +39,31 @@ import { PageSetModal } from './PageSetModal';
 function PinModal() {
   const req = pinRequest.value;
   const [entered, setEntered] = useState('');
-  const [err, setErr] = useState(false);
+  const [err, setErr] = useState('');
   const [checking, setChecking] = useState(false);
   if (!req) return null;
 
   async function submit(e: Event) {
     e.preventDefault();
     if (checking) return;
+    const wait = lockoutSeconds('pin');
+    if (wait) {
+      setErr(`Too many tries. Wait ${wait} seconds.`);
+      return;
+    }
     setChecking(true);
     const ok = await verifySecret(entered.trim(), settings.value.pin);
     setChecking(false);
     if (ok) {
+      clearFailedAttempts('pin');
       pinRequest.value = null;
       setEntered('');
-      setErr(false);
+      setErr('');
       req!.run();
     } else {
-      setErr(true);
+      const locked = recordFailedAttempt('pin');
+      setEntered('');
+      setErr(locked ? `Too many tries. Wait ${locked} seconds.` : "That's not the PIN.");
     }
   }
 
@@ -85,12 +95,12 @@ function PinModal() {
               value={entered}
               onInput={(e) => {
                 setEntered((e.target as HTMLInputElement).value);
-                setErr(false);
+                setErr('');
               }}
               autoFocus
             />
           </label>
-          {err && <p class="alert-box error">Incorrect PIN. Try again.</p>}
+          {err && <p class="alert-box error">{err}</p>}
           <div class="modal-footer" style={{ marginTop: '12px' }}>
             <button type="button" class="btn secondary" onClick={() => (pinRequest.value = null)}>
               Cancel
@@ -144,7 +154,7 @@ export function App() {
     } else {
       root.style.removeProperty('--scan-outline');
     }
-    root.style.setProperty('--btn-radius', `${s.buttonRadius ?? 10}px`);
+    root.style.setProperty('--btn-radius', `${s.buttonRadius ?? 12}px`);
     root.style.setProperty('--icon-scale', String(s.iconScale ?? 1));
   }, [
     theme,
@@ -174,21 +184,7 @@ export function App() {
       if (!file) return;
       if (panel.value === 'vocabs') return;
       e.preventDefault();
-      try {
-        toast(`Importing ${file.name}...`, 'info');
-        const bytes = new Uint8Array(await file.arrayBuffer());
-        const res = await importAnyFile({ name: file.name, bytes }, { filename: file.name });
-        await putAssets(res.assets);
-        await saveVocab(res.vocab);
-        await refreshVocabList();
-        await openVocab(res.vocab.id);
-        toast(
-          `Loaded "${res.vocab.name}" (${res.stats.pages} pages, ${res.stats.buttons} buttons)`,
-          'success',
-        );
-      } catch (err) {
-        toast(err instanceof Error ? err.message : String(err), 'error');
-      }
+      await importBoardFileWithToasts({ name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) });
     }
     const anyWin = window as any;
     if (anyWin.launchQueue?.setConsumer) {
@@ -196,46 +192,25 @@ export function App() {
         const handle = launchParams?.files?.[0];
         if (!handle?.getFile) return;
         const file: File = await handle.getFile();
-        const bytes = new Uint8Array(await file.arrayBuffer());
-        const res = await importAnyFile({ name: file.name, bytes }, { filename: file.name });
-        await putAssets(res.assets);
-        await saveVocab(res.vocab);
-        await refreshVocabList();
-        await openVocab(res.vocab.id);
-        toast(`Opened "${res.vocab.name}"`, 'success');
+        await importBoardFileWithToasts({ name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) });
       });
     }
     if (anyWin.bridgeDesktop?.onOpenFile) {
-      anyWin.bridgeDesktop.onOpenFile(async (payload: { name: string; bytes: Uint8Array }) => {
-        try {
-          const res = await importAnyFile(payload, { filename: payload.name });
-          await putAssets(res.assets);
-          await saveVocab(res.vocab);
-          await refreshVocabList();
-          await openVocab(res.vocab.id);
-          toast(`Opened "${res.vocab.name}"`, 'success');
-        } catch (err) {
-          toast(err instanceof Error ? err.message : String(err), 'error');
-        }
-      });
+      anyWin.bridgeDesktop.onOpenFile((payload: { name: string; bytes: Uint8Array }) =>
+        importBoardFileWithToasts(payload),
+      );
     }
-    anyWin.__bridgeOpenFileFromNative = async (name: string, base64: string) => {
+    anyWin.__bridgeImportFromNative = async (name: string, path: string) => {
+      if (!path) {
+        toast(`Couldn't read "${name}". If it's in iCloud, open it once in Files so it downloads, then try again.`, 'error', undefined, 9000);
+        return;
+      }
       try {
-        toast(`Importing ${name}...`, 'info');
-        const bin = atob(base64);
-        const bytes = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-        const res = await importAnyFile({ name, bytes }, { filename: name });
-        await putAssets(res.assets);
-        await saveVocab(res.vocab);
-        await refreshVocabList();
-        await openVocab(res.vocab.id);
-        toast(
-          `Loaded "${res.vocab.name}" (${res.stats.pages} pages, ${res.stats.buttons} buttons)`,
-          'success',
-        );
-      } catch (err) {
-        toast(err instanceof Error ? err.message : String(err), 'error');
+        const res = await fetch(path, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        await importBoardFileWithToasts({ name, bytes: new Uint8Array(await res.arrayBuffer()) });
+      } catch {
+        toast(`Couldn't read "${name}". Try picking it again.`, 'error');
       }
     };
     try {

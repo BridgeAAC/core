@@ -12,10 +12,17 @@ function bridgeTtsPlugin(): Plugin {
       next();
       return;
     }
+    if (req.method !== 'POST') {
+      res.statusCode = 405;
+      res.end();
+      return;
+    }
     try {
-      const u = new URL(urlStr, 'http://localhost');
-      const q = (u.searchParams.get('q') ?? '').trim().slice(0, 200);
-      const tl = (u.searchParams.get('tl') ?? 'en').trim();
+      const chunks: Buffer[] = [];
+      for await (const c of req) chunks.push(c as Buffer);
+      const body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+      const q = String(body.q ?? '').trim().slice(0, 200);
+      const tl = String(body.tl ?? 'en').trim().slice(0, 16);
       if (!q) {
         res.statusCode = 400;
         res.end('Missing q');
@@ -37,8 +44,7 @@ function bridgeTtsPlugin(): Plugin {
       }
       const buf = Buffer.from(await upstream.arrayBuffer());
       res.setHeader('Content-Type', 'audio/mpeg');
-      res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
-      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cache-Control', 'private, no-store');
       res.statusCode = 200;
       res.end(buf);
     } catch {
@@ -126,15 +132,6 @@ export default defineConfig({
               cacheName: 'arasaac',
               expiration: { maxEntries: 4000, maxAgeSeconds: 60 * 60 * 24 * 365 },
               cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            urlPattern: ({ url }) => url.pathname.startsWith('/api/tts'),
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'tts-audio',
-              expiration: { maxEntries: 3000, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [200] },
             },
           },
         ],

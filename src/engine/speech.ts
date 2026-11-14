@@ -261,14 +261,25 @@ export function getVoiceMirrorUrl(): string {
   return '';
 }
 
-export function setVoiceMirrorUrl(url: string): void {
+export function isValidMirrorUrl(url: string): boolean {
+  try {
+    const u = new URL(url.trim());
+    return (u.protocol === 'https:' || u.protocol === 'http:') && !u.username && !u.password;
+  } catch {
+    return false;
+  }
+}
+
+export function setVoiceMirrorUrl(url: string): boolean {
+  const clean = url.trim().replace(/\/+$/, '');
+  const ok = !clean || isValidMirrorUrl(clean);
   try {
     if (typeof localStorage !== 'undefined') {
-      const clean = url.trim();
-      if (clean) localStorage.setItem('bridgeaac.voice_mirror_url', clean);
+      if (clean && ok) localStorage.setItem('bridgeaac.voice_mirror_url', clean);
       else localStorage.removeItem('bridgeaac.voice_mirror_url');
     }
   } catch {}
+  return ok;
 }
 
 let synthPrimed = false;
@@ -1039,10 +1050,6 @@ export async function synthesizeOfflineWav(
 
 let naturalTtsCooldownUntil = 0;
 
-/**
- * Online speech is opt-in. When disabled (the default), no text is ever sent to /api/tts and
- * the engine uses on-device voices only. Controlled by the `onlineSpeech` setting.
- */
 let onlineSpeechAllowed = false;
 
 export function setOnlineSpeechAllowed(allowed: boolean): void {
@@ -1053,7 +1060,75 @@ export function isOnlineSpeechAllowed(): boolean {
   return onlineSpeechAllowed;
 }
 
-async function fetchNaturalAudioBuffer(text: string, lang: string): Promise<ArrayBuffer | null> {
+let ttsProxyMissing = false;
+
+function googleTtsUrl(text: string, lang: string): string {
+  return `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${encodeURIComponent(
+    lang,
+  )}&q=${encodeURIComponent(text)}`;
+}
+
+function playRemoteAudioChunk(
+  url: string,
+  settings: SpeechSettings,
+  onCleanupRegister: (fn: () => void) => void,
+): Promise<{ durationSec: number; donePromise: Promise<boolean> } | null> {
+  return new Promise((resolve) => {
+    if (typeof Audio === 'undefined') {
+      resolve(null);
+      return;
+    }
+    const el = primedAudioEl ?? new Audio();
+    let settled = false;
+    let finish: (ok: boolean) => void = () => {};
+    const donePromise = new Promise<boolean>((r) => {
+      finish = r;
+    });
+    const giveUp = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(null);
+    };
+    const timer = setTimeout(giveUp, 5000);
+    el.onended = () => finish(true);
+    el.onerror = () => {
+      if (settled) finish(false);
+      else giveUp();
+    };
+    onCleanupRegister(() => {
+      el.onended = null;
+      el.onerror = null;
+      el.pause();
+      finish(false);
+    });
+    try {
+      el.preload = 'auto';
+      (el as any).playsInline = true;
+      el.volume = clamp(settings.volume, 0, 1, 1);
+      el.src = url;
+      el.playbackRate = clamp(settings.rate, 0.5, 2, 1);
+      void el
+        .play()
+        .then(() => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          const d = Number.isFinite(el.duration) && el.duration > 0 ? el.duration : 1.5;
+          resolve({ durationSec: d / el.playbackRate, donePromise });
+        })
+        .catch(giveUp);
+    } catch {
+      giveUp();
+    }
+  });
+}
+
+async function fetchNaturalAudioBuffer(
+  text: string,
+  lang: string,
+  timeoutMs = 1500,
+): Promise<ArrayBuffer | null> {
   const norm = text.trim();
   if (!norm) return null;
   const key = `natural:${lang}:${norm.toLowerCase()}`;
@@ -1066,13 +1141,12 @@ async function fetchNaturalAudioBuffer(text: string, lang: string): Promise<Arra
     return disk;
   }
 
-  // Privacy gate: never transmit text unless the user explicitly enabled online speech.
-  if (!onlineSpeechAllowed) return null;
+  if (!onlineSpeechAllowed || ttsProxyMissing) return null;
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return null;
   if (Date.now() < naturalTtsCooldownUntil) return null;
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 1500);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const res = await fetch('/api/tts', {
       method: 'POST',
@@ -1081,12 +1155,12 @@ async function fetchNaturalAudioBuffer(text: string, lang: string): Promise<Arra
       cache: 'no-store',
       signal: controller.signal,
     });
-    if (!res.ok || res.status === 204) {
-      naturalTtsCooldownUntil = Date.now() + 2_000;
+    const ct = res.headers.get('content-type') ?? '';
+    if (res.status === 404 || res.status === 405 || (res.ok && !ct.includes('audio') && res.status !== 204)) {
+      ttsProxyMissing = true;
       return null;
     }
-    const ct = res.headers.get('content-type') ?? '';
-    if (!ct.includes('audio')) {
+    if (!res.ok || res.status === 204) {
       naturalTtsCooldownUntil = Date.now() + 2_000;
       return null;
     }
@@ -1490,15 +1564,16 @@ async function runFallbackAudioSpeech(
       }
     }
 
+    const wantsOnlineVoice = voiceURI.startsWith('bridge:natural-');
     if (!buf && !forceInstantOffline && onlineSpeechAllowed) {
       const netKey = `natural:${lang}:${norm}`;
       buf = ttsMp3Cache.get(netKey) ?? (await ttsCacheGet(netKey)) ?? null;
       if (buf) {
         audioKind = 'natural-mp3';
       } else {
-        const netPromise = fetchNaturalAudioBuffer(chunk.text, lang);
+        const netPromise = fetchNaturalAudioBuffer(chunk.text, lang, wantsOnlineVoice ? 4000 : 1500);
         const timeoutPromise = new Promise<null>((r) => setTimeout(() => r(null), 240));
-        buf = await Promise.race([netPromise, timeoutPromise]);
+        buf = wantsOnlineVoice ? await netPromise : await Promise.race([netPromise, timeoutPromise]);
         if (buf) {
           audioKind = 'natural-mp3';
         } else {
@@ -1509,6 +1584,43 @@ async function runFallbackAudioSpeech(
             }
           });
         }
+      }
+    }
+
+    if (
+      !buf &&
+      wantsOnlineVoice &&
+      onlineSpeechAllowed &&
+      !(typeof navigator !== 'undefined' && navigator.onLine === false)
+    ) {
+      if (me.cancelled || session !== me) return;
+      let stopRemote: (() => void) | undefined;
+      let remoteTimers: ReturnType<typeof setTimeout>[] = [];
+      me.stopCleanup = () => {
+        for (const t of remoteTimers) clearTimeout(t);
+        stopRemote?.();
+      };
+      const remote = await playRemoteAudioChunk(googleTtsUrl(chunk.text, lang), settings, (fn) => {
+        stopRemote = fn;
+      });
+      if (me.cancelled || session !== me) return;
+      if (remote) {
+        if (!started) {
+          started = true;
+          opts.onStart?.();
+        }
+        remoteTimers = scheduleWordBoundaries(
+          chunk,
+          processed,
+          originalText,
+          remote.durationSec,
+          me,
+          opts.onBoundary,
+        );
+        const ok = await remote.donePromise;
+        for (const t of remoteTimers) clearTimeout(t);
+        if (!ok || me.cancelled || session !== me) return;
+        continue;
       }
     }
 

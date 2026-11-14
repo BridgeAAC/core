@@ -53,13 +53,13 @@ export function PageSetModal({ isOnboarding = false }: PageSetModalProps) {
         class="modal-card pageset-modal"
         role="dialog"
         aria-modal="true"
-        aria-label="Choose a Page Set"
+        aria-label="Choose a starting board"
         onClick={(e) => e.stopPropagation()}
       >
         <div class="pageset-header">
-          <h1 class="pageset-title">Choose a Page Set</h1>
+          <h1 class="pageset-title">Choose a starting board</h1>
           <p class="pageset-subtitle">
-            Select the vocabulary that best fits your needs. You can change this later.
+            Pick the one that fits best. You can switch or edit it any time.
           </p>
         </div>
 

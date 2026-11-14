@@ -157,7 +157,7 @@ export function MessagesModal() {
               class={`tab-btn ${tab === 'phrases' ? 'active' : ''}`}
               onClick={() => setTab('phrases')}
             >
-              Saved Phrases & History ({saved.length})
+              Saved and recent ({saved.length})
             </button>
           </div>
           <button type="button" class="icon-close" onClick={close} aria-label="Close">
@@ -235,7 +235,7 @@ export function MessagesModal() {
 
               {showAddCustom && (
                 <form class="section-box" onSubmit={(e) => void handleAddSoundboardItem(e)}>
-                  <strong>Create Custom Soundboard Button</strong>
+                  <strong>New soundboard button</strong>
                   <div class="inline-row" style={{ marginTop: '8px', flexWrap: 'wrap' }}>
                     <input
                       type="text"
@@ -354,7 +354,7 @@ export function MessagesModal() {
             <div class="editor-grid">
               <div class="editor-col">
                 <div class="section-head">
-                  <strong>Saved Phrases ({saved.length})</strong>
+                  <strong>Saved phrases ({saved.length})</strong>
                 </div>
                 <form class="inline-row" onSubmit={addPhrase}>
                   <input
@@ -411,7 +411,7 @@ export function MessagesModal() {
 
               <div class="editor-col">
                 <div class="section-head">
-                  <strong>Recent History ({hist.length})</strong>
+                  <strong>Recent ({hist.length})</strong>
                   {hist.length > 0 && (
                     <button type="button" class="sm-btn" onClick={() => clearHistory()}>
                       Clear

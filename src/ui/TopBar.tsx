@@ -149,8 +149,8 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             type="button"
             class="nav-btn"
             onClick={() => (panel.value = 'tools')}
-            title="Daily Planner, Mood Tracker, Games, About Me & Caregiver Notes"
-            aria-label="Daily Planner, Mood Tracker, Games, About Me, and Caregiver Notes"
+            title="Planner, moods, games, about me and notes"
+            aria-label="Planner, moods, games, about me and notes"
           >
             <Icon name="star" size={20} />
             <span class="nav-label">{t.tools || 'Tools'}</span>

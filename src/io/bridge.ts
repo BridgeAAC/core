@@ -1,4 +1,4 @@
-import { unzipSync, zipSync } from 'fflate';
+import { zipSync } from 'fflate';
 import type {
   Action,
   AssetBlob,
@@ -6,7 +6,7 @@ import type {
   ImportResult,
   Vocabulary,
 } from '../model';
-import { isZip, newId } from './util';
+import { isZip, newId, safeUnzip } from './util';
 
 interface BridgeMeta {
   format: 'bridgeaac-backup-1';
@@ -72,7 +72,7 @@ export async function importBridge(
   }
   let entries: Record<string, Uint8Array>;
   try {
-    entries = unzipSync(data);
+    entries = safeUnzip(data);
   } catch (e) {
     throw new Error(
       `Could not unpack BridgeAAC backup (${e instanceof Error ? e.message : 'corrupt zip'}).`,

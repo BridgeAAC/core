@@ -93,7 +93,7 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: Install Capacitor Android tooling
-        run: npm install --no-save --legacy-peer-deps @capacitor/core@7.0.0 @capacitor/cli@7.0.0 @capacitor/android@7.0.0
+        run: npm install --no-save --legacy-peer-deps @capacitor/core@8.0.0 @capacitor/cli@8.0.0 @capacitor/android@8.0.0
 
       - name: Build Web Bundle & Sync Capacitor Android
         run: |
@@ -102,6 +102,8 @@ jobs:
             npx cap add android
           fi
           npx cap sync android
+          sed -i -E 's/(compileSdkVersion|targetSdkVersion) = [0-9]+/\1 = 36/' android/variables.gradle
+          grep -E "compileSdkVersion|targetSdkVersion" android/variables.gradle
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 
       - name: Build Android APK & Google Play App Bundle (AAB) with Gradle

@@ -35,7 +35,7 @@ To ensure the device remains a true communication tool rather than a toy, keep B
 6. The student cannot exit the app, switch to web browsers, or access other apps.
 
 ### BridgeAAC App PIN Protection
-1. In BridgeAAC, tap **Settings** (gear icon) &rarr; **PIN Lock** tab.
+1. In BridgeAAC, tap **Settings** (gear icon) &rarr; **Privacy** tab.
 2. In the **New PIN** box, enter a code known only to parents and staff, then tap **Set PIN**.
 3. Once set, the student can communicate freely on the board, but tapping the Edit pencil, Vocab manager, or Settings gear instantly prompts for the PIN keypad.
 4. To remove the PIN, leave the **New PIN** box blank and tap **Remove PIN**. The PIN stops accidental changes. It is not encryption. Caregiver Notes are encrypted separately when you set a notes passcode. For complete configuration instructions, see the [Settings & Configuration Guide](Settings-and-Configuration).

@@ -280,11 +280,37 @@ describe('OBF / OBZ & BridgeAAC backup round-trip', () => {
   it('throws friendly errors on corrupt or unrecognized files', async () => {
     await expect(
       importAnyFile({ name: 'broken.ce', bytes: new Uint8Array([1, 2, 3, 4]) }, {}),
-    ).rejects.toThrow(/Not a valid.*(\.ce|\.c4v)/i);
+    ).rejects.toThrow(/doesn't look like a \.ce file/i);
 
     await expect(
       importAnyFile({ name: 'unknown.xyz', bytes: new Uint8Array([9, 9, 9]) }, {}),
-    ).rejects.toThrow(/Supported formats/i);
+    ).rejects.toThrow(/Supported files/i);
+
+    await expect(
+      importAnyFile({ name: 'empty.ce', bytes: new Uint8Array() }, {}),
+    ).rejects.toThrow(/empty/i);
+  });
+
+  it('opens boards that were zipped up or renamed on the way to the device', async () => {
+    const board = {
+      format: 'open-board-0.1',
+      id: 'b1',
+      name: 'Zipped',
+      grid: { rows: 1, columns: 1, order: [['x']] },
+      buttons: [{ id: 'x', label: 'hello' }],
+    };
+    const obf = strToU8(JSON.stringify(board));
+    const wrapped = zipSync({ 'Boards/My Board.obf': obf, '__MACOSX/._My Board.obf': new Uint8Array(3) });
+    const res = await importAnyFile({ name: 'My Board.zip', bytes: wrapped }, {});
+    expect(res.vocab.pages[0].buttons[0].label).toBe('hello');
+
+    const renamed = await importAnyFile({ name: 'download', bytes: obf }, {});
+    expect(renamed.vocab.pages[0].buttons[0].label).toBe('hello');
+
+    const two = zipSync({ 'a.bridge': new Uint8Array([1]), 'b.ce': new Uint8Array([1]) });
+    await expect(importAnyFile({ name: 'two.zip', bytes: two }, {})).rejects.toThrow(
+      /more than one board/i,
+    );
   });
 });
 

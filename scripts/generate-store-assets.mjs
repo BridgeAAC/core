@@ -255,13 +255,28 @@ async function captureDeviceScenes(deviceName, width, height, scale, outDir) {
   const page = await ctx.newPage();
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
   await page.waitForTimeout(400);
+  await page.evaluate(() => {
+    const key = 'bridgeaac.settings.v2';
+    const cur = JSON.parse(localStorage.getItem(key) || '{}');
+    localStorage.setItem(key, JSON.stringify({ ...cur, speakButtons: false }));
+  });
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(400);
+  for (let i = 0; i < 3; i++) {
+    const next = page.getByRole('button', { name: /^Continue$/ }).first();
+    if (!(await next.count())) break;
+    await next.click().catch(() => {});
+    await page.waitForTimeout(600);
+  }
+  await page.addStyleTag({ content: '.toast-stack { display: none !important; }' });
+  await page.waitForTimeout(300);
 
   const clearBtn = page.locator('button.msg-btn.danger-subtle').first();
   if (await clearBtn.count()) await clearBtn.click().catch(() => {});
   await page.waitForTimeout(100);
 
   const clickWord = async (text) => {
-    const btn = page.locator('button.aac-btn', { hasText: new RegExp(`^${text}$`, 'i') }).first();
+    const btn = page.locator(`button.aac-btn[aria-label="${text}" i]`).first();
     if (await btn.count()) await btn.click().catch(() => {});
     await page.waitForTimeout(80);
   };
@@ -348,10 +363,16 @@ async function captureDeviceScenes(deviceName, width, height, scale, outDir) {
   console.log(`Captured 6 screenshots for ${deviceName} (${width * scale}x${height * scale}) -> ${outDir}`);
 }
 
+await captureDeviceScenes('README iPad Landscape', 1180, 820, 2, 'docs/images');
 await captureDeviceScenes('iPad Pro 13" Portrait', 1024, 1366, 2, 'store-assets/apple-app-store/ipad-pro-13');
 await captureDeviceScenes('iPhone 6.5" Portrait', 428, 926, 3, 'store-assets/apple-app-store/iphone-6.5');
 await captureDeviceScenes('Android Tablet 16:10 Landscape', 960, 600, 2, 'store-assets/google-play/tablet-10in');
 await captureDeviceScenes('Android Phone 16:9 Portrait', 360, 640, 3, 'store-assets/google-play/phone');
+
+fs.copyFileSync(
+  'store-assets/apple-app-store/iphone-6.5/01-communication-board.png',
+  'docs/images/iphone-board.png',
+);
 
 await browser.close();
 srv.close();

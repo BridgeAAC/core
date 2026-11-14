@@ -33,9 +33,10 @@ import { Predictor, type PredictorData } from './engine/predict';
 import { createStarterVocabulary, type PageSetSize } from './data/starter';
 import { ensureButtonImage } from './data/icons';
 import { putAssets } from './store/db';
+import { importAnyFile } from './io/detect';
+import type { ImportResult } from './model';
 
 
-// Online speech is opt-in; keep the speech engine's network gate in sync with settings.
 effect(() => {
   setOnlineSpeechAllowed(settings.value.onlineSpeech === true);
 });
@@ -626,4 +627,30 @@ export async function installStarter(locale = 'en', size: PageSetSize = 60): Pro
   await refreshVocabList();
   void preloadArasaacForVocabulary(starter);
   return starter.id;
+}
+
+export async function importBoardFile(
+  file: { name: string; bytes: Uint8Array },
+  onProgress?: (frac: number, msg: string) => void,
+): Promise<ImportResult> {
+  const res = await importAnyFile(file, { filename: file.name, onProgress });
+  onProgress?.(0.97, 'Saving…');
+  await putAssets(res.assets);
+  await saveVocab(res.vocab);
+  await refreshVocabList();
+  await openVocab(res.vocab.id);
+  return res;
+}
+
+export async function importBoardFileWithToasts(file: { name: string; bytes: Uint8Array }): Promise<void> {
+  toast(`Opening ${file.name}…`, 'info');
+  try {
+    const res = await importBoardFile(file);
+    toast(`Opened "${res.vocab.name}" (${res.stats.pages} pages)`, 'success');
+    if (res.warnings.length) {
+      toast(res.warnings[0], 'info', undefined, 8000);
+    }
+  } catch (err) {
+    toast(err instanceof Error ? err.message : String(err), 'error', undefined, 9000);
+  }
 }

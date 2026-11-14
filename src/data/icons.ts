@@ -19,8 +19,8 @@ function getReverseMultilingualMap(): Map<string, string> {
 }
 
 export function getSvgPictogram(id: string): string | null {
-  const fn = SVG_PICTOGRAMS[id];
-  return fn ? fn() : null;
+  if (!Object.prototype.hasOwnProperty.call(SVG_PICTOGRAMS, id)) return null;
+  return SVG_PICTOGRAMS[id]();
 }
 
 const wrapSvg = (inner: string) =>
