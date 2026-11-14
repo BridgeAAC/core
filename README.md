@@ -18,29 +18,29 @@
 
 ---
 
-## App Screenshots
+## Screenshots
 
 <div align="center">
-  <img src="docs/images/01-communication-board.png" alt="BridgeAAC Core Communication Board" width="90%" />
-  <p><em>Standard Core Communication Board with dynamic Fitzgerald Key color coding, message bar, and symbol prediction.</em></p>
+  <img src="docs/images/01-communication-board.png" alt="The BridgeWords 60 board on an iPad, with a message in the message bar" width="92%" />
+  <p><em>The BridgeWords 60 board with word suggestions and the message bar. Colors follow word type.</em></p>
 </div>
 
 <br />
 
-| Calm Sensory Mode | Daily Visual Planner |
+| Calm theme | Planner |
 | :---: | :---: |
-| <img src="docs/images/02-calm-sensory-mode.png" alt="Calm Sensory Mode" width="100%" /> | <img src="docs/images/03-daily-planner-rewards.png" alt="Daily Visual Planner" width="100%" /> |
-| *Sensory-friendly low-glare sage palette with softened pastel saturation.* | *Visual schedule with morning/evening routines and gamified rewards.* |
+| <img src="docs/images/02-calm-sensory-mode.png" alt="The board in the calm theme" width="100%" /> | <img src="docs/images/03-daily-planner-rewards.png" alt="The daily planner with morning routine steps checked off" width="100%" /> |
+| *A low-glare theme with softer colors, for kids who find bright screens hard.* | *A visual schedule with spoken steps and a star reward.* |
 
-| Mood Tracking & Analytics | Gamified Learning Games |
+| Moods | Games |
 | :---: | :---: |
-| <img src="docs/images/04-mood-tracker-analytics.png" alt="Mood Tracker and Analytics" width="100%" /> | <img src="docs/images/05-gamified-learning.png" alt="Gamified Learning Games" width="100%" /> |
-| *Log emotions, identify triggers, and view mood trends.* | *Interactive Sentence Builder and Emotion Match skill games.* |
+| <img src="docs/images/04-mood-tracker-analytics.png" alt="The mood check-in screen with a coping tip and mood history" width="100%" /> | <img src="docs/images/05-gamified-learning.png" alt="The sentence builder game" width="100%" /> |
+| *Log how you feel, hear a coping phrase, and see your history.* | *Sentence builder and emotion matching games that speak every tile.* |
 
-| Offline Neural Voice Customization | Phone & Compact Layout |
+| Speech settings | On a phone |
 | :---: | :---: |
-| <img src="docs/images/06-offline-voices-customization.png" alt="Offline Voice Customization" width="100%" /> | <img src="docs/images/iphone-board.png" alt="BridgeAAC Mobile Layout" width="100%" /> |
-| *Downloadable Piper VITS neural voices with fine pitch and rate controls.* | *Responsive grid layout optimized for phone screens and mobile AAC.* |
+| <img src="docs/images/06-offline-voices-customization.png" alt="Speech settings with downloadable Piper voices" width="100%" /> | <img src="docs/images/iphone-board.png" alt="The board on an iPhone" width="42%" /> |
+| *Pick a voice, download Piper voices for offline use, and set rate and pitch.* | *The same board on a phone.* |
 
 ---
 
