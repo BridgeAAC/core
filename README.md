@@ -50,7 +50,7 @@
 
 I’m 15 years old. I built BridgeAAC because my 16-year-old sister has to have an iPad for an AAC device to communicate. An iPad alone costs hundreds of dollars — and that doesn’t even include the AAC app itself, which also costs hundreds of dollars more.
 
-I love my sister, and I wanted every person and family to have access to a real AAC communication board without having to pay hundreds of dollars just to speak. BridgeAAC is **100% free, open-source (MIT License), and works completely offline** on whatever tablet, phone, Chromebook, or computer a family already has.
+I love my sister, and I wanted every person and family to have access to a real AAC communication board without having to pay hundreds of dollars just to speak. BridgeAAC is **100% free, open-source (MIT License), and works offline** on whatever tablet, phone, Chromebook, or computer a family already has.
 
 ---
 
@@ -62,7 +62,7 @@ I love my sister, and I wanted every person and family to have access to a real 
 - **Open Board Format (`.obf` / `.obz`)**: Imports and exports single-page `.obf` boards and multi-page `.obz` archives with embedded images and sounds.
 
 ### 2. Three-Tier Offline Speech Engine
-BridgeAAC is engineered so speech **always works offline**, even on devices without system TTS voices or internet access:
+BridgeAAC is engineered so speech **always works offline**, even on devices without system TTS voices or internet access. By default, speech never leaves the device. Optional *Online Natural* voices, which are off by default, send spoken text to Google's TTS through the bridgeaac.org proxy. See [Privacy & Security](https://github.com/BridgeAAC/core/wiki/Privacy-HIPAA-and-Security).
 1. **Built-in Instant Offline Synthesizer (`meSpeak` Web Audio)**: Bundled directly inside the app with zero download required. Includes crisp female, male, UK, and multilingual phoneme tables (`en-US`, `en-GB`, `es`, `fr`, `de`, `pt`, `it`, `zh`, plus phonetic romanization for `ar` and `hi`).
 2. **One-Click Vocabulary Audio Cache (`tts_cache`)**: Pre-generates and stores spoken audio clips for every button and grammar variant in the active vocabulary into IndexedDB so board buttons speak instantaneously offline.
 3. **Offline Neural Voices (Piper VITS ONNX)**: Optional downloadable neural voice models (`en_US`, `en_GB`, `es_MX`, `es_ES`, `fr_FR`, `de_DE`, `pt_BR`, `it_IT`, `ar_JO`, `zh_CN`) stored in the browser's Origin Private File System (OPFS) alongside the local ONNX Runtime and `espeak-ng` phonemizer WASM so any typed sentence is synthesized on-device with zero network requests.
@@ -73,10 +73,10 @@ BridgeAAC is engineered so speech **always works offline**, even on devices with
 - **Switch Scanning**: Supports **1-Switch Automatic Timer** (`Space` to select) and **2-Switch Step** (`Enter` = Next, `Space` = Select) across **Row-then-Column**, **Column-then-Row**, and **Linear** scan patterns.
 
 ### 4. Full On-Device Grid Editor & Word Finder
-- **Visual Editing**: Tap any cell in Edit Mode to edit labels, spoken messages, Fitzgerald Key colors, actions, grammar variants, custom uploaded photos, or search **ARASAAC** pictograms.
+- **Visual Editing**: Tap any cell in Edit Mode to edit labels, spoken messages, Fitzgerald Key colors, actions, grammar variants, custom uploaded photos, or search **ARASAAC** pictograms (an opt-in online feature that sends search words to api.arasaac.org).
 - **60-Step Undo / Redo**: Safely experiment with grid dimensions (`cols × rows`) without losing off-grid buttons.
 - **Find Word Pathfinder**: Search for any word in the vocabulary to see the exact step-by-step folder sequence from the Home page.
-- **PIN Lock**: Optional PIN protection for Edit Mode, Vocabularies, and Settings so users don't accidentally exit their board.
+- **PIN Lock**: Optional PIN for Edit Mode, Vocabularies, and Settings so users don't accidentally exit their board. The PIN is stored as a salted hash. It is an access lock, not encryption.
 
 ### 5. Life, Sensory & Learning Hub
 - **Color Modes (Light, Dark, Calm & High Contrast)**: Includes a sensory-friendly **Calm Mode** with warm low-glare sage/oatmeal tones and softened pastel button saturation to reduce visual overload.
@@ -85,7 +85,7 @@ BridgeAAC is engineered so speech **always works offline**, even on devices with
 - **Mood Tracking & Analytics**: Log emotions and environmental triggers, receive immediate supportive coping tips with one-tap spoken requests, and view mood distribution charts.
 - **Gamified Learning Games**: Interactive **Sentence Builder** and **Emotion Match** games that speak every tapped tile and reward streaks with stars.
 - **"About Me" Communication Passport**: Share likes, dislikes, sensory triggers, allergies/medical needs, calming strategies, and emergency contacts with caregivers, nurses, or teachers — with one-tap speech on every card.
-- **Secure Caregiver Notes**: Passcode-protected observation log for parents, teachers, and SLPs with category filtering and `.txt` report export.
+- **Encrypted Caregiver Notes**: Observation log for parents, teachers, and SLPs. With a passcode set, it is encrypted on the device (AES-256-GCM). Includes category filtering and `.txt` report export (plaintext).
 
 ---
 

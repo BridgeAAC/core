@@ -24,6 +24,7 @@ import { exportCe } from '../io/ce';
 import { SUPPORTED_LANGUAGES, type LangCode } from '../i18n';
 import type { ImportResult } from '../model';
 import { enrichVocabularyWithArasaac, type EnrichProgress } from '../data/arasaac';
+import { settings, updateSettings } from '../settings';
 
 function downloadBytes(filename: string, bytes: Uint8Array, mime = 'application/octet-stream') {
   const blob = new Blob([bytes as BlobPart], { type: mime });
@@ -119,6 +120,21 @@ export function VocabModal() {
   }
 
   async function handleEnrich(id: string) {
+    if (!settings.value.onlineSymbolSearch) {
+      toast(
+        'Auto-Enrich is an online feature: it sends your button labels to ARASAAC (api.arasaac.org) to find symbols. Turn on online symbol search to continue.',
+        'info',
+        {
+          label: 'Turn on',
+          run: () => {
+            updateSettings({ onlineSymbolSearch: true });
+            void handleEnrich(id);
+          },
+        },
+        9000,
+      );
+      return;
+    }
     const v = id === active?.id ? active : await loadVocab(id);
     if (!v) return;
     setEnriching(true);

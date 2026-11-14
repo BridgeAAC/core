@@ -129,10 +129,10 @@ Once BridgeAAC is open, complete these four steps for an optimal communication e
 - Tap **Download**. The high-definition neural voice model is stored directly in your browser's private offline storage.
 
 ### 4. Set a Caregiver PIN Lock
-- In **Settings** &rarr; **System**, locate **Security & PIN Lock**.
-- Enter a 4-digit PIN (e.g., `1234`).
-- Toggle **Protect Edit Mode** and **Protect Settings**.
-- Now the communicator cannot accidentally delete buttons or alter configurations during daily use.
+- Open **Settings** &rarr; **PIN Lock**.
+- Enter a PIN and tap **Set PIN**.
+- Edit Mode, Vocabularies and Settings now ask for the PIN, so the communicator cannot accidentally delete buttons or change settings during daily use.
+- The PIN is an access lock, not encryption. See [Privacy & Security](Privacy-HIPAA-and-Security).
 
 ---
 

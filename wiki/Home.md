@@ -59,7 +59,7 @@ Explore the complete system documentation:
 | **[Life & Learning Hub](Life-and-Learning-Hub)** | Daily Planner, Mood Tracker, Sentence Builder & Emotion Match games, "About Me" passport, and Notes. | Caregivers, Teachers, Users |
 | **[Settings & Configuration](Settings-and-Configuration)** | Complete guide to voices, touch timing, switch scanning, visual ergonomic styling, and PIN locks. | All Users |
 | **[Caregiver & Classroom Guide](Caregiver-and-Classroom-Guide)** | Practical AAC modeling (Aided Language Stimulation), Guided Access locking, PIN protection, and backups. | Parents, Teachers, Aides |
-| **[Privacy, HIPAA & Security](Privacy-HIPAA-and-Security)** | Zero-telemetry architecture, local-only ePHI isolation, sandboxing, and clinical HIPAA compliance. | SLPs, Clinics, Families |
+| **[Privacy, HIPAA & Security](Privacy-HIPAA-and-Security)** | What stays on the device, which optional features use the network, PIN and Caregiver Notes encryption, and HIPAA considerations. | SLPs, Clinics, Families |
 | **[Languages & Localization](Languages-and-Localization)** | Breakdown of all 10 supported languages, RTL Arabic engine, multilingual keyboards, and prediction. | International Users, SLPs |
 | **[Technical Architecture & Build](Technical-Architecture-and-Deployment)** | Deep technical look at IndexedDB, OPFS, SQLite WASM, Piper ONNX, Electron, Swift, and CI/CD. | Developers, Contributors |
 | **[Troubleshooting & FAQ](Troubleshooting-and-FAQ)** | Solutions for audio silence, offline storage limits, AAC Backup file imports, and switch setups. | All Users |

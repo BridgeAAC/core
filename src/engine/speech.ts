@@ -139,16 +139,16 @@ export const NEURAL_OFFLINE_MODELS: NeuralOfflineModelInfo[] = [
 export const BUILTIN_VOICES: VoiceInfo[] = [
   {
     uri: 'bridge:natural-en',
-    name: 'BridgeAAC Natural (US English)',
+    name: 'Online Natural (US English)',
     lang: 'en-US',
-    local: true,
-    default: true,
+    local: false,
+    default: false,
   },
   {
     uri: 'bridge:natural-en-gb',
-    name: 'BridgeAAC Natural (UK English)',
+    name: 'Online Natural (UK English)',
     lang: 'en-GB',
-    local: true,
+    local: false,
     default: false,
   },
   ...NEURAL_OFFLINE_MODELS.map((m) => ({
@@ -1039,6 +1039,20 @@ export async function synthesizeOfflineWav(
 
 let naturalTtsCooldownUntil = 0;
 
+/**
+ * Online speech is opt-in. When disabled (the default), no text is ever sent to /api/tts and
+ * the engine uses on-device voices only. Controlled by the `onlineSpeech` setting.
+ */
+let onlineSpeechAllowed = false;
+
+export function setOnlineSpeechAllowed(allowed: boolean): void {
+  onlineSpeechAllowed = !!allowed;
+}
+
+export function isOnlineSpeechAllowed(): boolean {
+  return onlineSpeechAllowed;
+}
+
 async function fetchNaturalAudioBuffer(text: string, lang: string): Promise<ArrayBuffer | null> {
   const norm = text.trim();
   if (!norm) return null;
@@ -1052,16 +1066,21 @@ async function fetchNaturalAudioBuffer(text: string, lang: string): Promise<Arra
     return disk;
   }
 
+  // Privacy gate: never transmit text unless the user explicitly enabled online speech.
+  if (!onlineSpeechAllowed) return null;
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return null;
   if (Date.now() < naturalTtsCooldownUntil) return null;
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 1500);
   try {
-    const res = await fetch(
-      `/api/tts?tl=${encodeURIComponent(lang)}&q=${encodeURIComponent(norm)}`,
-      { signal: controller.signal },
-    );
+    const res = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tl: lang, q: norm }),
+      cache: 'no-store',
+      signal: controller.signal,
+    });
     if (!res.ok || res.status === 204) {
       naturalTtsCooldownUntil = Date.now() + 2_000;
       return null;
@@ -1444,7 +1463,11 @@ async function runFallbackAudioSpeech(
       }
     }
 
-    if (!buf && !forceInstantOffline && !voiceURI.startsWith('bridge:natural-')) {
+    if (
+      !buf &&
+      !forceInstantOffline &&
+      (!voiceURI.startsWith('bridge:natural-') || !onlineSpeechAllowed)
+    ) {
       if (!cachedStoredNeuralModels) {
         await getDownloadedNeuralVoices();
       }
@@ -1467,7 +1490,7 @@ async function runFallbackAudioSpeech(
       }
     }
 
-    if (!buf && !forceInstantOffline) {
+    if (!buf && !forceInstantOffline && onlineSpeechAllowed) {
       const netKey = `natural:${lang}:${norm}`;
       buf = ttsMp3Cache.get(netKey) ?? (await ttsCacheGet(netKey)) ?? null;
       if (buf) {

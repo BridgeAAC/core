@@ -18,6 +18,7 @@ import {
   vocab,
 } from '../state';
 import { settings } from '../settings';
+import { verifySecret } from '../store/secure';
 import { getLanguageInfo, resolveActiveLang } from '../i18n';
 import { importAnyFile } from '../io/detect';
 import { putAssets, saveVocab } from '../store/db';
@@ -37,11 +38,16 @@ function PinModal() {
   const req = pinRequest.value;
   const [entered, setEntered] = useState('');
   const [err, setErr] = useState(false);
+  const [checking, setChecking] = useState(false);
   if (!req) return null;
 
-  function submit(e: Event) {
+  async function submit(e: Event) {
     e.preventDefault();
-    if (entered.trim() === settings.value.pin) {
+    if (checking) return;
+    setChecking(true);
+    const ok = await verifySecret(entered.trim(), settings.value.pin);
+    setChecking(false);
+    if (ok) {
       pinRequest.value = null;
       setEntered('');
       setErr(false);
@@ -71,7 +77,7 @@ function PinModal() {
             ×
           </button>
         </div>
-        <form class="modal-body" onSubmit={submit}>
+        <form class="modal-body" onSubmit={(e) => void submit(e)}>
           <label class="field">
             <span>Enter your PIN to unlock:</span>
             <input
@@ -89,8 +95,8 @@ function PinModal() {
             <button type="button" class="btn secondary" onClick={() => (pinRequest.value = null)}>
               Cancel
             </button>
-            <button type="submit" class="btn primary">
-              Unlock
+            <button type="submit" class="btn primary" disabled={checking}>
+              {checking ? 'Checking…' : 'Unlock'}
             </button>
           </div>
         </form>

@@ -1,67 +1,92 @@
-# Privacy, HIPAA & Security Architecture
+# Privacy, HIPAA & Security
 
-BridgeAAC is architected from the ground up on a **Zero-Knowledge, Local-First, Offline-Always** security and privacy paradigm. 
-
-Because BridgeAAC serves non-speaking children, autistic individuals, students, and patients in clinical and educational settings, privacy is not an afterthought—it is fundamentally built into how the software is structured.
+BridgeAAC is a **local-first** app. It has no accounts, no analytics and no trackers. Everything a communicator or caregiver creates is stored on their own device. Because BridgeAAC is used by children, autistic people, patients and their families, this page describes exactly what does and does not leave the device, including the optional features that use the internet.
 
 ---
 
-## 1. HIPAA Compliance & Architecture
+## 1. What stays on the device
 
-### What is HIPAA?
-The **Health Insurance Portability and Accountability Act of 1996 (HIPAA)** and its Security Rule regulate how Covered Entities (healthcare providers, hospitals, clinics, speech-language therapy practices) and their Business Associates create, receive, maintain, or transmit **Protected Health Information (ePHI)**.
+The following are stored only in the device's local storage (IndexedDB, localStorage and OPFS in the browser, or the app sandbox on iOS and desktop). BridgeAAC never uploads them:
 
-### How BridgeAAC Adheres to HIPAA Security & Privacy Principles
-1. **Zero External PHI Transmission**:
-   - BridgeAAC has **no cloud account system**, **no user logins**, and **no central backend databases**.
-   - No user identity, communication logs, phrase history, patient names, medical diagnoses, or vocabulary contents are ever transmitted to BridgeAAC servers or any third-party analytics provider.
-2. **Local-Only On-Device Storage**:
-   - All patient/client vocabulary files, custom symbols, recorded audio messages, and communicator profiles reside strictly in the local sandboxed storage of the user's client device (IndexedDB / OPFS in the browser, or sandboxed `Application Support` directory in the native iOS app).
-3. **Covered Entity Deployment Friendly**:
-   - Because BridgeAAC does not collect, ingest, process, host, or transmit ePHI, speech therapy clinics and hospitals can deploy BridgeAAC on facility iPads, tablets, or workstations without BridgeAAC acting as a Business Associate or requiring a Business Associate Agreement (BAA) for central data hosting.
-4. **Air-Gapped & Offline Clinical Readiness**:
-   - Speech synthesis, vocabulary file imports (.ce / .obf), switch-scanning access, and visual supports run 100% offline. Devices can be locked into Airplane Mode or restricted mobile device management (MDM) profiles with complete functional integrity.
+- Vocabularies, boards, button labels, custom photos and recorded audio
+- The message bar, phrase history and anything typed or spoken, **with online speech left off** (the default; see section 2)
+- Mood logs, planner tasks, the "About Me" profile and Caregiver Notes
+- Settings, including the PIN, which is stored as a salted hash
+
+They leave the device only when you export a file yourself (`.bridge`, `.obz`, `.ce`, `.txt` or a settings backup). Exported files are **not encrypted**, so store and share them carefully.
 
 ---
 
-## 2. Zero Telemetry, Zero Analytics, Zero Trackers
+## 2. Everything that uses the network
 
-BridgeAAC adheres to a strict anti-tracking policy:
-- **No Google Analytics, Firebase, Mixpanel, Sentry, or PostHog**.
-- **No advertising SDKs or tracking pixels**.
-- **No browser fingerprinting or telemetry beaconing**.
-- **No selling or monetizing of user data**.
+| Feature | Default | What is sent | Sent to |
+| :--- | :---: | :--- | :--- |
+| **Online Natural voices** ("Online Natural (US/UK English)") | **Off** | The text being spoken | The bridgeaac.org `/api/tts` proxy, which forwards it to Google's text-to-speech service |
+| **Online symbol search** (button editor search and "Auto-Enrich with ARASAAC") | **Off** | Your search words, or the labels of buttons that have no picture | `api.arasaac.org` |
+| ARASAAC pictogram images | On | A numeric pictogram ID only (no text) | `static.arasaac.org` |
+| Piper neural voice downloads | Only when you tap Download | The name of the voice model | The voice CDN, or the custom mirror you configure |
+| Loading or updating the web app | On (web/PWA) | Standard web requests for the app's files | The bridgeaac.org web host |
 
-The software code is 100% open-source and auditable under the MIT license at [github.com/BridgeAAC/core](https://github.com/BridgeAAC/core).
+Both online features that send text are **off by default** and can be switched on or off in **Settings → PIN Lock → Online Features**. Online speech is also in **Settings → Speech**. When online speech is off, the Online Natural voices are disabled, and any existing selection of one is spoken by an on-device voice instead.
 
----
-
-## 3. Data Protection & Sandboxing
-
-### Local Encryption & Access Control
-- **Caregiver Security Passcode**: Settings, vocabulary editing, and Caregiver Notes can be protected behind an administrator passcode (configurable in Settings -> Security) to prevent accidental vocabulary deletion or unauthorized modification by communicators in classroom or clinical environments.
-- **Native OS Sandboxing**:
-  - On iOS, BridgeAAC executes within Apple's mandatory application sandbox. Stored offline voice models and user databases cannot be accessed by other third-party apps on the device.
-  - In modern web browsers, BridgeAAC runs within the same-origin security boundary (`https://bridgeaac.org`), isolating IndexedDB and localStorage from all other domains.
-
-### Data Ownership & Portability
-- Users and clinicians retain **100% full ownership** of all custom boards, button designs, recorded voices, and vocabulary assets.
-- Data can be exported at any time to open, unencrypted standardized formats (such as Open Board Format `.obf` / `.obz` or standard `.json` backups) directly through Settings -> Export.
-- Clearing the browser storage or deleting the application completely and permanently wipes all local data from the device.
+Like any website, the web host can see standard request information such as IP addresses when the app is loaded. To avoid this, install the desktop or iOS app, or use the installed PWA offline.
 
 ---
 
-## 4. Local Neural Speech & On-Device Processing
+## 3. Offline speech
 
-- Neural text-to-speech models (Piper VITS ONNX models) and offline synthesized audio engines run directly in WebAssembly on the device CPU/GPU.
-- When you tap a button to speak, the phrase text is **never** sent to an external cloud speech API (such as Google Cloud Text-to-Speech or Amazon Polly).
-- The text is synthesized entirely within the device's local memory and played through local audio hardware.
+With online speech off, all speech is generated on the device:
+
+- **Piper neural voices** (ONNX and WebAssembly) run locally once downloaded.
+- **System voices** use the operating system's speech engine. They are run by the OS vendor, and some browsers or operating systems may use cloud voices for certain voice choices. Choose a voice marked local/offline in your OS if this matters to you.
+- **The built-in meSpeak voice** is bundled with the app and always works offline.
 
 ---
 
-## 5. Security Vulnerability Reporting
+## 4. PIN lock and Caregiver Notes
 
-We treat security disclosures with the highest priority. If you identify a potential security vulnerability, dependency issue, or data isolation concern:
+**Settings PIN.** The PIN in Settings → PIN Lock stops Edit Mode, Vocabularies and Settings from being opened by accident. It is stored as a salted PBKDF2-SHA256 hash, not as plaintext. It is an **access lock, not encryption**. Anyone with full access to the browser's storage (for example through developer tools on an unlocked computer) can remove it. It does not protect boards or settings from someone with that level of access.
 
-- **Security & Privacy Contact**: [support@bridgeaac.org](mailto:support@bridgeaac.org?subject=Security%20Vulnerability%20Report%20-%20BridgeAAC)
-- **Policy**: We review security reports promptly and release patches to our open-source codebase without delay.
+**Caregiver Notes.** When a Caregiver Notes passcode is set, the notes are **encrypted on the device** with AES-256-GCM, using a key derived from the passcode with PBKDF2-SHA256 (310,000 iterations). The stored data cannot be read without the passcode.
+
+- A short numeric passcode can be guessed by someone who copies the device's storage. **Use 8 or more characters** for meaningful protection.
+- If the passcode is forgotten, encrypted notes **cannot be recovered**.
+- Notes exported to `.txt` are plaintext.
+- Notes from older versions are encrypted automatically the first time they are unlocked.
+
+The most effective protection is still the device's own **screen lock and storage encryption**, which iOS, Android, ChromeOS and modern Windows and macOS provide.
+
+---
+
+## 5. HIPAA
+
+BridgeAAC is **not certified as HIPAA compliant**, and this project does not sign Business Associate Agreements. HIPAA compliance depends on how an organization deploys and manages its devices, not on an app alone.
+
+What we can say from the source code:
+
+- BridgeAAC has no accounts or central database, so BridgeAAC does not receive or store communication content.
+- With both online features left **off**, the app does not transmit communication text or vocabulary contents.
+- With **online speech on**, spoken text goes to Google through our proxy. Organizations handling PHI should leave it off.
+- Device security (screen locks, encryption, MDM, who can access the device) remains the organization's responsibility.
+
+Covered entities should do their own risk assessment before using BridgeAAC with patients.
+
+---
+
+## 6. No analytics or tracking
+
+- No Google Analytics, Firebase, Mixpanel, Sentry, PostHog or similar SDKs
+- No advertising SDKs or tracking pixels
+- No telemetry
+- No selling of data, because no data is collected
+
+The full source is MIT-licensed and open to audit at [github.com/BridgeAAC/core](https://github.com/BridgeAAC/core). If you find something that contradicts this page, please report it.
+
+---
+
+## 7. Reporting a security or privacy issue
+
+- **Contact**: [support@bridgeaac.org](mailto:support@bridgeaac.org?subject=Security%20Vulnerability%20Report%20-%20BridgeAAC)
+- **GitHub private reporting**: [Report a vulnerability](https://github.com/BridgeAAC/core/security/advisories/new)
+
+See [SECURITY.md](https://github.com/BridgeAAC/core/blob/main/SECURITY.md) for the full disclosure policy.

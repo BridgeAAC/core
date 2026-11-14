@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import {
   resetSettings,
+  setSettingsPin,
   settings,
   updateSettings,
   type ColorCodingSetting,
@@ -46,6 +47,23 @@ export function SettingsModal() {
   const [pronSoundsLike, setPronSoundsLike] = useState('');
   const [mirrorUrl, setMirrorUrlState] = useState<string>(() => getVoiceMirrorUrl());
   const [testingMirror, setTestingMirror] = useState<boolean>(false);
+  const [newPin, setNewPin] = useState('');
+  const [savingPin, setSavingPin] = useState(false);
+
+  async function handleSavePin(e: Event) {
+    e.preventDefault();
+    if (savingPin) return;
+    setSavingPin(true);
+    try {
+      await setSettingsPin(newPin);
+      toast(newPin.trim() ? 'PIN saved' : 'PIN removed', 'success');
+      setNewPin('');
+    } catch {
+      toast('Could not save PIN on this browser.', 'error');
+    } finally {
+      setSavingPin(false);
+    }
+  }
 
   useEffect(() => {
     void listVoices().then(setVoices);
@@ -128,7 +146,7 @@ export function SettingsModal() {
     const updated = await getDownloadedNeuralVoices();
     setStoredModels(updated);
     if (s.voiceURI === voiceURI) {
-      updateSettings({ voiceURI: 'bridge:natural-en' });
+      updateSettings({ voiceURI: '' });
     }
     toast('Removed downloaded voice model', 'info');
   }
@@ -218,20 +236,28 @@ export function SettingsModal() {
                     const isPiperInstalled = isPiper
                       ? storedModels.includes(piperModelId) || s.voiceURI === voice.uri
                       : true;
+                    const isOnline = voice.uri.startsWith('bridge:natural-');
                     return (
                       <option
                         key={voice.uri}
                         value={voice.uri}
-                        disabled={isPiper && !isPiperInstalled}
+                        disabled={
+                          (isPiper && !isPiperInstalled) ||
+                          (isOnline && !s.onlineSpeech && s.voiceURI !== voice.uri)
+                        }
                       >
                         {voice.name} ({voice.lang})
                         {isPiper
                           ? isPiperInstalled
                             ? ' [offline neural — ready]'
                             : ' [download below first]'
-                          : voice.local
-                            ? ' [offline]'
-                            : ''}
+                          : isOnline
+                            ? s.onlineSpeech
+                              ? ' [online — sends text to Google]'
+                              : ' [online — turn on below first]'
+                            : voice.local
+                              ? ' [offline]'
+                              : ''}
                       </option>
                     );
                   })}
@@ -297,6 +323,44 @@ export function SettingsModal() {
                 >
                   Device Install Guide
                 </button>
+              </div>
+
+              <div class="section-box" style={{ marginTop: '8px' }}>
+                <label class="check-row" style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                  <input
+                    type="checkbox"
+                    checked={s.onlineSpeech}
+                    onChange={(e) => {
+                      const on = (e.target as HTMLInputElement).checked;
+                      updateSettings(
+                        on
+                          ? { onlineSpeech: true }
+                          : {
+                              onlineSpeech: false,
+                              voiceURI: s.voiceURI.startsWith('bridge:natural-') ? '' : s.voiceURI,
+                            },
+                      );
+                    }}
+                  />
+                  <span>
+                    <strong>Allow online speech (off by default)</strong>
+                    <span class="hint" style={{ display: 'block', marginTop: '2px' }}>
+                      Turning this on enables the "Online Natural" voices.{' '}
+                      <strong>
+                        The words being spoken are sent over the internet to the bridgeaac.org
+                        speech proxy and on to Google's text-to-speech service.
+                      </strong>{' '}
+                      Leave it off to keep all speech on this device (Piper neural voices, system
+                      voices, and the built-in voice never send text anywhere).
+                    </span>
+                  </span>
+                </label>
+                {!s.onlineSpeech && s.voiceURI.startsWith('bridge:natural-') && (
+                  <p class="alert-box" style={{ marginTop: '8px' }}>
+                    Your selected voice is an online voice, but online speech is off, so an
+                    on-device voice is being used instead.
+                  </p>
+                )}
               </div>
 
               <div class="section-box" style={{ marginTop: '8px' }}>
@@ -1155,29 +1219,87 @@ export function SettingsModal() {
               <div class="section-box">
                 <strong>Caregiver & Editor PIN Lock</strong>
                 <p class="hint" style={{ margin: '4px 0 10px' }}>
-                  Require a PIN before opening Edit Mode, Vocabularies, or Settings. Leave blank to
-                  disable.
+                  Require a PIN before opening Edit Mode, Vocabularies, or Settings.{' '}
+                  {s.pin ? 'A PIN is currently set.' : 'No PIN is set.'}
                 </p>
-                <label class="field" style={{ maxWidth: '280px' }}>
-                  <span>PIN Code</span>
+                <form
+                  class="inline-row"
+                  style={{ flexWrap: 'wrap', alignItems: 'flex-end' }}
+                  onSubmit={(e) => void handleSavePin(e)}
+                >
+                  <label class="field" style={{ maxWidth: '280px' }}>
+                    <span>{s.pin ? 'New PIN (leave blank to remove)' : 'New PIN'}</span>
+                    <input
+                      type="password"
+                      autoComplete="new-password"
+                      value={newPin}
+                      placeholder={s.pin ? '••••' : 'None'}
+                      onInput={(e) => setNewPin((e.target as HTMLInputElement).value)}
+                    />
+                  </label>
+                  <button type="submit" class="btn secondary sm" disabled={savingPin}>
+                    {s.pin ? (newPin.trim() ? 'Change PIN' : 'Remove PIN') : 'Set PIN'}
+                  </button>
+                </form>
+                <p class="hint" style={{ margin: '8px 0 0', lineHeight: 1.5 }}>
+                  This PIN is an access lock that stops the communicator or others from changing
+                  the board by accident. It is <strong>not encryption</strong>: the PIN is stored
+                  as a salted hash, but someone with full access to this browser's storage could
+                  still remove it. Use your device's screen lock and storage encryption to protect
+                  the device itself.
+                </p>
+              </div>
+
+              <div class="section-box">
+                <strong>Online Features (all off by default)</strong>
+                <label style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginTop: '8px' }}>
                   <input
-                    type="text"
-                    value={s.pin}
-                    placeholder="None"
-                    onInput={(e) =>
-                      updateSettings({ pin: (e.target as HTMLInputElement).value.trim() })
+                    type="checkbox"
+                    checked={s.onlineSpeech}
+                    onChange={(e) => {
+                      const on = (e.target as HTMLInputElement).checked;
+                      updateSettings(
+                        on
+                          ? { onlineSpeech: true }
+                          : {
+                              onlineSpeech: false,
+                              voiceURI: s.voiceURI.startsWith('bridge:natural-') ? '' : s.voiceURI,
+                            },
+                      );
+                    }}
+                  />
+                  <span class="hint">
+                    <strong>Online speech</strong>: sends the words being spoken to the
+                    bridgeaac.org proxy and Google's text-to-speech service.
+                  </span>
+                </label>
+                <label style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginTop: '8px' }}>
+                  <input
+                    type="checkbox"
+                    checked={s.onlineSymbolSearch}
+                    onChange={(e) =>
+                      updateSettings({
+                        onlineSymbolSearch: (e.target as HTMLInputElement).checked,
+                      })
                     }
                   />
+                  <span class="hint">
+                    <strong>Online symbol search</strong>: sends search words and button labels
+                    (for Auto-Enrich) to the ARASAAC API at api.arasaac.org.
+                  </span>
                 </label>
               </div>
 
               <div class="section-box">
                 <strong>Privacy & Local Data Guarantee</strong>
                 <p class="hint" style={{ margin: '4px 0 8px', lineHeight: 1.5 }}>
-                  BridgeAAC operates <strong>100% locally on your device</strong>. No accounts,
-                  analytics, trackers, or telemetry are ever collected or transmitted. Your custom
-                  vocabularies, photos, mood logs, planner tasks, and caregiver notes never leave
-                  this device unless you explicitly export a backup file.
+                  BridgeAAC has no accounts, analytics, trackers, or telemetry. Your vocabularies,
+                  photos, mood logs, planner tasks, and caregiver notes are stored only on this
+                  device and are not uploaded anywhere unless you export a file. Spoken text and
+                  symbol searches stay on this device unless you turn on the online features
+                  above. The app does download things it needs: the app itself, optional voice
+                  models, and ARASAAC pictogram images (requested by symbol number, not by
+                  text).
                 </p>
                 <div class="inline-row" style={{ gap: '8px', flexWrap: 'wrap' }}>
                   <a

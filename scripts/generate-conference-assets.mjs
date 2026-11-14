@@ -418,7 +418,7 @@ async function renderConferenceSlide() {
     <div class="badge-row">
       <span class="badge primary-link">bridgeaac.org</span>
       <span class="badge mit">MIT License</span>
-      <span class="badge green">100% Offline Speech</span>
+      <span class="badge green">Offline Speech by Default</span>
     </div>
   </div>
 
