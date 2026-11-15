@@ -1,5 +1,5 @@
 import {
-  O, BLUE, SKY, RED, GREEN, YEL, ORANGE, PURPLE, PINK, TEAL, GRAY, WHITE, WATER, svg, circle, ellipse, rect, path, line,
+  O, BLUE, SKY, RED, GREEN, YEL, ORANGE, PURPLE, PINK, TEAL, GRAY, WHITE, WATER, svg, circle, rect, path, line,
   text, g, heart, star, face, person, toilet, openHand,
 } from './draw';
 

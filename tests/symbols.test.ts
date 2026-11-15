@@ -8,7 +8,8 @@ describe('BridgeAAC symbols', () => {
     for (const id of Object.keys(SYMBOLS)) {
       const s = getSymbolSvg(id)!;
       expect(s, id).toMatch(/^<svg [^>]*viewBox="0 0 100 100"/);
-      expect(s, id).not.toMatch(/https?:\/\/(?!www\.w3\.org)/);
+      const urls = s.match(/https?:\/\/[^\s"'<>]+/g) ?? [];
+      expect(urls.every((u) => u === 'http://www.w3.org/2000/svg'), id).toBe(true);
       expect(s, id).not.toMatch(/<script|on\w+=/i);
     }
   });
