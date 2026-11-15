@@ -9,6 +9,7 @@ import {
   type LabelPositionSetting,
   type ScanPatternSetting,
   type ThemeSetting,
+  sanitizeImportedSettings,
 } from '../settings';
 import {
   BUILTIN_VOICES,
@@ -1187,11 +1188,10 @@ export function SettingsModal() {
                         const file = (e.target as HTMLInputElement).files?.[0];
                         if (!file) return;
                         try {
-                          const parsed = JSON.parse(await file.text());
-                          if (parsed && typeof parsed === 'object') {
-                            updateSettings(parsed);
-                            toast('Settings restored', 'success');
-                          }
+                          const restored = sanitizeImportedSettings(JSON.parse(await file.text()));
+                          if (Object.keys(restored).length === 0) throw new Error('empty');
+                          updateSettings(restored);
+                          toast('Settings restored', 'success');
                         } catch {
                           toast("That file isn't a BridgeAAC settings backup.", 'error');
                         }

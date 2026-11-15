@@ -124,7 +124,7 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 30 * 1024 * 1024,
         navigateFallback: 'index.html',
         navigateFallbackDenylist: [/^\/api\//, /^\/about/, /\.[a-zA-Z0-9]+$/],
-        globIgnores: ['about/**', 'images/**', 'og-image.jpg'],
+        globIgnores: ['about/**', 'images/**', 'og-image.jpg', '404.html', '.well-known/**'],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => /(^|\.)arasaac\.org$/.test(url.hostname),

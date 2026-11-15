@@ -25,11 +25,14 @@ try {
     ortCode = ortCode.replace(callSite, wasmHook);
     changed = true;
   }
-  const directEval = 'var mod=eval("quire".replace(/^/,"re"))(moduleName);';
-  const indirectEval = 'var mod=(0,eval)("quire".replace(/^/,"re"))(moduleName);';
-  if (ortCode.includes(directEval)) {
-    ortCode = ortCode.replace(directEval, indirectEval);
-    changed = true;
+  for (const evalCall of [
+    'var mod=eval("quire".replace(/^/,"re"))(moduleName);',
+    'var mod=(0,eval)("quire".replace(/^/,"re"))(moduleName);',
+  ]) {
+    if (ortCode.includes(evalCall)) {
+      ortCode = ortCode.replace(evalCall, 'var mod=null;');
+      changed = true;
+    }
   }
   if (changed) {
     fs.writeFileSync(ortPath, ortCode, 'utf8');

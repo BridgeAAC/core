@@ -115,3 +115,34 @@ describe('import and input hardening', () => {
     expect(isValidMirrorUrl('voices.example.org')).toBe(false);
   });
 });
+
+describe('settings backup import', () => {
+  it('only restores known, valid settings and never the PIN or online features', async () => {
+    const { sanitizeImportedSettings } = await import('../src/settings');
+    const restored = sanitizeImportedSettings({
+      pin: 'attacker',
+      onboarded: false,
+      onlineSpeech: true,
+      onlineSymbolSearch: true,
+      rate: 1.4,
+      theme: 'dark',
+      fontFamily: 'comic-sans',
+      accentColor: 'red; background:url(https://evil.example)',
+      scanColor: '#22c55e',
+      switchSelectKeys: ['Space', 'Enter'],
+      pronunciations: JSON.parse('{"gif":"jif","__proto__":{"polluted":"yes"}}'),
+      somethingElse: 'x',
+    });
+    expect(restored).toEqual({
+      rate: 1.4,
+      theme: 'dark',
+      scanColor: '#22c55e',
+      switchSelectKeys: ['Space', 'Enter'],
+      pronunciations: { gif: 'jif' },
+    });
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+    expect(sanitizeImportedSettings({ onlineSpeech: false })).toEqual({ onlineSpeech: false });
+    expect(sanitizeImportedSettings('nope')).toEqual({});
+    expect(sanitizeImportedSettings([1, 2])).toEqual({});
+  });
+});

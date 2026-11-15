@@ -151,3 +151,61 @@ export function updateSettings(patch: Partial<Settings>): void {
 export function resetSettings(): void {
   settings.value = { ...DEFAULT_SETTINGS, onboarded: true };
 }
+
+const CHOICES: Partial<Record<keyof Settings, readonly string[]>> = {
+  access: ['touch', 'scan'],
+  scanPattern: ['linear', 'row-column', 'column-row'],
+  scanMode: ['auto', 'step'],
+  theme: ['auto', 'light', 'dark', 'calm', 'contrast'],
+  fontFamily: ['system', 'rounded', 'dyslexic', 'serif', 'mono'],
+  labelPosition: ['auto', 'top', 'bottom'],
+  colorCoding: ['default', 'pastel', 'vivid', 'monochrome'],
+};
+
+const NEVER_IMPORTED = new Set<keyof Settings>(['pin', 'onboarded']);
+const OFF_ONLY = new Set<keyof Settings>(['onlineSpeech', 'onlineSymbolSearch']);
+const COLOR = /^#[0-9a-f]{3,8}$/i;
+
+export function sanitizeImportedSettings(input: unknown): Partial<Settings> {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return {};
+  const source = input as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  const known = { ...DEFAULT_SETTINGS, useDeviceKeyboard: false } as Record<string, unknown>;
+
+  for (const key of Object.keys(known)) {
+    if (!Object.prototype.hasOwnProperty.call(source, key)) continue;
+    const k = key as keyof Settings;
+    if (NEVER_IMPORTED.has(k)) continue;
+    const value = source[key];
+    const expected = known[key];
+
+    if (OFF_ONLY.has(k)) {
+      if (value === false) out[key] = false;
+      continue;
+    }
+    if (typeof expected === 'boolean') {
+      if (typeof value === 'boolean') out[key] = value;
+    } else if (typeof expected === 'number') {
+      if (typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 100000) out[key] = value;
+    } else if (typeof expected === 'string') {
+      if (typeof value !== 'string' || value.length > 300) continue;
+      const choices = CHOICES[k];
+      if (choices && !choices.includes(value)) continue;
+      if ((k === 'accentColor' || k === 'scanColor') && !COLOR.test(value)) continue;
+      out[key] = value;
+    } else if (Array.isArray(expected)) {
+      if (Array.isArray(value) && value.length <= 20 && value.every((v) => typeof v === 'string' && v.length <= 40)) {
+        out[key] = [...value];
+      }
+    } else if (key === 'pronunciations') {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) continue;
+      const clean: Record<string, string> = {};
+      for (const [word, said] of Object.entries(value as Record<string, unknown>).slice(0, 2000)) {
+        if (word === '__proto__' || word === 'constructor' || word === 'prototype') continue;
+        if (typeof said === 'string' && word.length <= 100 && said.length <= 300) clean[word] = said;
+      }
+      out[key] = clean;
+    }
+  }
+  return out as Partial<Settings>;
+}
