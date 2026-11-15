@@ -1,0 +1,16 @@
+BridgeAAC got a big update.
+
+It's a free communication app for people who don't speak, or don't always speak, with boards you can customize and a voice that works without Wi-Fi.
+
+What's new:
+- Open boards straight from the Files app on iPad and iPhone
+- .ce files open more reliably, with clearer messages when something's wrong
+- Caregiver notes are encrypted with a passcode
+- Online features are off until you turn them on
+- A cleaner look, in light, dark, calm and high-contrast
+
+No accounts. No ads. No tracking. The code is open, link in bio.
+
+bridgeaac.org
+
+#AAC #AugmentativeAndAlternativeCommunication #nonspeaking #autism #speechtherapy #SLP #AssistiveTechnology #opensource #specialeducation #accessibility

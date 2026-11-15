@@ -27,7 +27,9 @@
     "ios:ipa": "npm run ios:sync && xtool dev build -c release --ipa",
     "ios:run": "npm run ios:sync && xtool dev run",
     "store:assets": "node scripts/generate-store-assets.mjs",
-    "wiki:sync": "node scripts/sync-wiki.mjs"
+    "wiki:sync": "node scripts/sync-wiki.mjs",
+    "brand:assets": "node scripts/generate-brand-assets.mjs",
+    "social:assets": "npm run build && node scripts/generate-social-assets.mjs"
   },
   "dependencies": {
     "@diffusionstudio/vits-web": "^1.0.3",
