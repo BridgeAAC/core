@@ -5,4 +5,5 @@ import './styles.css';
 const root = document.getElementById('app');
 if (root) {
   render(<App />, root);
+  document.getElementById('intro')?.remove();
 }

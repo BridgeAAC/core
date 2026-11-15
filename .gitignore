@@ -18,3 +18,4 @@ fixtures/
 .wiki_repo/
 .xtool-bin/
 .bsp/
+.mcp.json

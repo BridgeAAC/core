@@ -88,7 +88,7 @@ export default defineConfig({
         name: 'BridgeAAC',
         short_name: 'BridgeAAC',
         description:
-          'Free, open-source AAC communication app. Opens Open Board (.obf/.obz), BridgeAAC, and standard vocabulary files.',
+          'Free AAC app that turns taps into speech. Works offline, with natural voices, 600+ symbols, and .ce and Open Board import.',
         theme_color: '#1d4ed8',
         background_color: '#f4f6fb',
         display: 'standalone',
@@ -123,7 +123,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,wasm,woff2,json}'],
         maximumFileSizeToCacheInBytes: 30 * 1024 * 1024,
         navigateFallback: 'index.html',
-        navigateFallbackDenylist: [/^\/api\//, /\.[a-zA-Z0-9]+$/],
+        navigateFallbackDenylist: [/^\/api\//, /^\/about/, /\.[a-zA-Z0-9]+$/],
+        globIgnores: ['about/**', 'images/**', 'og-image.jpg'],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => /(^|\.)arasaac\.org$/.test(url.hostname),
