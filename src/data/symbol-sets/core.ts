@@ -1,6 +1,6 @@
 import {
   O, SKIN, HAIR, BLUE, NAVY, RED, GREEN, LIME, YEL, ORANGE, PURPLE, PINK, TEAL, GRAY, LIGHT, WHITE, BROWN, WOOD, SW, svg,
-  circle, rect, path, line, text, arrow, curvedArrow, heart, star, box, ball, person, face, hand, bubble, groundLine,
+  circle, rect, path, line, text, arrow, curvedArrow, heart, star, box, ball, person, face, hand, bubble, groundLine, g,
 } from './draw';
 
 const bigFace = (expr: 'happy' | 'sad' | 'neutral', fill = YEL) =>
@@ -74,14 +74,11 @@ export const CORE: Record<string, () => string> = {
     ),
   eat: () =>
     svg(
-      circle(42, 48, 32, SKIN, 3.5) +
-        path('M 13 40 Q 14 14 42 14 Q 70 14 71 40 Q 60 26 42 26 Q 24 26 13 40 Z', HAIR, 2.5) +
-        `<circle cx="32" cy="42" r="3.4" fill="${O}"/><circle cx="52" cy="42" r="3.4" fill="${O}"/>` +
-        `<ellipse cx="44" cy="62" rx="9" ry="7" fill="${O}"/>` +
-        line('M 90 94 L 66 70', O, 9) +
-        line('M 90 94 L 66 70', GRAY, 5) +
-        `<ellipse cx="60" cy="64" rx="10" ry="7" transform="rotate(45 60 64)" fill="${GRAY}" stroke="${O}" stroke-width="${SW}"/>` +
-        circle(58, 62, 4.5, ORANGE, 2),
+      g('translate(-8 -4)', face({ eyes: 'happy', mouth: 'o', fill: SKIN }) + path('M 14 44 Q 14 8 50 8 Q 86 8 86 44 Q 72 22 50 22 Q 28 22 14 44 Z', HAIR, 3)) +
+        line('M 64 74 L 94 98', O, 9) +
+        line('M 64 74 L 94 98', GRAY, 5) +
+        `<ellipse cx="56" cy="66" rx="11" ry="7" transform="rotate(38 56 66)" fill="${GRAY}" stroke="${O}" stroke-width="${SW}"/>` +
+        circle(55, 64, 5, ORANGE, 2),
     ),
   play: () => svg(ball(30, 66, 18, RED) + box(54, 50, 34, YEL) + box(60, 18, 22, BLUE)),
   open: () =>

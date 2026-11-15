@@ -85,7 +85,9 @@ export function ButtonPicture({ image, alt = '' }: { image?: ImageRef; alt?: str
   if (!image || image === 'none:') return null;
 
   if (image.startsWith('svg:')) {
-    const svgMarkup = getSvgPictogram(image.slice(4));
+    const labelRef = alt ? resolveIconForButton(alt) : undefined;
+    const svgMarkup =
+      getSvgPictogram(image.slice(4)) ?? (labelRef?.startsWith('svg:') ? getSvgPictogram(labelRef.slice(4)) : null);
     if (svgMarkup) {
       return (
         <span

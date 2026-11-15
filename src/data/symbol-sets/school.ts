@@ -1,7 +1,7 @@
 import {
   O, SKIN, BLUE, SKY, NAVY, RED, GREEN, LIME, YEL, ORANGE, PURPLE, PINK, TEAL, GRAY, DARK, LIGHT, WHITE, BROWN, WOOD,
   CREAM, WATER, svg, circle, ellipse, dot, rect, path, line, dashed, text, g, flip, arrow, heart, star, ball, box,
-  person, face, book, openHand, groundLine, drop, cloud,
+  person, face, book, openHand, pointingHand, groundLine, drop, cloud,
 } from './draw';
 
 const pencil = (fill = YEL) =>
@@ -59,7 +59,7 @@ const sneeze = () => face({ eyes: 'closed', mouth: 'o', fill: '#fde68a' }) + [[8
 
 const smell = () => face({ eyes: 'closed', mouth: 'happy', fill: '#fde68a' }) + line('M 74 24 Q 80 16 86 24 T 98 24 M 70 10 Q 76 2 82 10 T 94 10', PINK, 3);
 
-const touch = () => g('rotate(20 50 60)', openHand(50, 62, 1.5)) + circle(30, 22, 10, YEL) + line('M 40 30 L 46 36 M 22 32 L 18 38', ORANGE, 3);
+const touch = () => ellipse(50, 30, 30, 10, LIGHT) + ellipse(50, 26, 22, 8, RED) + pointingHand(52, 70, 1.1) + line('M 18 10 L 24 16 M 82 10 L 76 16 M 50 2 L 50 8', ORANGE, 3);
 
 const taste = () => face({ eyes: 'happy', mouth: 'tongue' }) + star(84, 18, 8);
 
@@ -91,7 +91,7 @@ const wakeUp = () => rect(6, 56, 88, 22, 6, '#bfdbfe') + person({ x: 30, y: 46, 
 
 const dressed = () => person({ x: 50, shirt: '#f97316', pose: 'down' }) + rect(10, 8, 22, 26, 3, WOOD) + line('M 20 8 L 20 34', O, 2) + star(84, 20, 7);
 
-const brushHair = () => face({ eyes: 'happy', mouth: 'happy', fill: SKIN }) + path('M 14 44 Q 14 8 50 8 Q 86 8 86 44 Q 72 22 50 22 Q 28 22 14 44 Z', '#5b3a29') + g('rotate(30 80 20)', rect(70, 4, 26, 12, 4, PURPLE) + line('M 72 16 L 72 22 M 78 16 L 78 22 M 84 16 L 84 22 M 90 16 L 90 22', O, 2) + rect(94, 6, 6, 6, 2, PURPLE, 0));
+const brushHair = () => face({ eyes: 'happy', mouth: 'happy', fill: SKIN }) + path('M 14 44 Q 14 8 50 8 Q 86 8 86 44 Q 72 22 50 22 Q 28 22 14 44 Z', '#5b3a29') + g('rotate(-18 70 16)', rect(80, 12, 16, 8, 4, PURPLE, 2.5) + rect(50, 8, 32, 13, 5, PURPLE) + line('M 55 21 L 55 28 M 61 21 L 61 28 M 67 21 L 67 28 M 73 21 L 73 28 M 79 21 L 79 28', O, 2));
 
 export const SCHOOL: Record<string, () => string> = {
   pencil: () => svg(pencil()),
@@ -148,7 +148,7 @@ export const SCHOOL: Record<string, () => string> = {
   point: () => svg(person({ x: 36, pose: 'point', shirt: BLUE }) + star(86, 40, 10)),
   drive: () => svg(path('M 8 66 L 8 52 Q 8 46 14 45 L 24 44 L 34 28 Q 36 24 42 24 L 66 24 Q 72 24 76 30 L 84 44 Q 92 46 92 54 L 92 66 Z', BLUE) + path('M 38 30 L 66 30 Q 70 30 72 34 L 78 44 L 30 44 Z', SKY, 2.5) + circle(52, 36, 6, SKIN, 2) + circle(28, 68, 10, DARK) + circle(72, 68, 10, DARK) + line('M 2 80 L 14 80 M 0 88 L 10 88', GRAY, 3)),
   fly: () => svg(g('rotate(-20 50 50)', path('M 10 50 Q 10 42 22 42 L 80 42 Q 94 42 94 50 Q 94 58 80 58 L 22 58 Q 10 58 10 50 Z', WHITE) + path('M 44 42 L 32 12 L 44 12 L 62 42 Z', SKY) + path('M 44 58 L 32 88 L 44 88 L 62 58 Z', SKY)) + cloud(22, 80, 0.5)),
-  wave: () => svg(openHand(50, 56, 1.6) + line('M 14 30 Q 8 40 14 50 M 86 30 Q 92 40 86 50', ORANGE, 4)),
+  wave: () => svg(openHand(52, 60, 1.3) + line('M 14 30 Q 8 40 14 50 M 86 30 Q 92 40 86 50', ORANGE, 4)),
   wet: () => svg(person({ x: 50, shirt: SKY, face: 'o' }) + drop(20, 20, 0.6) + drop(80, 24, 0.6) + drop(26, 50, 0.5) + drop(78, 56, 0.5)),
   dry: () => svg(rect(14, 20, 72, 60, 6, '#fde68a') + line('M 14 34 L 86 34 M 14 66 L 86 66', '#f59e0b', 4) + circle(80, 16, 10, YEL)),
   full: () => svg(path('M 22 14 L 78 14 L 72 92 L 28 92 Z', WHITE) + path('M 23 22 L 77 22 L 72 90 L 28 90 Z', WATER, 0) + path('M 22 14 L 78 14 L 72 92 L 28 92 Z', 'none')),
@@ -156,7 +156,7 @@ export const SCHOOL: Record<string, () => string> = {
   yummy: () => svg(face({ eyes: 'happy', mouth: 'tongue', blush: true })),
   yucky: () => svg(face({ eyes: 'x', brow: 'angry', mouth: 'wavy', fill: '#bef264' })),
   soft: () => svg(cloud(50, 54, 1.4, WHITE) + `<ellipse cx="50" cy="58" rx="20" ry="6" fill="${PINK}" opacity="0.25"/>`),
-  heavy: () => svg(person({ x: 50, y: 56, pose: 'up', shirt: RED, face: 'frown' }) + rect(18, 2, 64, 18, 4, DARK) + text(50, 16, 'kg', 14, WHITE)),
+  heavy: () => svg(person({ x: 50, y: 64, s: 0.95, pose: 'up', shirt: RED, face: 'frown' }) + rect(22, 4, 56, 22, 5, DARK) + text(50, 21, 'kg', 15, WHITE) + sweatDrop(72, 40)),
   tall: () => svg(person({ x: 34, s: 1.15, y: 50, shirt: BLUE }) + person({ x: 72, s: 0.7, y: 66, shirt: ORANGE }) + arrow(10, 90, 10, 8, GREEN, 4, 9)),
   short: () => svg(person({ x: 34, s: 1.0, y: 52, shirt: BLUE }) + person({ x: 72, s: 0.55, y: 72, shirt: ORANGE }) + arrow(92, 56, 92, 90, RED, 4, 9)),
   long: () => svg(line('M 8 50 L 92 50', O, 14) + line('M 8 50 L 92 50', TEAL, 9) + arrow(30, 74, 8, 74, RED, 4, 9) + arrow(70, 74, 92, 74, RED, 4, 9)),
@@ -169,6 +169,10 @@ export const SCHOOL: Record<string, () => string> = {
   pretty: () => svg(flowerSmall(30, 54) + flowerSmall(70, 46) + star(50, 16, 8) + star(18, 20, 5, YEL, 2) + star(86, 80, 5, YEL, 2)),
   scary: () => svg(path('M 20 90 L 20 40 Q 20 10 50 10 Q 80 10 80 40 L 80 90 L 70 80 L 60 90 L 50 80 L 40 90 L 30 80 Z', WHITE) + ellipse(38, 40, 6, 8, O, 0) + ellipse(62, 40, 6, 8, O, 0) + ellipse(50, 60, 6, 9, O, 0)),
 };
+
+function sweatDrop(x: number, y: number) {
+  return path(`M ${x} ${y} Q ${x - 4} ${y + 7} ${x} ${y + 10} Q ${x + 4} ${y + 7} ${x} ${y} Z`, '#93c5fd', 2);
+}
 
 function flowerSmall(cx: number, cy: number) {
   let petals = '';

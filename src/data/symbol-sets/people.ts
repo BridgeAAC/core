@@ -92,14 +92,14 @@ export const PEOPLE: Record<string, () => string> = {
     ),
   driver: () =>
     svg(
-      person({ x: 50, y: 46, s: 0.9, shirt: BLUE, hat: 'cap', pose: 'hold' }) +
-        `<circle cx="50" cy="76" r="20" fill="none" stroke="${O}" stroke-width="12"/>` +
-        `<circle cx="50" cy="76" r="20" fill="none" stroke="${DARK}" stroke-width="7"/>` +
-        line('M 31 78 L 69 78 M 50 78 L 50 94', O, 7) +
-        line('M 31 78 L 69 78 M 50 78 L 50 94', DARK, 3) +
-        circle(50, 78, 5, GRAY, 2.5) +
-        circle(33, 64, 4.5, SKIN, 2.5) +
-        circle(67, 64, 4.5, SKIN, 2.5),
+      person({ x: 50, y: 50, s: 0.95, shirt: BLUE, hat: 'cap', pose: 'hold' }) +
+        `<circle cx="50" cy="86" r="22" fill="none" stroke="${O}" stroke-width="12"/>` +
+        `<circle cx="50" cy="86" r="22" fill="none" stroke="${DARK}" stroke-width="7"/>` +
+        line('M 29 88 L 71 88 M 50 88 L 50 100', O, 7) +
+        line('M 29 88 L 71 88 M 50 88 L 50 100', DARK, 3) +
+        circle(50, 88, 5, GRAY, 2.5) +
+        circle(34, 68, 4.5, SKIN, 2.5) +
+        circle(66, 68, 4.5, SKIN, 2.5),
     ),
 };
 

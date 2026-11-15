@@ -1,7 +1,7 @@
 import {
   O, SKIN, BLUE, SKY, NAVY, RED, GREEN, LIME, YEL, ORANGE, PURPLE, PINK, TEAL, GRAY, DARK, LIGHT, WHITE, BROWN, WOOD,
   CREAM, GRAYHAIR, svg, circle, ellipse, dot, rect, path, fillPath, line, dashed, text, g, flip, at, arrow, curvedArrow,
-  heart, star, box, ball, person, clockFace, qmark, openHand, plate, badge,
+  heart, star, box, ball, person, face, clockFace, qmark, openHand, plate, badge,
 } from './draw';
 
 const pin = (cx: number, cy: number, s = 1, fill = RED) =>
@@ -51,9 +51,8 @@ export const WORDS: Record<string, () => string> = {
 
   drink: () =>
     svg(
-      person({ x: 40, shirt: BLUE, pose: 'mouth' }) +
-        g('rotate(-25 52 34)', rect(46, 24, 14, 20, 2, SKY, 2.5)) +
-        line('M 52 30 L 60 8', RED, 3),
+      g('translate(-12 -4)', face({ eyes: 'closed', mouth: 'o', fill: SKIN }) + path('M 14 44 Q 14 8 50 8 Q 86 8 86 44 Q 72 22 50 22 Q 28 22 14 44 Z', '#5b3a29', 3)) +
+        g('rotate(-28 70 66)', path('M 52 44 L 82 44 L 78 88 L 56 88 Z', '#e0f2fe') + path('M 54 58 L 80 58 L 78 86 L 56 86 Z', '#60a5fa', 0) + path('M 52 44 L 82 44 L 78 88 L 56 88 Z', 'none')),
     ),
   say: () => svg(person({ x: 36, shirt: ORANGE, face: 'open' }) + speechLines(54, 25)),
   tell: () =>

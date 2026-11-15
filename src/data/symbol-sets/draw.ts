@@ -368,25 +368,59 @@ export function face(opts: { eyes?: Eyes; brow?: Brow; mouth?: Mouth; fill?: str
   return circle(50, 50, 36, fill, 4) + cheeks + brows[brow] + eyeMarks[eyes] + mouths[mouth] + extra;
 }
 
-export const hand = (thumb: 'up' | 'down') => {
-  const gr =
-    rect(30, 46, 34, 30, 9, SKIN) +
-    rect(40, 20, 13, 32, 6.5, SKIN) +
-    line('M 30 55 L 50 55 M 30 64 L 50 64', O, 2.5) +
-    rect(62, 44, 14, 34, 4, BLUE);
-  return thumb === 'up' ? gr : g('rotate(180 52 50)', gr);
-};
+type Part = { x: number; y: number; w: number; h: number; r: number; rot?: [number, number, number] };
+
+const partRect = (p: Part, fill: string, stroke: string, sw: number) =>
+  `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="${p.r}" fill="${fill}"${sw ? ` stroke="${stroke}" stroke-width="${sw}"` : ''}${p.rot ? ` transform="rotate(${p.rot.join(' ')})"` : ''}/>`;
+
+export const silhouette = (parts: Part[], fill: string, outline = SW) =>
+  parts.map((p) => partRect(p, O, O, outline * 2)).join('') + parts.map((p) => partRect(p, fill, '', 0)).join('');
+
+const OPEN_HAND: Part[] = [
+  { x: -16, y: -6, w: 33, h: 30, r: 12 },
+  { x: -16.5, y: -31, w: 8.6, h: 33, r: 4.3, rot: [-6, -12, 0] },
+  { x: -6.8, y: -36, w: 8.6, h: 38, r: 4.3 },
+  { x: 2.9, y: -33, w: 8.6, h: 35, r: 4.3, rot: [5, 7, 0] },
+  { x: 12, y: -24, w: 7.6, h: 28, r: 3.8, rot: [14, 16, 2] },
+  { x: -20, y: -1, w: 10, h: 24, r: 5, rot: [-32, -14, 21] },
+  { x: -10, y: 18, w: 21, h: 14, r: 4 },
+];
 
 export const openHand = (x: number, y: number, s = 1, fill = SKIN) =>
+  at(x, y, s, g('translate(-5 -2) scale(0.82)', silhouette(OPEN_HAND, fill) + line('M -8 12 Q 0 16 8 11', '#d4a27f', 1.6)));
+
+const POINT_HAND: Part[] = [
+  { x: -15, y: -2, w: 31, h: 30, r: 11 },
+  { x: -14.5, y: -38, w: 9.5, h: 40, r: 4.75 },
+  { x: -10, y: 22, w: 20, h: 14, r: 4 },
+];
+
+export const pointingHand = (x: number, y: number, s = 1, fill = SKIN) =>
   at(
     x,
     y,
     s,
-    path(
-      'M -14 6 L -14 -14 Q -14 -19 -10 -19 Q -6 -19 -6 -14 L -6 -24 Q -6 -29 -2 -29 Q 2 -29 2 -24 L 2 -22 Q 2 -27 6 -27 Q 10 -27 10 -22 L 10 -12 Q 10 -17 14 -17 Q 18 -17 18 -12 L 18 8 Q 18 24 2 24 L -2 24 Q -12 24 -18 14 L -26 2 Q -28 -2 -24 -4 Q -20 -5 -17 0 Z',
-      fill,
-    ),
+    silhouette(POINT_HAND, fill) +
+      silhouette([{ x: -24, y: 6, w: 22, h: 9.5, r: 4.75, rot: [-10, -13, 10] }], fill) +
+      line('M -4 4 Q 6 2 14 6 M -3 12 Q 6 10 15 13', '#d4a27f', 1.8),
   );
+
+const FIST: Part[] = [
+  { x: 33, y: 42, w: 37, h: 40, r: 12 },
+  { x: 40, y: 10, w: 16, h: 44, r: 8, rot: [-6, 48, 50] },
+];
+
+export const hand = (thumb: 'up' | 'down') => {
+  const fingers = [44, 54.5, 65, 75].map((y, i) => ({ x: 21 + (i === 3 ? 3 : 0), y, w: 30 - (i === 3 ? 3 : 0), h: 11, r: 5.5 }));
+  const shape =
+    rect(66, 46, 18, 42, 5, BLUE) +
+    line('M 70 54 L 80 54', '#93c5fd', 2) +
+    silhouette([...FIST, ...fingers], SKIN) +
+    line('M 24 54.5 L 44 54.5 M 24 65 L 44 65 M 26 75.5 L 44 75.5', O, 2.4) +
+    g('rotate(-6 48 50)', `<rect x="44" y="12" width="8" height="8" rx="3" fill="#fde7d4" stroke="#d4a27f" stroke-width="1.4"/>`) +
+    line('M 46 36 Q 52 38 56 34', '#d4a27f', 1.8);
+  return thumb === 'up' ? shape : g('rotate(180 52 50)', shape);
+};
 
 export const building = (x: number, y: number, w: number, h: number, fill: string, roof = RED) =>
   rect(x, y, w, h, 2, fill) + path(`M ${x - 4} ${y + 2} L ${x + w / 2} ${y - h * 0.35} L ${x + w + 4} ${y + 2} Z`, roof);

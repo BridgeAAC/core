@@ -1,6 +1,6 @@
 import {
-  O, BLUE, SKY, RED, GREEN, YEL, ORANGE, PURPLE, PINK, TEAL, GRAY, WHITE, WATER, svg, circle, rect, path, line,
-  text, g, heart, star, face, person, toilet, openHand,
+  O, BLUE, SKY, RED, GREEN, YEL, ORANGE, PURPLE, PINK, TEAL, GRAY, WHITE, WATER, svg, circle, rect, path, line, text, g,
+  heart, star, face, person, toilet,
 } from './draw';
 
 const tear = (x: number, y: number) => path(`M ${x} ${y} Q ${x - 4} ${y + 8} ${x} ${y + 11} Q ${x + 4} ${y + 8} ${x} ${y} Z`, WATER, 2);
@@ -47,7 +47,7 @@ export const FEELINGS: Record<string, () => string> = {
     svg(person({ x: 50, shirt: '#bef264', pose: 'belly', face: 'sad' }) + line('M 30 44 Q 38 48 46 44 Q 54 40 62 44 Q 70 48 76 44', RED, 3)),
   bathroom: () => svg(toilet()),
   'need bathroom': () => svg(toilet() + rect(4, 6, 30, 30, 15, '#fef3c7', 2.5) + text(19, 30, '!', 22, ORANGE)),
-  medicine: () => svg(pill(50, 50, -35)),
+  medicine: () => svg(g('translate(50 50) scale(1.7) translate(-50 -50)', pill(50, 50, -35))),
   'need medicine': () =>
     svg(
       rect(28, 30, 44, 60, 8, ORANGE) +
@@ -59,7 +59,7 @@ export const FEELINGS: Record<string, () => string> = {
     svg(
       circle(50, 50, 40, '#bbf7d0', 4) + rect(33, 28, 12, 44, 3, GREEN) + rect(55, 28, 12, 44, 3, GREEN),
     ),
-  'need help': () => svg(person({ x: 40, shirt: ORANGE, pose: 'wave', face: 'open' }) + openHand(80, 70, 0.7) + text(80, 34, '!', 30, RED)),
+  'need help': () => svg(person({ x: 40, shirt: ORANGE, pose: 'wave', face: 'open' }) + circle(80, 72, 14, RED) + text(80, 81, '!', 24, WHITE)),
   hug: () => svg(person({ x: 38, s: 0.9, shirt: BLUE, pose: 'hug' }) + person({ x: 62, s: 0.9, shirt: PINK, hair: 'long', pants: PURPLE, pose: 'hug' }) + heart(50, 12, 8)),
   loud: () => svg(face({ eyes: 'closed', mouth: 'yawn', fill: '#fdba74' }) + line('M 4 30 L 12 36 M 2 50 L 12 50 M 4 70 L 12 64 M 96 30 L 88 36 M 98 50 L 88 50 M 96 70 L 88 64', RED, 4)),
   'feel better': () => svg(face({ eyes: 'happy', mouth: 'happy', fill: '#bbf7d0' }) + bandage(76, 20, -30)),

@@ -65,6 +65,12 @@ describe('BridgeAAC symbols', () => {
     expect(symbolIdForWord('seventeen')).toBe('17');
   });
 
+  it('still draws a picture for boards saved with an older picture name', () => {
+    expect(getSymbolSvg('television')).toBe(getSymbolSvg('tv'));
+    expect(getSvgPictogram('bs-ipad')).toContain('<svg');
+    expect(getSymbolSvg('no-such-picture')).toBeNull();
+  });
+
   it('keeps aliases from hiding real symbols', () => {
     for (const word of Object.keys(SYMBOL_ALIASES)) {
       expect(Object.prototype.hasOwnProperty.call(SYMBOLS, word), word).toBe(false);

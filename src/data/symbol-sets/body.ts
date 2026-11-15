@@ -1,5 +1,6 @@
 import {
-  O, SKIN, HAIR, BLUE, NAVY, RED, PINK, WHITE, svg, circle, ellipse, dot, path, line, g, person, openHand, flip,
+  O, SKIN, HAIR, BLUE, NAVY, RED, PINK, WHITE, svg, circle, ellipse, dot, path, line, g, person, openHand, pointingHand,
+  flip,
 } from './draw';
 
 const spot = (cx: number, cy: number, r: number) =>
@@ -32,7 +33,7 @@ const bigFoot = () =>
   path('M 30 18 Q 22 50 24 70 Q 26 92 50 92 Q 72 92 74 72 Q 76 54 66 40 Q 58 26 58 16 Z', SKIN, 4) +
   [ [36, 10, 7], [50, 8, 6], [62, 11, 5], [71, 16, 4.5], [78, 23, 4] ].map(([x, y, r]) => circle(x, y, r, SKIN, 3)).join('');
 
-const fingers = () => openHand(56, 64, 1.45) + `<path d="M 47 14 L 46 6 M 59 12 L 61 4 M 71 26 L 76 20" stroke="${RED}" stroke-width="4"/>`;
+const fingers = () => openHand(54, 64, 1.3) + `<path d="M 47 14 L 46 6 M 59 12 L 61 4 M 71 26 L 76 20" stroke="${RED}" stroke-width="4"/>`;
 
 export const BODY: Record<string, () => string> = {
   body: () => svg(figure() + `<ellipse cx="50" cy="52" rx="40" ry="46" fill="none" stroke="${RED}" stroke-width="3" stroke-dasharray="6 5"/>`),
@@ -51,9 +52,9 @@ export const BODY: Record<string, () => string> = {
   shoulder: () => svg(figure() + spot(66, 36, 11)),
   arm: () => svg(figure() + g('rotate(-20 70 50)', `<ellipse cx="70" cy="50" rx="10" ry="20" fill="${RED}" fill-opacity="0.12" stroke="${RED}" stroke-width="4" stroke-dasharray="6 5"/>`)),
   elbow: () => svg(figure() + spot(72, 52, 9)),
-  hand: () => svg(openHand(56, 60, 1.5)),
-  hands: () => svg(g('rotate(-10 30 56)', openHand(30, 58, 1.2)) + g('rotate(10 70 56)', flip(openHand(30, 58, 1.2)))),
-  finger: () => svg(fingers()),
+  hand: () => svg(openHand(54, 60, 1.3)),
+  hands: () => svg(g('rotate(-10 30 56)', openHand(32, 60, 0.95)) + g('rotate(10 68 56)', flip(openHand(32, 60, 0.95)))),
+  finger: () => svg(pointingHand(52, 56, 1.1) + line('M 40 6 L 44 12 M 64 6 L 60 12', RED, 3.5)),
   fingers: () => svg(fingers()),
   chest: () => svg(figure() + spot(50, 46, 12)),
   tummy: () => svg(figure() + spot(50, 58, 13)),
