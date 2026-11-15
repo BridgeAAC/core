@@ -21,6 +21,7 @@ import { boardFileAccept, pickBoardFile } from '../io/pick';
 import { exportBridge } from '../io/bridge';
 import { exportObz } from '../io/obf';
 import { exportCe } from '../io/ce';
+import { embedBuiltInPictures } from '../io/embed';
 import { SUPPORTED_LANGUAGES, type LangCode } from '../i18n';
 import type { ImportResult } from '../model';
 import { enrichVocabularyWithArasaac, type EnrichProgress } from '../data/arasaac';
@@ -96,16 +97,11 @@ export function VocabModal() {
       const bytes = exportBridge(v, assets);
       downloadBytes(`${safeName}.bridge`, bytes, 'application/zip');
       toast(`Exported ${safeName}.bridge`, 'success');
-    } else if (format === 'obz') {
-      const map = new Map(assets.map((a) => [a.id, a]));
-      const bytes = exportObz(v, map);
-      downloadBytes(`${safeName}.obz`, bytes, 'application/zip');
-      toast(`Exported ${safeName}.obz`, 'success');
-    } else if (format === 'ce') {
-      const map = new Map(assets.map((a) => [a.id, a]));
-      const bytes = await exportCe(v, map);
-      downloadBytes(`${safeName}.ce`, bytes, 'application/zip');
-      toast(`Exported ${safeName}.ce`, 'success');
+    } else {
+      const packed = await embedBuiltInPictures(v, new Map(assets.map((a) => [a.id, a])));
+      const bytes = format === 'obz' ? exportObz(packed.vocab, packed.assetsById) : await exportCe(packed.vocab, packed.assetsById);
+      downloadBytes(`${safeName}.${format}`, bytes, 'application/zip');
+      toast(`Exported ${safeName}.${format}`, 'success');
     }
   }
 

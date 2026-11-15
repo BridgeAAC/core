@@ -357,8 +357,9 @@ export function ToolsModal() {
     await kvSet('planner_tasks', next);
     if (item.done) {
       await awardStars(1);
-      speakText(`Great job finishing ${item.title}! You earned a star.`);
-      toast(`⭐ +1 Star! Completed "${item.title}"`, 'success');
+      const say = item.title.replace(/\s*&\s*/g, ' and ').replace(/\s*\/\s*/g, ' or ');
+      speakText(`Nice work! ${say} is done. You earned a star.`);
+      toast(`Star earned for "${item.title}"`, 'success');
     } else {
       speakText(item.title);
     }
@@ -445,7 +446,7 @@ export function ToolsModal() {
         }, 350);
         void awardStars(2);
         setGameStreak((s) => s + 1);
-        toast('🎉 Correct sentence! +2 Stars!', 'success');
+        toast('Correct sentence. +2 stars', 'success');
       } else {
         setTimeout(() => {
           speakText('Almost! Let us try putting the words in order.');
@@ -464,7 +465,7 @@ export function ToolsModal() {
       setEmotionFeedback(`✅ Correct! ${currentScenario.explanation}`);
       void awardStars(2);
       setGameStreak((s) => s + 1);
-      toast('🌟 +2 Stars! Great emotion match!', 'success');
+      toast('Great match. +2 stars', 'success');
     } else {
       speakText(`That is ${m.label}. Try another feeling for this story.`);
       setEmotionFeedback(`Try again! Think about how "${currentScenario.situation}" feels.`);

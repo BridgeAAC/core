@@ -1,6 +1,7 @@
 import type { Action, AssetBlob, Button, Page, Vocabulary } from '../model';
 import { WORD_CLASS } from './palette';
 import { resolveIconForButton } from './icons';
+import { symbolIdForWord } from './symbols';
 import { normalizeLangCode } from '../i18n';
 import { translateVocabularyToLocale } from './multilingual';
 
@@ -31,7 +32,9 @@ function it(spec: string, defKind: Kind): Item {
 function toButton(pageKey: string, idx: number, item: Item, row: number, col: number, big = false): Button {
   const sw = WORD_CLASS[item.k ?? 'misc'];
   const actions: Action[] = item.a ?? (item.go ? [{ type: 'navigate', pageId: item.go }] : []);
-  const image = item.img ?? (item.e ? `emoji:${item.e}` : undefined) ?? resolveIconForButton(item.l, item.m, actions);
+  const sym = symbolIdForWord(item.l);
+  const image =
+    item.img ?? (sym ? `svg:bs-${sym}` : undefined) ?? (item.e ? `emoji:${item.e}` : undefined) ?? resolveIconForButton(item.l, item.m, actions);
   return {
     id: `${pageKey}-${idx}`,
     label: item.l,

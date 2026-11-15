@@ -1,6 +1,7 @@
 import type { Action, Button, ImageRef } from '../model';
 import { VOCAB_TRANSLATIONS } from './multilingual';
 import { getArasaacIdForWord } from './arasaac';
+import { getSymbolSvg, symbolIdForWord } from './symbols';
 
 let reverseMultilingualMap: Map<string, string> | null = null;
 function getReverseMultilingualMap(): Map<string, string> {
@@ -19,6 +20,7 @@ function getReverseMultilingualMap(): Map<string, string> {
 }
 
 export function getSvgPictogram(id: string): string | null {
+  if (id.startsWith('bs-')) return getSymbolSvg(id.slice(3));
   if (!Object.prototype.hasOwnProperty.call(SVG_PICTOGRAMS, id)) return null;
   return SVG_PICTOGRAMS[id]();
 }
@@ -1222,7 +1224,12 @@ export function resolveIconForButton(
     return `badge:color:${COLOR_SWATCH_MAP[lower]}`;
   }
 
-  for (const key of candidateKeys(trimmed)) {
+  const keys = candidateKeys(trimmed);
+  for (const key of keys) {
+    const sym = symbolIdForWord(key);
+    if (sym) return `svg:bs-${sym}`;
+  }
+  for (const key of keys) {
     const hit = WORD_ICON_MAP[key];
     if (hit) return hit;
     if (COLOR_SWATCH_MAP[key]) return `badge:color:${COLOR_SWATCH_MAP[key]}`;

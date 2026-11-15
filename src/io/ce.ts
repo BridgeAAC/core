@@ -934,11 +934,11 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
     if (missingSymbolRefs > 0) {
       if (autoMappedArasaac > 0) {
         warnings.push(
-          `${missingSymbolRefs.toLocaleString()} buttons used symbols that aren't included in the file. ${autoMappedArasaac.toLocaleString()} of them were matched to ARASAAC pictures. Use "Add ARASAAC pictures" to look up the rest.`,
+          `${missingSymbolRefs.toLocaleString()} buttons used symbols that aren't included in the file. ${autoMappedArasaac.toLocaleString()} of them were matched to built-in pictures.`,
         );
       } else {
         warnings.push(
-          `${missingSymbolRefs.toLocaleString()} buttons used symbols that aren't included in the file. Use "Add ARASAAC pictures" in Vocabularies to fill them in.`,
+          `${missingSymbolRefs.toLocaleString()} buttons used symbols that aren't included in the file. They show their label instead.`,
         );
       }
     }
