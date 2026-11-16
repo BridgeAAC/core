@@ -2,8 +2,8 @@ node_modules/
 dist/
 dev-dist/
 release/
-android/
-ios/
+/android/
+/ios/
 .build/
 .swiftpm/
 xtool/

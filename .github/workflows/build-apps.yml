@@ -6,6 +6,11 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      upload_to_app_store:
+        description: Upload the iOS build to App Store Connect (TestFlight)
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -59,11 +64,16 @@ jobs:
             release/*.deb
             release/*.dmg
             release/*.zip
-          if-no-files-found: warn
+          if-no-files-found: error
 
   build-android:
-    name: Build Android APK
+    name: Build Android APK & Play Bundle
     runs-on: ubuntu-latest
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -104,36 +114,63 @@ jobs:
           npx cap sync android
           sed -i -E 's/(compileSdkVersion|targetSdkVersion) = [0-9]+/\1 = 36/' android/variables.gradle
           grep -E "compileSdkVersion|targetSdkVersion" android/variables.gradle
+          cp -r resources/android/res/. android/app/src/main/res/
+          VERSION_NAME=$(node -p "require('./package.json').version")
+          sed -i -E "s/versionCode [0-9]+/versionCode ${{ github.run_number }}/; s/versionName \"[^\"]*\"/versionName \"$VERSION_NAME\"/" android/app/build.gradle
+          grep -E "versionCode|versionName" android/app/build.gradle
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 
       - name: Build Android APK & Google Play App Bundle (AAB) with Gradle
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug bundleRelease --no-daemon
-          cp app/build/outputs/apk/debug/app-debug.apk ../BridgeAAC-android.apk
-          cp app/build/outputs/bundle/release/app-release.aab ../BridgeAAC-android.aab || true
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload.jks"
+            ./gradlew assembleRelease bundleRelease --no-daemon \
+              -Pandroid.injected.signing.store.file="$RUNNER_TEMP/upload.jks" \
+              -Pandroid.injected.signing.store.password="$ANDROID_KEYSTORE_PASSWORD" \
+              -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" \
+              -Pandroid.injected.signing.key.password="$ANDROID_KEY_PASSWORD"
+            rm -f "$RUNNER_TEMP/upload.jks"
+            cp app/build/outputs/apk/release/app-release.apk ../BridgeAAC-android.apk
+            cp app/build/outputs/bundle/release/app-release.aab ../BridgeAAC-android.aab
+          else
+            echo "::warning::No Android signing key secrets set, so this is a debug APK and no Google Play bundle was made."
+            ./gradlew assembleDebug --no-daemon
+            cp app/build/outputs/apk/debug/app-debug.apk ../BridgeAAC-android.apk
+          fi
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
           name: BridgeAAC-Android
           path: BridgeAAC-android.apk
-          if-no-files-found: warn
+          if-no-files-found: error
 
       - name: Upload Private Google Play AAB Bundle
         uses: actions/upload-artifact@v4
         with:
           name: BridgeAAC-GooglePlay-AAB
           path: BridgeAAC-android.aab
-          if-no-files-found: warn
+          if-no-files-found: ignore
 
-  build-ios-swift:
-    name: Build Swift Package (iOS & macOS)
+  build-ios:
+    name: Build iOS App
     runs-on: macos-latest
+    env:
+      APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      UPLOAD: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.upload_to_app_store == true }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Select latest Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -143,14 +180,51 @@ jobs:
       - name: Install project dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Sync Web Bundle & Verify Swift Package
+      - name: Build Web Bundle & Generate Xcode Project
         run: |
           npm run ios:sync
-          swift build
+          brew install xcodegen
+          VERSION_NAME=$(node -p "require('./package.json').version")
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION_NAME" Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" Info.plist
+          xcodegen generate --spec apple/project.yml
+
+      - name: Build for Simulator
+        if: env.UPLOAD != 'true' || env.APP_STORE_CONNECT_KEY == ''
+        run: |
+          xcodebuild build -project apple/BridgeAAC.xcodeproj -scheme BridgeAAC \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO -quiet
+
+      - name: Archive & Upload to App Store Connect
+        if: env.UPLOAD == 'true' && env.APP_STORE_CONNECT_KEY != ''
+        run: |
+          KEY_PATH="$RUNNER_TEMP/AuthKey_$APP_STORE_CONNECT_KEY_ID.p8"
+          printf '%s' "$APP_STORE_CONNECT_KEY" > "$KEY_PATH"
+          AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY_PATH" -authenticationKeyID "$APP_STORE_CONNECT_KEY_ID" -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID")
+          xcodebuild archive -project apple/BridgeAAC.xcodeproj -scheme BridgeAAC \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/BridgeAAC.xcarchive" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" "${AUTH[@]}"
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$APPLE_TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/BridgeAAC.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" "${AUTH[@]}"
+          rm -f "$KEY_PATH"
 
   publish-release:
     name: Publish GitHub Release Downloads
-    needs: [build-desktop, build-android, build-ios-swift]
+    needs: [build-desktop, build-android, build-ios]
     runs-on: ubuntu-latest
     steps:
       - name: Download all built app artifacts
@@ -162,16 +236,18 @@ jobs:
       - name: Filter public release assets
         run: |
           rm -f release-assets/*.aab
+          ls -la release-assets
 
       - name: Prune previous release assets
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           TARGET_TAG="${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'latest' }}"
           EXISTING_ASSETS=$(gh release view "$TARGET_TAG" --json assets --jq '.assets[].name' 2>/dev/null || true)
           for asset in $EXISTING_ASSETS; do
-            if [ "$TARGET_TAG" = "latest" ] || [ ! -f "release-assets/$asset" ]; then
-              gh release delete-asset "$TARGET_TAG" "$asset" --yes 2>/dev/null || true
+            if [ ! -f "release-assets/$asset" ]; then
+              gh release delete-asset "$TARGET_TAG" "$asset" --yes || true
             fi
           done
 
@@ -184,6 +260,7 @@ jobs:
           body: ${{ startsWith(github.ref, 'refs/tags/v') && '' || format('Continuous build updated from commit {0}. All platform binaries are refreshed automatically on every update.', github.sha) }}
           make_latest: true
           generate_release_notes: true
+          fail_on_unmatched_files: true
           files: |
             release-assets/*.exe
             release-assets/*.AppImage

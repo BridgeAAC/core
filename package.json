@@ -50,7 +50,11 @@
     "playwright-core": "^1.65.0"
   },
   "overrides": {
-    "glob": "^14.0.4",
-    "minimatch": "^11.0.7"
+    "workbox-build": {
+      "glob": "^14.0.4"
+    },
+    "filelist": {
+      "minimatch": "^11.0.7"
+    }
   }
 }
