@@ -58,7 +58,7 @@ BridgeAAC operates three independent client-side storage tiers:
 
 ### 1. IndexedDB
 - **`bridgeaac_db`**: Stores user vocabularies, page grids, button configurations, and application preferences.
-- **`bridgeaac_assets`**: Stores binary image blobs (ARASAAC symbols, user photos) and custom audio recordings.
+- **`bridgeaac_assets`**: Stores binary image blobs (ARASAAC symbols you choose, user photos) and custom audio recordings.
 - **`bridgeaac_piper_files`**: Stores pre-cached vocabulary WAV clips (`tts_cache`).
 
 ### 2. Origin Private File System (OPFS)
@@ -67,6 +67,12 @@ BridgeAAC operates three independent client-side storage tiers:
 
 ### 3. Service Worker CacheStorage
 - Workbox precaches all JavaScript, CSS, HTML, WebAssembly modules, and core symbol assets. When the device loses Wi-Fi or cellular service, the application continues to boot and operate identically.
+
+### Built-in symbol set
+- The original symbols are SVG drawings written in TypeScript under `src/data/symbol-sets/`, built from shared drawing helpers in `draw.ts` (people, hands, faces, buildings, food and so on).
+- `src/data/symbols.ts` merges the sets and maps everyday words to symbols with an alias table, so `television` and `tv` resolve to the same picture.
+- Buttons refer to symbols as `svg:bs-<id>`. Because the symbols are bundled code, they need no network and are embedded into exported `.ce` files.
+- To redraw the images in the README, store listings and this wiki after changing symbols, run `npm run store:assets`, `npm run brand:assets` and `node scripts/generate-symbol-sheet.mjs`.
 
 ---
 

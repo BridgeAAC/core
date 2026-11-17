@@ -1,0 +1,25 @@
+BridgeAAC is a free, open-source AAC app. Tap pictures to build sentences and hear them spoken. It works offline on iPad, iPhone, Android, Chromebook, Windows, Mac and Linux.
+
+Try it: https://bridgeaac.org
+Source code: https://github.com/BridgeAAC/core
+
+Chapters
+0:00 Intro
+0:13 Meet BridgeAAC
+0:23 Why I built it
+0:45 Talking
+1:07 Folders
+1:25 Keyboard
+1:43 Symbols
+1:59 Offline voices
+2:16 Make it yours
+2:37 Import and export
+2:52 Planner, moods and games
+3:40 Accessibility
+4:01 Languages and privacy
+4:24 Every device
+4:42 Try it
+
+No accounts, no ads, no tracking. Boards and messages stay on your device.
+
+#AAC #Autism #AssistiveTechnology #SpeechTherapy #OpenSource

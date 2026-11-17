@@ -1,0 +1,13 @@
+BridgeAAC is now in testing on Android. Free, works offline, and built for people who use AAC and the families who support them.
+
+Want to try it? It takes about 2 minutes:
+
+1. Join the Google Group: [GROUP LINK]
+   Use the Gmail account you use on your Android phone.
+2. On that same phone, open this link while signed in with that account: [OPT-IN LINK]
+3. Tap "Become a tester."
+4. Tap "Download it on Google Play" and install.
+
+Android phones and tablets only. iPad and iPhone users can install it from Safari instead: bridgeaac.org
+
+Questions or something not working? Comment here or email support@bridgeaac.org. Feedback is very welcome while we test.

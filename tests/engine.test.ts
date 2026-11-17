@@ -67,6 +67,17 @@ describe('message engine', () => {
     expect(lastWord(msg)).toBe('cats');
   });
 
+  it('only capitalizes a typed "i" once the word ends', () => {
+    const type = (msg: string, chars: string) =>
+      [...chars].reduce((m, ch) => insertText(m, ch, { noSpace: true, autoCapitalize: true }), msg);
+    expect(type('', 'pizza')).toBe('Pizza');
+    expect(type('', 'in')).toBe('In');
+    expect(type('', 'go in')).toBe('Go in');
+    expect(type('', 'so i ')).toBe('So I ');
+    expect(type('', 'hi')).toBe('Hi');
+    expect(type('', 'i.')).toBe('I.');
+  });
+
   it('handles backspace and deleteWord accurately', () => {
     expect(backspace('Hello ')).toBe('Hello');
     expect(backspace('')).toBe('');

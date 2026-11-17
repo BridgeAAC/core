@@ -1114,8 +1114,10 @@ a.btn {
 .sm-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
-  min-height: 32px;
+  min-height: 36px;
+  min-width: 36px;
   padding: 5px 10px;
   border-radius: 8px;
   border: none;
@@ -1390,7 +1392,8 @@ a.btn {
 }
 
 .wc-chip {
-  padding: 3px 7px;
+  min-height: 30px;
+  padding: 5px 9px;
   border-radius: 6px;
   border: 1px solid;
   font-size: 0.72rem;
@@ -1408,8 +1411,8 @@ a.btn {
 }
 
 .swatch-dot {
-  width: 22px;
-  height: 22px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   border: 2px solid;
   cursor: pointer;
@@ -1810,6 +1813,8 @@ a.btn {
 }
 
 .pageset-lang-label {
+  min-width: 0;
+  max-width: 100%;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1819,6 +1824,8 @@ a.btn {
 }
 
 .pageset-lang-select {
+  min-width: 0;
+  max-width: 100%;
   padding: 6px 10px;
   border-radius: 8px;
   border: 1.5px solid var(--border-subtle);
@@ -1829,6 +1836,7 @@ a.btn {
 }
 
 .pageset-grid {
+  grid-auto-rows: max-content;
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
@@ -2013,5 +2021,185 @@ a.btn {
   }
   .pageset-footer {
     padding: 12px 16px 16px;
+  }
+}
+
+@media (max-width: 720px) {
+  .nav-btn {
+    min-height: 40px;
+    min-width: 36px;
+    padding: 4px 6px;
+  }
+
+  .nav-btn .ui-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .kb-display {
+    flex-wrap: wrap;
+  }
+
+  .kb-display .kb-message,
+  .kb-display .kb-native-input {
+    flex: 1 1 100%;
+    min-height: 48px;
+  }
+
+  .kb-display .kb-action-btn {
+    flex: 1 1 0;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-install {
+    display: none;
+  }
+
+  .nav-row {
+    padding: 4px;
+    gap: 2px;
+  }
+
+  .nav-group {
+    gap: 1px;
+  }
+
+  .nav-btn {
+    min-width: 33px;
+    padding: 4px;
+  }
+
+  .kb-row {
+    gap: 4px;
+  }
+
+  .kb-key {
+    min-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .tab-strip {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .nav-label {
+    display: none;
+  }
+
+  .nav-row {
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding: 2px 10px;
+  }
+
+  .nav-group {
+    flex-wrap: nowrap;
+    min-width: 0;
+  }
+
+  .nav-btn {
+    min-height: 38px;
+    min-width: 38px;
+    padding: 4px 8px;
+  }
+
+  .page-pill-name {
+    max-width: 140px;
+  }
+
+  .edit-toolbar {
+    padding: 2px 10px;
+    font-size: 0.78rem;
+  }
+
+  .message-bar {
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding: 0 10px 6px;
+  }
+
+  .message-display {
+    min-height: 42px;
+    max-height: 48px;
+    padding: 4px 12px;
+  }
+
+  .message-controls {
+    width: auto;
+  }
+
+  .msg-btn {
+    min-height: 42px;
+    min-width: 46px;
+    padding: 2px 8px;
+  }
+
+  .msg-btn-label {
+    display: none;
+  }
+
+  .prediction-strip {
+    display: none;
+  }
+
+  .aac-btn .btn-label {
+    font-size: clamp(0.62rem, 3.1vh, 0.95rem) !important;
+    -webkit-line-clamp: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .edit-toolbar {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  .edit-badge {
+    flex: 1 1 100%;
+    font-size: 0.78rem;
+    line-height: 1.25;
+  }
+
+  .edit-actions {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 360px) {
+  .nav-btn {
+    min-width: 30px;
+    padding: 4px 3px;
+  }
+
+  .nav-group {
+    gap: 0;
+  }
+
+  .page-pill-name,
+  .page-pill-find {
+    display: none;
+  }
+
+  .edit-badge {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .pageset-toolbar {
+    padding: 8px 16px 10px;
+  }
+
+  .pageset-lang-label {
+    flex: 1 1 100%;
+  }
+
+  .pageset-lang-select {
+    flex: 1;
   }
 }

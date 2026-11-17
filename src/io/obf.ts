@@ -70,6 +70,7 @@ interface ObfBoard {
 
 interface ObzManifest {
   format?: string;
+  name?: string;
   root?: string;
   paths?: {
     boards?: Record<string, string>;
@@ -477,7 +478,11 @@ export async function importObz(data: Uint8Array, opts: ImportOptions = {}): Pro
   const now = Date.now();
   const vocab: Vocabulary = {
     id: vocabId,
-    name: homePage.name || opts.filename?.replace(/\.obz$/i, '') || 'OBZ Board Set',
+    name:
+      (typeof manifest?.name === 'string' && manifest.name.trim()) ||
+      opts.filename?.replace(/^.*[/\\]/, '').replace(/\.obz$/i, '').replace(/_+/g, ' ').trim() ||
+      homePage.name ||
+      'OBZ Board Set',
     locale: rawBoards.get(homePage.id)?.board.locale || 'en',
     source: { kind: 'obf', filename: opts.filename, importedAt: now },
     homePageId: homePage.id,
@@ -637,6 +642,7 @@ export function exportObz(vocab: Vocabulary, assetsById: Map<string, AssetBlob>)
   const rootBoardPath = manifestBoards[vocab.homePageId] ?? Object.values(manifestBoards)[0];
   const manifest: ObzManifest = {
     format: 'open-board-0.1',
+    name: vocab.name,
     root: rootBoardPath,
     paths: {
       boards: manifestBoards,

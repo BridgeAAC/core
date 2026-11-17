@@ -242,6 +242,10 @@ describe('OBF / OBZ & BridgeAAC backup round-trip', () => {
     const obzRes = await importAnyFile({ name: 'sample.obz', bytes: obzBytes }, { filename: 'sample.obz' });
     expect(obzRes.vocab.name).toBe('My OBF Board');
     expect(obzRes.assets.length).toBe(1);
+
+    const renamed = exportObz({ ...res.vocab, name: 'Sam at School', pages: res.vocab.pages.map((p) => ({ ...p, name: 'Home' })) }, assetMap);
+    const renamedRes = await importAnyFile({ name: 'Copy.obz', bytes: renamed }, { filename: 'Copy.obz' });
+    expect(renamedRes.vocab.name).toBe('Sam at School');
   });
 
   it('round-trips a .bridge archive and re-namespaces asset IDs cleanly', async () => {

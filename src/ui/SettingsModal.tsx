@@ -29,6 +29,8 @@ import {
 import { resetAllLocalData, ttsCacheClear, ttsCacheCount } from '../store/db';
 import { commit, panel, speakText, toast, vocab } from '../state';
 import { getLanguageInfo, SUPPORTED_LANGUAGES } from '../i18n';
+import { isStoreApp } from './InstallModal';
+import { saveFile } from '../io/save';
 
 export function SettingsModal() {
   const s = settings.value;
@@ -341,7 +343,7 @@ export function SettingsModal() {
                     panel.value = 'help';
                   }}
                 >
-                  Device Install Guide
+                  {isStoreApp() ? 'Offline Setup' : 'Device Install Guide'}
                 </button>
               </div>
 
@@ -1097,8 +1099,8 @@ export function SettingsModal() {
                         onClick={() => updateSettings({ accentColor: hex })}
                         aria-label={`Accent color ${hex}`}
                         style={{
-                          width: '24px',
-                          height: '24px',
+                          width: '32px',
+                          height: '32px',
                           borderRadius: '999px',
                           background: hex,
                           border:
@@ -1164,16 +1166,9 @@ export function SettingsModal() {
                     type="button"
                     class="btn secondary sm"
                     onClick={() => {
-                      const blob = new Blob([JSON.stringify(s, null, 2)], {
-                        type: 'application/json',
-                      });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = 'bridgeaac-settings.json';
-                      a.click();
-                      URL.revokeObjectURL(url);
-                      toast('Settings saved to a file', 'success');
+                      void saveFile('bridgeaac-settings.json', JSON.stringify(s, null, 2), 'application/json')
+                        .then(() => toast('Settings saved to a file', 'success'))
+                        .catch(() => toast("Couldn't save the settings file.", 'error'));
                     }}
                   >
                     Export Settings JSON
@@ -1207,15 +1202,17 @@ export function SettingsModal() {
                   >
                     View on GitHub
                   </a>
-                  <a
-                    href="https://github.com/bridgeaac/core/releases/latest"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="btn secondary sm"
-                    style={{ textDecoration: 'none' }}
-                  >
-                    GitHub Releases
-                  </a>
+                  {!isStoreApp() && (
+                    <a
+                      href="https://github.com/bridgeaac/core/releases/latest"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="btn secondary sm"
+                      style={{ textDecoration: 'none' }}
+                    >
+                      GitHub Releases
+                    </a>
+                  )}
                 </div>
               </div>
             </div>

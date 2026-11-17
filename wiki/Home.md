@@ -43,6 +43,12 @@ BridgeAAC provides a modern, touch-first communication system engineered to run 
 | ![Gamified Learning](images/05-gamified-learning.png) | ![Voice & Settings](images/06-offline-voices-customization.png) |
 | *Sentence Builder and Emotion Match games designed to build syntax and social-emotional understanding.* | *Integrated voice manager with downloadable neural voices, pitch/rate controls, and pre-caching.* |
 
+### Built-in Symbols
+
+Every button can show a clear picture without any setup. BridgeAAC includes more than 600 original symbols for core words, people, food, feelings, places, actions, body parts, animals, school and home. They are bundled with the app, so they work offline.
+
+![Built-in BridgeAAC symbols](images/symbols.png)
+
 ---
 
 ## Documentation Index
@@ -55,7 +61,7 @@ Explore the complete system documentation:
 | **[File Interoperability & Migration](Open-Board-and-Backup-Migration)** | Importing `.ce`, `.c4v`, `.wf`, `.obf`, and `.obz` files with full round-trip layout and symbol fidelity. | SLPs, Therapists, Parents |
 | **[Offline Speech & Neural Voices](Speech-and-Offline-Audio)** | The four-tier speech engine, Piper neural ONNX models, audio caching, and pronunciation overrides. | All Users, Caregivers |
 | **[Motor Access & Switch Scanning](Motor-Access-and-Switch-Scanning)** | Touch timing filters (hold/repeat debounce), pointer dwell for eye-gaze, and 1/2-switch scanning. | OTs, Assistive Tech Specialists |
-| **[Grid Editor & Customization](Grid-Editor-and-Customization)** | Visual button editor, ARASAAC symbol search, personal photo uploads, page creation, and Word Finder. | SLPs, Teachers, Parents |
+| **[Grid Editor & Customization](Grid-Editor-and-Customization)** | Built-in symbols, visual button editor, optional ARASAAC symbol search, personal photo uploads, page creation, and Word Finder. | SLPs, Teachers, Parents |
 | **[Life & Learning Hub](Life-and-Learning-Hub)** | Daily Planner, Mood Tracker, Sentence Builder & Emotion Match games, "About Me" passport, and Notes. | Caregivers, Teachers, Users |
 | **[Settings & Configuration](Settings-and-Configuration)** | Complete guide to voices, touch timing, switch scanning, visual ergonomic styling, and PIN locks. | All Users |
 | **[Caregiver & Classroom Guide](Caregiver-and-Classroom-Guide)** | Practical AAC modeling (Aided Language Stimulation), Guided Access locking, PIN protection, and backups. | Parents, Teachers, Aides |

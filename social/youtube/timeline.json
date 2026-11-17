@@ -1,0 +1,311 @@
+{
+  "total": 295.6,
+  "narration": [
+    {
+      "start": 0.8,
+      "end": 3.5739130434782616,
+      "text": "Everyone has something to say.",
+      "scene": "open"
+    },
+    {
+      "start": 5.2,
+      "end": 12.7,
+      "text": "But for a lot of people, saying it out loud isn't easy. Or isn't possible at all.",
+      "scene": "open"
+    },
+    {
+      "start": 13.6,
+      "end": 21.156521739130437,
+      "text": "This is BridgeAAC. A free communication app that speaks for you, one picture at a time.",
+      "scene": "title"
+    },
+    {
+      "start": 23.8,
+      "end": 29.3,
+      "text": "I built BridgeAAC for my sister. She uses an iPad to talk.",
+      "scene": "why"
+    },
+    {
+      "start": 29.6,
+      "end": 36.300000000000004,
+      "text": "Apps like this can cost hundreds of dollars, and dedicated speech devices can cost thousands.",
+      "scene": "why"
+    },
+    {
+      "start": 36.6,
+      "end": 43.721739130434784,
+      "text": "No family should have to pay for a voice. So BridgeAAC is free, for everyone.",
+      "scene": "why"
+    },
+    {
+      "start": 45.6,
+      "end": 49.400000000000006,
+      "text": "Here's how it works. Every button is a word.",
+      "scene": "talk"
+    },
+    {
+      "start": 49.7,
+      "end": 57.1880000782013,
+      "text": "Tap the words you want, and they line up in the message bar. Then tap Speak.",
+      "scene": "talk"
+    },
+    {
+      "start": 59.6,
+      "end": 66.7,
+      "text": "The buttons are color coded, so people, actions and describing words are quick to find.",
+      "scene": "talk"
+    },
+    {
+      "start": 67.5,
+      "end": 72.88260869565217,
+      "text": "More specific words live in folders, like food, people and places.",
+      "scene": "folder"
+    },
+    {
+      "start": 78.6,
+      "end": 84.7,
+      "text": "Open a folder, pick a word, and BridgeAAC takes you right back home.",
+      "scene": "folder"
+    },
+    {
+      "start": 85.5,
+      "end": 91.10000000000001,
+      "text": "If a word isn't on the board, open the keyboard and spell it.",
+      "scene": "keyboard"
+    },
+    {
+      "start": 91.4,
+      "end": 96.78260869565217,
+      "text": "Word prediction suggests whole words as you type, so it's faster.",
+      "scene": "keyboard"
+    },
+    {
+      "start": 103.8,
+      "end": 107.3,
+      "text": "Every button has a clear, friendly picture.",
+      "scene": "symbols"
+    },
+    {
+      "start": 107.6,
+      "end": 116.89565217391304,
+      "text": "BridgeAAC comes with hundreds of its own symbols, drawn just for this app, and they all work without the internet.",
+      "scene": "symbols"
+    },
+    {
+      "start": 119.6,
+      "end": 123.10000000000001,
+      "text": "You can choose the voice that fits.",
+      "scene": "voices"
+    },
+    {
+      "start": 123.4,
+      "end": 134,
+      "text": "Natural voices download once, then run right on the device. So BridgeAAC keeps talking on a plane, at school, or anywhere without Wi-Fi.",
+      "scene": "voices"
+    },
+    {
+      "start": 136.6,
+      "end": 139.7,
+      "text": "Every board can be made your own.",
+      "scene": "edit"
+    },
+    {
+      "start": 140,
+      "end": 146.68695652173912,
+      "text": "Tap Edit, pick any button, and change its word, its picture, or its color.",
+      "scene": "edit"
+    },
+    {
+      "start": 147.6,
+      "end": 155.15652173913043,
+      "text": "You can even add your own photos, like mom, a favorite toy, or the family dog.",
+      "scene": "edit"
+    },
+    {
+      "start": 157.6,
+      "end": 160.7,
+      "text": "Already have boards from another AAC app?",
+      "scene": "import"
+    },
+    {
+      "start": 161,
+      "end": 169.42608695652174,
+      "text": "BridgeAAC imports dot-C-E and Open Board files, and it can export them too. So you're never locked in.",
+      "scene": "import"
+    },
+    {
+      "start": 172.6,
+      "end": 176.7,
+      "text": "BridgeAAC helps with the rest of the day, too.",
+      "scene": "planner"
+    },
+    {
+      "start": 177,
+      "end": 184.90599999427795,
+      "text": "A visual planner shows the day step by step, with a star for every task that's done.",
+      "scene": "planner"
+    },
+    {
+      "start": 192.6,
+      "end": 199.72173913043477,
+      "text": "Mood check-ins help people share how they feel, and get ideas for what might help.",
+      "scene": "mood"
+    },
+    {
+      "start": 205.6,
+      "end": 210.11304347826086,
+      "text": "And simple games make practicing words and sentences fun.",
+      "scene": "games"
+    },
+    {
+      "start": 220.6,
+      "end": 223.5,
+      "text": "BridgeAAC adapts to the person using it.",
+      "scene": "access"
+    },
+    {
+      "start": 223.8,
+      "end": 230.05217391304348,
+      "text": "There's a calm mode with soft colors, plus dark and high contrast themes.",
+      "scene": "access"
+    },
+    {
+      "start": 230.6,
+      "end": 239.4608695652174,
+      "text": "Touch settings help with shaky hands, and switch scanning lets people speak even if they can't tap at all.",
+      "scene": "access"
+    },
+    {
+      "start": 241.6,
+      "end": 247.4173913043478,
+      "text": "It comes in ten languages, including Spanish, French, Arabic, Chinese and Hindi.",
+      "scene": "languages"
+    },
+    {
+      "start": 251.6,
+      "end": 257.3,
+      "text": "And it's private. There are no accounts, no ads, and no tracking.",
+      "scene": "privacy"
+    },
+    {
+      "start": 257.6,
+      "end": 261.67826086956524,
+      "text": "Your boards and messages stay on your device.",
+      "scene": "privacy"
+    },
+    {
+      "start": 264.6,
+      "end": 273.0260869565218,
+      "text": "BridgeAAC runs on the devices families already have. iPad, iPhone, Android, Chromebook, and Windows, Mac and Linux computers.",
+      "scene": "devices"
+    },
+    {
+      "start": 274.4,
+      "end": 281.5217391304348,
+      "text": "On an iPad, just open bridgeaac.org in Safari and add it to your home screen.",
+      "scene": "devices"
+    },
+    {
+      "start": 282.8,
+      "end": 286.00869565217397,
+      "text": "BridgeAAC is free and open source.",
+      "scene": "end"
+    },
+    {
+      "start": 286.4,
+      "end": 290.4782608695652,
+      "text": "Try it today at bridgeaac.org. Thanks for watching.",
+      "scene": "end"
+    }
+  ],
+  "app": [
+    {
+      "start": 57.488000078201296,
+      "end": 58.8695870782013,
+      "text": "I want to play."
+    },
+    {
+      "start": 76.98799983978272,
+      "end": 78.32314683978272,
+      "text": "I want pizza."
+    },
+    {
+      "start": 98.38900000572204,
+      "end": 100.00278700572204,
+      "text": "I want to go swimming."
+    },
+    {
+      "start": 185.20599999427796,
+      "end": 190.02414099427796,
+      "text": "Nice work! Wake Up and Stretch is done. You earned a star."
+    },
+    {
+      "start": 200.4689999294281,
+      "end": 201.89702692942808,
+      "text": "I feel happy!"
+    },
+    {
+      "start": 215.11799983978273,
+      "end": 217.77668483978272,
+      "text": "Awesome! I want water please."
+    }
+  ],
+  "chapters": [
+    {
+      "t": 13,
+      "title": "Meet BridgeAAC"
+    },
+    {
+      "t": 23,
+      "title": "Why I built it"
+    },
+    {
+      "t": 45,
+      "title": "Talking"
+    },
+    {
+      "t": 67,
+      "title": "Folders"
+    },
+    {
+      "t": 85,
+      "title": "Keyboard"
+    },
+    {
+      "t": 103,
+      "title": "Symbols"
+    },
+    {
+      "t": 119,
+      "title": "Offline voices"
+    },
+    {
+      "t": 136,
+      "title": "Make it yours"
+    },
+    {
+      "t": 157,
+      "title": "Import and export"
+    },
+    {
+      "t": 172,
+      "title": "Planner, moods and games"
+    },
+    {
+      "t": 220,
+      "title": "Accessibility"
+    },
+    {
+      "t": 241,
+      "title": "Languages and privacy"
+    },
+    {
+      "t": 264,
+      "title": "Every device"
+    },
+    {
+      "t": 282,
+      "title": "Try it"
+    }
+  ]
+}

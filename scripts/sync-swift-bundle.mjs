@@ -11,7 +11,11 @@ if (!fs.existsSync(distDir)) {
 
 fs.rmSync(targetDir, { recursive: true, force: true });
 fs.mkdirSync(targetDir, { recursive: true });
-fs.cpSync(distDir, targetDir, { recursive: true });
+const webOnly = new Set(['about', 'images', 'og-image.jpg', '404.html', '.well-known', 'CNAME', 'robots.txt', 'sitemap.xml', '_headers', '_redirects', 'privacy']);
+fs.cpSync(distDir, targetDir, {
+  recursive: true,
+  filter: (src) => !webOnly.has(path.relative(distDir, src).split(path.sep)[0]),
+});
 
 const icon512 = path.resolve('public/icon-512.png');
 const appIcon = path.resolve('AppIcon.png');

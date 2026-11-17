@@ -14,6 +14,7 @@ import {
   type DerivedKey,
   type EncryptedEnvelope,
 } from '../store/secure';
+import { saveFile } from '../io/save';
 
 export type ToolsTab = 'planner' | 'mood' | 'games' | 'aboutme' | 'notes';
 
@@ -624,15 +625,9 @@ export function ToolsModal() {
           `[${new Date(n.createdAt).toLocaleString()}] (${n.category})\n${n.text}\n`,
       ),
     ];
-    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'BridgeAAC-Caregiver-Notes.txt';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    void saveFile('BridgeAAC-Caregiver-Notes.txt', lines.join('\n'), 'text/plain;charset=utf-8').catch(() =>
+      toast("Couldn't save the notes file.", 'error'),
+    );
   }
 
   const completedTasks = tasks.filter((t) => t.done).length;

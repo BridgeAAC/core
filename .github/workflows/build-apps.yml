@@ -103,7 +103,7 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: Install Capacitor Android tooling
-        run: npm install --no-save --legacy-peer-deps @capacitor/core@8.0.0 @capacitor/cli@8.0.0 @capacitor/android@8.0.0
+        run: npm install --no-save --legacy-peer-deps @capacitor/core@8.0.0 @capacitor/cli@8.0.0 @capacitor/android@8.0.0 @capacitor/filesystem@8.1.4 @capacitor/share@8.0.2
 
       - name: Build Web Bundle & Sync Capacitor Android
         run: |
@@ -194,7 +194,15 @@ jobs:
         run: |
           xcodebuild build -project apple/BridgeAAC.xcodeproj -scheme BridgeAAC \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-            CODE_SIGNING_ALLOWED=NO -quiet
+            -derivedDataPath "$RUNNER_TEMP/dd" CODE_SIGNING_ALLOWED=NO -quiet
+          APP="$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/BridgeAAC.app"
+          test -x "$APP/BridgeAAC"
+          test -f "$APP/PrivacyInfo.xcprivacy"
+          test -f "$APP/WebBundle/index.html"
+          test -f "$APP/Assets.car"
+          plutil -extract CFBundleIconName raw "$APP/Info.plist"
+          plutil -extract CFBundleShortVersionString raw "$APP/Info.plist"
+          du -sh "$APP"
 
       - name: Archive & Upload to App Store Connect
         if: env.UPLOAD == 'true' && env.APP_STORE_CONNECT_KEY != ''

@@ -26,17 +26,10 @@ import { SUPPORTED_LANGUAGES, type LangCode } from '../i18n';
 import type { ImportResult } from '../model';
 import { enrichVocabularyWithArasaac, type EnrichProgress } from '../data/arasaac';
 import { settings, updateSettings } from '../settings';
+import { saveFile } from '../io/save';
 
 function downloadBytes(filename: string, bytes: Uint8Array, mime = 'application/octet-stream') {
-  const blob = new Blob([bytes as BlobPart], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  return saveFile(filename, bytes, mime);
 }
 
 export function VocabModal() {
@@ -90,18 +83,21 @@ export function VocabModal() {
   async function handleExport(id: string, format: 'ce' | 'obz' | 'bridge') {
     const v = id === active?.id ? active : await loadVocab(id);
     if (!v) return;
-    const assets = await getAssetsForVocab(v.id);
     const safeName = (v.name || 'vocabulary').replace(/[^a-zA-Z0-9_-]+/g, '_');
-
-    if (format === 'bridge') {
-      const bytes = exportBridge(v, assets);
-      downloadBytes(`${safeName}.bridge`, bytes, 'application/zip');
-      toast(`Exported ${safeName}.bridge`, 'success');
-    } else {
-      const packed = await embedBuiltInPictures(v, new Map(assets.map((a) => [a.id, a])));
-      const bytes = format === 'obz' ? exportObz(packed.vocab, packed.assetsById) : await exportCe(packed.vocab, packed.assetsById);
-      downloadBytes(`${safeName}.${format}`, bytes, 'application/zip');
-      toast(`Exported ${safeName}.${format}`, 'success');
+    try {
+      const assets = await getAssetsForVocab(v.id);
+      if (format === 'bridge') {
+        const bytes = exportBridge(v, assets);
+        await downloadBytes(`${safeName}.bridge`, bytes, 'application/zip');
+        toast(`Exported ${safeName}.bridge`, 'success');
+      } else {
+        const packed = await embedBuiltInPictures(v, new Map(assets.map((a) => [a.id, a])));
+        const bytes = format === 'obz' ? exportObz(packed.vocab, packed.assetsById) : await exportCe(packed.vocab, packed.assetsById);
+        await downloadBytes(`${safeName}.${format}`, bytes, 'application/zip');
+        toast(`Exported ${safeName}.${format}`, 'success');
+      }
+    } catch (e) {
+      toast(`Couldn't export ${safeName}.${format}: ${e instanceof Error ? e.message : String(e)}`, 'error');
     }
   }
 

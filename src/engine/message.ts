@@ -42,7 +42,11 @@ export function insertText(msg: string, text: string, opts: InsertOptions = {}):
   }
 
   if (opts.autoCapitalize) {
-    t = fixPronounI(t);
+    if (opts.noSpace) {
+      if (!/^[\p{L}\p{N}'\u2019]/u.test(t)) base = base.replace(/(^|\s)i$/, '$1I');
+    } else {
+      t = fixPronounI(t);
+    }
     if (SENTENCE_END.test(base)) t = capitalizeFirstLetter(t);
   }
 

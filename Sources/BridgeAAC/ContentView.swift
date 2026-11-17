@@ -618,6 +618,12 @@ final class BridgeNativeCoordinator: NSObject, ObservableObject, WKScriptMessage
                 audioPlayer = nil
             }
 
+        case "saveFile":
+            guard let rawName = body["name"] as? String,
+                  let base64 = body["data"] as? String,
+                  let data = Data(base64Encoded: base64) else { return }
+            saveExportedFile(name: rawName, data: data)
+
         case "downloadPiperFile":
             guard let rawFilename = body["filename"] as? String,
                   !rawFilename.contains("/"),
@@ -937,11 +943,62 @@ extension BridgeNativeCoordinator: UIDocumentPickerDelegate {
     }
 }
 
+extension BridgeNativeCoordinator: WKNavigationDelegate, WKUIDelegate {
+    static let externalSchemes: Set<String> = ["http", "https", "mailto", "tel", "sms"]
+
+    func saveExportedFile(name: String, data: Data) {
+        let base = (name as NSString).lastPathComponent.replacingOccurrences(of: "..", with: "_")
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let url = dir.appendingPathComponent(base.isEmpty ? "BridgeAAC-export" : base)
+        do {
+            try data.write(to: url, options: .atomic)
+        } catch {
+            return
+        }
+        let sheet = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        if let popover = sheet.popoverPresentationController, let view = webView {
+            popover.sourceView = view
+            popover.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 1, height: 1)
+            popover.permittedArrowDirections = []
+        }
+        topViewController()?.present(sheet, animated: true)
+    }
+
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
+        guard let url = navigationAction.request.url,
+              let scheme = url.scheme?.lowercased(),
+              Self.externalSchemes.contains(scheme) else {
+            return .allow
+        }
+        await MainActor.run {
+            UIApplication.shared.open(url)
+        }
+        return .cancel
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        createWebViewWith configuration: WKWebViewConfiguration,
+        for navigationAction: WKNavigationAction,
+        windowFeatures: WKWindowFeatures
+    ) -> WKWebView? {
+        if let url = navigationAction.request.url,
+           let scheme = url.scheme?.lowercased(),
+           Self.externalSchemes.contains(scheme) {
+            UIApplication.shared.open(url)
+        }
+        return nil
+    }
+}
+
 struct ContentView: UIViewRepresentable {
     @ObservedObject var coordinator: BridgeNativeCoordinator
 
     func makeUIView(context: Context) -> WKWebView {
         let webView = createConfiguredWebView(coordinator: coordinator)
+        webView.navigationDelegate = coordinator
+        webView.uiDelegate = coordinator
         coordinator.webView = webView
         loadInitialBundle(into: webView)
         return webView
@@ -950,6 +1007,18 @@ struct ContentView: UIViewRepresentable {
     func updateUIView(_ uiView: WKWebView, context: Context) {}
 }
 #elseif os(macOS)
+extension BridgeNativeCoordinator {
+    func saveExportedFile(name: String, data: Data) {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = (name as NSString).lastPathComponent
+        panel.begin { response in
+            if response == .OK, let url = panel.url {
+                try? data.write(to: url, options: .atomic)
+            }
+        }
+    }
+}
+
 extension BridgeNativeCoordinator: WKUIDelegate {
     func webView(
         _ webView: WKWebView,

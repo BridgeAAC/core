@@ -51,13 +51,20 @@ Buttons can span multiple grid cells:
 
 ## 3. Adding Symbols & Custom Photography
 
-BridgeAAC provides three methods for adding visuals to any button:
+BridgeAAC provides four ways to add visuals to any button:
+
+### Method 0: Built-in Symbols (Automatic)
+BridgeAAC ships with more than 600 original symbols for core words, people, food, feelings, places, actions, body parts, animals, school, home and the outdoors. When you type a label such as `drink`, `school` or `good`, the matching symbol is used automatically. Nothing is downloaded and nothing leaves the device, so these symbols work completely offline.
+
+![Built-in BridgeAAC symbols](images/symbols.png)
+
+If a button shows the wrong picture, open it in the Button Editor and choose a different symbol, emoji or photo.
 
 ### Method 1: ARASAAC Open-Source Symbol Search
 1. In the Button Editor, tap **Search Symbols**.
    - Symbol search is an **online, opt-in feature**. The first time, tap **Turn on symbol search**. Your search words are sent to the ARASAAC API (`api.arasaac.org`). You can turn it off again in **Settings → Privacy → Online features**.
 2. Type any keyword (e.g., `drink`, `swing`, `school`, `dog`).
-3. Select from over 10,000 standardized, high-contrast ARASAAC pictograms.
+3. Select from over 10,000 standardized, high-contrast ARASAAC pictograms. This is an optional extra on top of the built-in symbols.
 4. The symbol is saved locally in IndexedDB and works completely offline.
 
 ### Method 2: Custom Photo Upload

@@ -1,5 +1,4 @@
 import type { SqlJsStatic } from 'sql.js';
-import initSqlJs from 'sql.js/dist/sql-wasm-inline.js';
 
 let sqlPromise: Promise<SqlJsStatic> | null = null;
 
@@ -18,7 +17,8 @@ function unwrapInit(mod: unknown): InitFn {
 }
 
 async function load(): Promise<SqlJsStatic> {
-  const init = unwrapInit(initSqlJs);
+  const mod = await import('sql.js/dist/sql-wasm-inline.js');
+  const init = unwrapInit(mod);
   return init();
 }
 

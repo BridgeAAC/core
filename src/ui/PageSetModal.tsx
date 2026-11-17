@@ -10,7 +10,9 @@ interface PageSetModalProps {
 
 export function PageSetModal({ isOnboarding = false }: PageSetModalProps) {
   const currentLang = resolveActiveLang(vocab.value?.locale);
-  const [selectedSize, setSelectedSize] = useState<PageSetSize>(60);
+  const [selectedSize, setSelectedSize] = useState<PageSetSize>(() =>
+    typeof window !== 'undefined' && Math.min(window.innerWidth, window.innerHeight) < 600 ? 42 : 60,
+  );
   const [selectedLocale, setSelectedLocale] = useState<LangCode>(
     (SUPPORTED_LANGUAGES.some((l) => l.code === currentLang) ? currentLang : 'en') as LangCode,
   );

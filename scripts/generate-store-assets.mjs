@@ -2,6 +2,7 @@ import { chromium } from 'playwright-core';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
+import { statusSvg } from './lib/device-frames.mjs';
 
 const distDir = path.resolve('dist');
 if (!fs.existsSync(distDir)) {
@@ -108,13 +109,35 @@ await renderHtmlToPng(iconHtml(512, true, true), 512, 512, 'public/icon-maskable
 await renderHtmlToPng(iconHtml(192, false, true), 192, 192, 'public/icon-192.png');
 await renderHtmlToPng(iconHtml(180, false, true), 180, 180, 'public/apple-touch-icon.png');
 
-async function captureDeviceScenes(deviceName, width, height, scale, outDir) {
+const IPHONE_CHROME = (width) => `
+  .topbar { padding-top: 62px !important; }
+  .board-wrap { padding-bottom: 34px !important; }
+  .modal-backdrop { padding-top: 70px !important; padding-bottom: 40px !important; }
+  #ios-status { position: fixed; left: 0; right: 0; top: 0; height: 54px; z-index: 2147483647; pointer-events: none; color: #000; }
+  #ios-status .time { position: absolute; left: ${Math.round(width * 0.155)}px; top: 21px; width: 60px; text-align: center; font: 600 17px/1 'SF Pro Text', -apple-system, 'Helvetica Neue', Arial, sans-serif; letter-spacing: -0.01em; }
+  #ios-status .icons { position: absolute; right: ${Math.round(width * 0.075)}px; top: 21px; }
+`;
+
+async function captureDeviceScenes(deviceName, width, height, scale, outDir, opts = {}) {
   fs.mkdirSync(outDir, { recursive: true });
   const ctx = await browser.newContext({
     viewport: { width, height },
     deviceScaleFactor: scale,
   });
   const page = await ctx.newPage();
+  if (opts.iphone) {
+    await page.addInitScript(([css, icons]) => {
+      addEventListener('DOMContentLoaded', () => {
+        const st = document.createElement('style');
+        st.textContent = css;
+        document.head.appendChild(st);
+        const bar = document.createElement('div');
+        bar.id = 'ios-status';
+        bar.innerHTML = '<div class="time">9:41</div><div class="icons">' + icons + '</div>';
+        document.body.appendChild(bar);
+      });
+    }, [IPHONE_CHROME(width), statusSvg(1.15)]);
+  }
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
   await page.waitForTimeout(400);
   await page.evaluate(() => {
@@ -227,12 +250,12 @@ async function captureDeviceScenes(deviceName, width, height, scale, outDir) {
 
 await captureDeviceScenes('README iPad Landscape', 1180, 820, 2, 'docs/images');
 await captureDeviceScenes('iPad Pro 13" Portrait', 1024, 1366, 2, 'store-assets/apple-app-store/ipad-pro-13');
-await captureDeviceScenes('iPhone 6.5" Portrait', 428, 926, 3, 'store-assets/apple-app-store/iphone-6.5');
+await captureDeviceScenes('iPhone 6.3" Portrait', 402, 874, 3, 'store-assets/apple-app-store/iphone-6.3', { iphone: true });
 await captureDeviceScenes('Android Tablet 16:10 Landscape', 960, 600, 2, 'store-assets/google-play/tablet-10in');
 await captureDeviceScenes('Android Phone 16:9 Portrait', 360, 640, 3, 'store-assets/google-play/phone');
 
 fs.copyFileSync(
-  'store-assets/apple-app-store/iphone-6.5/01-communication-board.png',
+  'store-assets/apple-app-store/iphone-6.3/01-communication-board.png',
   'docs/images/iphone-board.png',
 );
 

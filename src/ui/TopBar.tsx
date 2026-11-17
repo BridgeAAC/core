@@ -79,7 +79,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
     <header class="topbar">
       <div class="nav-row" role="toolbar" aria-label="Navigation">
         <div class="nav-group">
-          <button type="button" class="nav-btn home-btn" onClick={() => goHome()} title={t.home}>
+          <button type="button" class="nav-btn home-btn" onClick={() => goHome()} title={t.home} aria-label={t.home}>
             <Icon name="home" size={20} />
             <span class="nav-label">{t.home}</span>
           </button>
@@ -89,6 +89,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             onClick={() => goBack()}
             disabled={!canGoBack.value}
             title={t.back}
+            aria-label={t.back}
           >
             <Icon name="back" size={20} />
             <span class="nav-label">{t.back}</span>
@@ -123,6 +124,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             class="nav-btn vocab-btn"
             onClick={onQuickImport}
             title="Switch, import, or export vocabularies"
+            aria-label={v?.name ?? t.vocabularies}
           >
             <Icon name="books" size={20} />
             <span class="nav-label vocab-name">{v?.name ?? t.vocabularies}</span>
@@ -132,6 +134,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             class="nav-btn"
             onClick={() => (keyboardOpen.value = true)}
             title="Type with the keyboard"
+            aria-label={t.keyboard}
           >
             <Icon name="keyboard" size={20} />
             <span class="nav-label">{t.keyboard}</span>
@@ -141,6 +144,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             class="nav-btn"
             onClick={() => (panel.value = 'messages')}
             title="Soundboard, saved phrases, and recent messages"
+            aria-label={t.phrases}
           >
             <Icon name="chat" size={20} />
             <span class="nav-label">{t.phrases}</span>
@@ -160,6 +164,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             class={`nav-btn ${isEdit ? 'active-edit' : ''}`}
             onClick={() => (isEdit ? exitEditMode() : enterEditMode())}
             title={isEdit ? 'Finish editing' : 'Edit buttons and pages'}
+            aria-label={isEdit ? t.done : t.edit}
           >
             <Icon name={isEdit ? 'check' : 'pencil'} size={20} />
             <span class="nav-label">{isEdit ? t.done : t.edit}</span>
@@ -167,9 +172,10 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
           {!standalone && (
             <button
               type="button"
-              class="nav-btn"
+              class="nav-btn nav-install"
               onClick={() => (panel.value = 'help')}
               title="Install the app and set up offline voices"
+              aria-label={t.install}
             >
               <Icon name="download" size={20} />
               <span class="nav-label">{t.install}</span>
@@ -180,6 +186,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             class="nav-btn"
             onClick={() => requireUnlock(() => (panel.value = 'settings'))}
             title="Settings"
+            aria-label={t.settings}
           >
             <Icon name="gear" size={20} />
             <span class="nav-label">{t.settings}</span>

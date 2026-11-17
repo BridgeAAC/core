@@ -19,3 +19,8 @@ fixtures/
 .xtool-bin/
 .bsp/
 .mcp.json
+
+social/youtube/*.mp4
+social/youtube/*.webm
+social/youtube/stems/
+social/youtube/preview/

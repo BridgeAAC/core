@@ -1,0 +1,106 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BridgeAAC Teleprompter</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #000; color: #f5f5f7; font-family: 'SF Pro Display', 'SF Pro Text', -apple-system, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; min-height: 100vh; display: grid; grid-template-rows: auto 1fr auto; }
+header { display: flex; align-items: center; gap: 12px; padding: 16px 24px; border-bottom: 1px solid #1d1d1f; flex-wrap: wrap; }
+header h1 { font-size: 18px; font-weight: 600; margin-right: auto; }
+button { font: 600 15px 'SF Pro Display', 'SF Pro Text', -apple-system, 'Helvetica Neue', Arial, sans-serif; border: 0; border-radius: 99px; padding: 10px 18px; cursor: pointer; background: #1d1d1f; color: #f5f5f7; }
+button.rec { background: #ff3b30; }
+button:disabled { opacity: .4; cursor: default; }
+#status { font-size: 14px; color: #86868b; min-width: 140px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 24px; padding: 24px; align-items: start; }
+@media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
+#prompt { display: flex; flex-direction: column; justify-content: center; min-height: 60vh; }
+#now { font-size: clamp(36px, 4.4vw, 64px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; transition: color .2s; }
+#now.app { color: #ff9f0a; font-style: italic; }
+#now.wait { color: #48484a; }
+#bar { height: 6px; background: #1d1d1f; border-radius: 99px; margin: 28px 0; overflow: hidden; }
+#bar i { display: block; height: 100%; width: 0; background: #2997ff; }
+#next { font-size: 26px; color: #6e6e73; line-height: 1.35; }
+#next b { color: #a1a1a6; font-weight: 600; }
+video { width: 100%; border-radius: 12px; background: #111; }
+#clock { font: 600 28px 'SF Pro Display', 'SF Pro Text', -apple-system, 'Helvetica Neue', Arial, sans-serif; font-variant-numeric: tabular-nums; margin-top: 12px; }
+#dl { display: block; margin-top: 14px; color: #2997ff; font-size: 16px; }
+footer { padding: 14px 24px; color: #6e6e73; font-size: 14px; border-top: 1px solid #1d1d1f; }
+</style></head><body>
+<header><h1>BridgeAAC teleprompter</h1>
+<button id="practice">Practice</button><button id="record" class="rec">Record</button><button id="stop" disabled>Stop</button><span id="status">Ready</span></header>
+<main>
+  <section id="prompt"><div id="now" class="wait">Press Practice or Record.</div><div id="bar"><i></i></div><div id="next"></div></section>
+  <aside><video id="v" src="bridgeaac-youtube-no-music.mp4" playsinline></video><div id="clock">0:00</div><a id="dl" hidden></a></aside>
+</main>
+<footer>Wear headphones so the mic only hears you. Orange lines are spoken by the app, so stay quiet for those. Recording starts with a 3 second countdown.</footer>
+<script>
+const cues = [{"s":0.8,"e":3.57,"k":"vo","t":"Everyone has something to say."},{"s":5.2,"e":12.7,"k":"vo","t":"But for a lot of people, saying it out loud isn't easy. Or isn't possible at all."},{"s":13.6,"e":21.16,"k":"vo","t":"This is BridgeAAC. A free communication app that speaks for you, one picture at a time."},{"s":23.8,"e":29.3,"k":"vo","t":"I built BridgeAAC for my sister. She uses an iPad to talk."},{"s":29.6,"e":36.3,"k":"vo","t":"Apps like this can cost hundreds of dollars, and dedicated speech devices can cost thousands."},{"s":36.6,"e":43.72,"k":"vo","t":"No family should have to pay for a voice. So BridgeAAC is free, for everyone."},{"s":45.6,"e":49.4,"k":"vo","t":"Here's how it works. Every button is a word."},{"s":49.7,"e":57.19,"k":"vo","t":"Tap the words you want, and they line up in the message bar. Then tap Speak."},{"s":57.49,"e":58.87,"k":"app","t":"I want to play."},{"s":59.6,"e":66.7,"k":"vo","t":"The buttons are color coded, so people, actions and describing words are quick to find."},{"s":67.5,"e":72.88,"k":"vo","t":"More specific words live in folders, like food, people and places."},{"s":76.99,"e":78.32,"k":"app","t":"I want pizza."},{"s":78.6,"e":84.7,"k":"vo","t":"Open a folder, pick a word, and BridgeAAC takes you right back home."},{"s":85.5,"e":91.1,"k":"vo","t":"If a word isn't on the board, open the keyboard and spell it."},{"s":91.4,"e":96.78,"k":"vo","t":"Word prediction suggests whole words as you type, so it's faster."},{"s":98.39,"e":100,"k":"app","t":"I want to go swimming."},{"s":103.8,"e":107.3,"k":"vo","t":"Every button has a clear, friendly picture."},{"s":107.6,"e":116.9,"k":"vo","t":"BridgeAAC comes with hundreds of its own symbols, drawn just for this app, and they all work without the internet."},{"s":119.6,"e":123.1,"k":"vo","t":"You can choose the voice that fits."},{"s":123.4,"e":134,"k":"vo","t":"Natural voices download once, then run right on the device. So BridgeAAC keeps talking on a plane, at school, or anywhere without Wi-Fi."},{"s":136.6,"e":139.7,"k":"vo","t":"Every board can be made your own."},{"s":140,"e":146.69,"k":"vo","t":"Tap Edit, pick any button, and change its word, its picture, or its color."},{"s":147.6,"e":155.16,"k":"vo","t":"You can even add your own photos, like mom, a favorite toy, or the family dog."},{"s":157.6,"e":160.7,"k":"vo","t":"Already have boards from another AAC app?"},{"s":161,"e":169.43,"k":"vo","t":"BridgeAAC imports dot-C-E and Open Board files, and it can export them too. So you're never locked in."},{"s":172.6,"e":176.7,"k":"vo","t":"BridgeAAC helps with the rest of the day, too."},{"s":177,"e":184.91,"k":"vo","t":"A visual planner shows the day step by step, with a star for every task that's done."},{"s":185.21,"e":190.02,"k":"app","t":"Nice work! Wake Up and Stretch is done. You earned a star."},{"s":192.6,"e":199.72,"k":"vo","t":"Mood check-ins help people share how they feel, and get ideas for what might help."},{"s":200.47,"e":201.9,"k":"app","t":"I feel happy!"},{"s":205.6,"e":210.11,"k":"vo","t":"And simple games make practicing words and sentences fun."},{"s":215.12,"e":217.78,"k":"app","t":"Awesome! I want water please."},{"s":220.6,"e":223.5,"k":"vo","t":"BridgeAAC adapts to the person using it."},{"s":223.8,"e":230.05,"k":"vo","t":"There's a calm mode with soft colors, plus dark and high contrast themes."},{"s":230.6,"e":239.46,"k":"vo","t":"Touch settings help with shaky hands, and switch scanning lets people speak even if they can't tap at all."},{"s":241.6,"e":247.42,"k":"vo","t":"It comes in ten languages, including Spanish, French, Arabic, Chinese and Hindi."},{"s":251.6,"e":257.3,"k":"vo","t":"And it's private. There are no accounts, no ads, and no tracking."},{"s":257.6,"e":261.68,"k":"vo","t":"Your boards and messages stay on your device."},{"s":264.6,"e":273.03,"k":"vo","t":"BridgeAAC runs on the devices families already have. iPad, iPhone, Android, Chromebook, and Windows, Mac and Linux computers."},{"s":274.4,"e":281.52,"k":"vo","t":"On an iPad, just open bridgeaac.org in Safari and add it to your home screen."},{"s":282.8,"e":286.01,"k":"vo","t":"BridgeAAC is free and open source."},{"s":286.4,"e":290.48,"k":"vo","t":"Try it today at bridgeaac.org. Thanks for watching."}];
+const v = document.getElementById('v');
+const now = document.getElementById('now');
+const next = document.getElementById('next');
+const bar = document.querySelector('#bar i');
+const status = document.getElementById('status');
+const dl = document.getElementById('dl');
+const btn = { practice: document.getElementById('practice'), record: document.getElementById('record'), stop: document.getElementById('stop') };
+let rec = null, chunks = [], recStart = 0, lead = 0, stream = null;
+const fmt = (t) => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+function tick() {
+  const t = v.currentTime;
+  document.getElementById('clock').textContent = fmt(t);
+  let i = cues.findIndex((c) => t < c.s);
+  if (i === -1) i = cues.length;
+  const cur = cues[i - 1];
+  const upcoming = cues[i];
+  if (cur && t < Math.max(cur.e, cur.s + 1.5) + 0.4) {
+    now.textContent = cur.k === 'app' ? 'App: "' + cur.t + '"' : cur.t;
+    now.className = cur.k === 'app' ? 'app' : '';
+  } else if (upcoming) {
+    now.textContent = upcoming.k === 'app' ? 'App: "' + upcoming.t + '"' : upcoming.t;
+    now.className = 'wait';
+  } else { now.textContent = 'Done.'; now.className = 'wait'; }
+  if (upcoming) {
+    const prev = cur ? cur.s : 0;
+    bar.style.width = (100 * Math.min(1, (t - prev) / Math.max(0.1, upcoming.s - prev))) + '%';
+    const after = cues[i + (cur && t < cur.e ? 0 : 1)];
+    next.innerHTML = after ? '<b>Next in ' + Math.max(0, after.s - t).toFixed(1) + 's</b><br>' + (after.k === 'app' ? '<i>App: "' + after.t + '"</i>' : after.t) : '';
+  } else { bar.style.width = '100%'; next.textContent = ''; }
+  if (!v.paused) requestAnimationFrame(tick);
+}
+v.addEventListener('play', () => requestAnimationFrame(tick));
+v.addEventListener('ended', () => stop());
+function setBusy(b) { btn.practice.disabled = b; btn.record.disabled = b; btn.stop.disabled = !b; }
+async function countdown() { for (let n = 3; n > 0; n--) { now.textContent = String(n); now.className = 'wait'; await new Promise((r) => setTimeout(r, 1000)); } }
+btn.practice.onclick = async () => { setBusy(true); v.currentTime = 0; status.textContent = 'Practicing'; await countdown(); v.play(); };
+btn.record.onclick = async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 } });
+  } catch (e) { status.textContent = 'Microphone blocked'; return; }
+  setBusy(true);
+  dl.hidden = true;
+  chunks = [];
+  rec = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 192000 });
+  rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+  rec.onstop = () => {
+    const blob = new Blob(chunks, { type: 'audio/webm' });
+    dl.href = URL.createObjectURL(blob);
+    dl.download = 'my-vocals_lead-' + lead.toFixed(3) + '.webm';
+    dl.textContent = 'Save recording (' + dl.download + ')';
+    dl.hidden = false;
+    stream.getTracks().forEach((tr) => tr.stop());
+    status.textContent = 'Saved. Click the link to download.';
+  };
+  v.currentTime = 0;
+  rec.start(1000);
+  recStart = performance.now();
+  status.textContent = 'Recording';
+  await countdown();
+  v.addEventListener('playing', () => { lead = (performance.now() - recStart) / 1000 - v.currentTime; }, { once: true });
+  v.play();
+};
+function stop() {
+  v.pause();
+  if (rec && rec.state !== 'inactive') rec.stop();
+  setBusy(false);
+  if (!rec) status.textContent = 'Stopped';
+  rec = null;
+}
+btn.stop.onclick = stop;
+</script></body></html>
