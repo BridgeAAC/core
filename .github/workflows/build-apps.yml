@@ -199,9 +199,9 @@ jobs:
           test -x "$APP/BridgeAAC"
           test -f "$APP/PrivacyInfo.xcprivacy"
           test -f "$APP/WebBundle/index.html"
-          test -f "$APP/Assets.car"
-          plutil -extract CFBundleIconName raw "$APP/Info.plist"
-          plutil -extract CFBundleShortVersionString raw "$APP/Info.plist"
+          test -f "$APP/Assets.car" || { echo "::error::Assets.car missing, so the app icon was not compiled"; exit 1; }
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIconName" "$APP/Info.plist" || { echo "::error::CFBundleIconName missing from the built Info.plist"; exit 1; }
+          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Info.plist"
           du -sh "$APP"
 
       - name: Archive & Upload to App Store Connect
