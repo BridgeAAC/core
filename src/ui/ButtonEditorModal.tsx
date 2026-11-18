@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import type { Action, Button, ImageRef } from '../model';
-import { clipboardButton, editTarget, toast, vocab } from '../state';
+import { clipboardButton, editTarget, movingButton, toast, undo, vocab } from '../state';
 import { addPage, deleteButton, newButton, saveButton, uid } from '../edit';
 import { EMOJI_GROUPS, SWATCHES, WORD_CLASS } from '../data/palette';
 import { ensureButtonImage, resolveIconForButton } from '../data/icons';
@@ -613,7 +613,10 @@ export function ButtonEditorModal() {
                   class="btn danger"
                   onClick={() => {
                     deleteButton(page.id, existing.id);
-                    toast('Button deleted', 'info');
+                    toast(`Deleted "${existing.label || 'button'}"`, 'info', {
+                      label: 'Undo',
+                      run: () => undo(),
+                    }, 6000);
                     close();
                   }}
                 >
@@ -624,7 +627,8 @@ export function ButtonEditorModal() {
                   class="btn secondary"
                   onClick={() => {
                     clipboardButton.value = structuredClone(draft);
-                    toast('Copied button. Tap any empty cell to paste.', 'info');
+                    movingButton.value = null;
+                    toast('Copied. Tap any empty space to paste it.', 'info');
                     close();
                   }}
                 >
@@ -634,9 +638,12 @@ export function ButtonEditorModal() {
                   type="button"
                   class="btn secondary"
                   onClick={() => {
-                    clipboardButton.value = structuredClone(draft);
-                    deleteButton(page.id, existing.id);
-                    toast('Cut button. Tap any empty cell to place it.', 'info');
+                    movingButton.value = {
+                      pageId: page.id,
+                      buttonId: existing.id,
+                      label: existing.label || 'button',
+                    };
+                    clipboardButton.value = null;
                     close();
                   }}
                 >

@@ -7,6 +7,7 @@ import {
   importBoardFileWithToasts,
   keyboardOpen,
   mode,
+  movingButton,
   panel,
   pinRequest,
   redo,
@@ -225,6 +226,9 @@ export function App() {
         } else if (editTarget.value) {
           editTarget.value = null;
           e.preventDefault();
+        } else if (movingButton.value) {
+          movingButton.value = null;
+          e.preventDefault();
         } else if (keyboardOpen.value) {
           keyboardOpen.value = false;
           e.preventDefault();
@@ -299,7 +303,14 @@ export function App() {
           <div key={t.id} class={`toast toast-${t.kind}`}>
             <span>{t.text}</span>
             {t.action && (
-              <button type="button" class="toast-action" onClick={t.action.run}>
+              <button
+                type="button"
+                class="toast-action"
+                onClick={() => {
+                  t.action?.run();
+                  toasts.value = toasts.value.filter((x) => x.id !== t.id);
+                }}
+              >
                 {t.action.label}
               </button>
             )}

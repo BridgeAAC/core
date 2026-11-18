@@ -842,7 +842,7 @@ export function ToolsModal() {
                         >
                           {task.title}
                         </div>
-                        <div class="vocab-meta">{task.period} &bull; Drag to reorder</div>
+                        <div class="vocab-meta">{task.period}</div>
                       </div>
                     </div>
 

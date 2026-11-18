@@ -48,11 +48,50 @@ jobs:
         run: npm install --no-save --legacy-peer-deps electron@35.0.0 electron-builder@26.0.12
 
       - name: Build Web Bundle & Package Desktop App
+        if: matrix.platform != 'mac'
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         run: |
           npm run build
           npx electron-builder --${{ matrix.platform }} --config electron-builder.json --publish never
+
+      - name: Build, Sign & Notarize macOS App
+        if: matrix.platform == 'mac'
+        shell: bash
+        env:
+          MAC_CERT_P12_BASE64: ${{ secrets.MAC_CERT_P12_BASE64 }}
+          MAC_CERT_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+        run: |
+          npm run build
+          if [ -n "$MAC_CERT_P12_BASE64" ]; then
+            echo "$MAC_CERT_P12_BASE64" | base64 --decode > "$RUNNER_TEMP/devid.p12"
+            export CSC_LINK="$RUNNER_TEMP/devid.p12"
+            export CSC_KEY_PASSWORD="$MAC_CERT_PASSWORD"
+            NOTARIZE=false
+            if [ -n "$APP_STORE_CONNECT_KEY" ]; then
+              KEY_PATH="$RUNNER_TEMP/AuthKey_$APP_STORE_CONNECT_KEY_ID.p8"
+              printf '%s' "$APP_STORE_CONNECT_KEY" > "$KEY_PATH"
+              export APPLE_API_KEY="$KEY_PATH"
+              export APPLE_API_KEY_ID="$APP_STORE_CONNECT_KEY_ID"
+              export APPLE_API_ISSUER="$APP_STORE_CONNECT_ISSUER_ID"
+              NOTARIZE=true
+            else
+              echo "::warning::No App Store Connect key, so the macOS app is signed but not notarized."
+            fi
+            npx electron-builder --mac --config electron-builder.json --publish never -c.mac.notarize=$NOTARIZE
+            rm -f "$RUNNER_TEMP/devid.p12" "$RUNNER_TEMP"/AuthKey_*.p8
+            codesign --verify --deep --strict --verbose=2 release/mac-universal/BridgeAAC.app
+            if [ "$NOTARIZE" = true ]; then
+              xcrun stapler validate release/mac-universal/BridgeAAC.app
+            fi
+          else
+            echo "::warning::No Developer ID certificate secret, so the macOS app is only ad-hoc signed. People will need to right-click and choose Open."
+            BRIDGE_ADHOC_SIGN=1 CSC_IDENTITY_AUTO_DISCOVERY=false npx electron-builder --mac --config electron-builder.json --publish never -c.mac.notarize=false
+            codesign --verify --deep --strict --verbose=2 release/mac-universal/BridgeAAC.app
+          fi
 
       - name: Upload Desktop Installers
         uses: actions/upload-artifact@v4

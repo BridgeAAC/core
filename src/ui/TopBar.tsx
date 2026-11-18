@@ -3,6 +3,7 @@ import { useEffect, useState } from 'preact/hooks';
 import {
   canGoBack,
   clearMessage,
+  clipboardButton,
   currentPage,
   deleteWordFromMessage,
   enterEditMode,
@@ -13,6 +14,7 @@ import {
   keyboardOpen,
   message,
   mode,
+  movingButton,
   panel,
   predictor,
   redo,
@@ -196,7 +198,23 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
 
       {isEdit && (
         <div class="edit-toolbar" role="region" aria-label="Editing tools">
-          <span class="edit-badge">{t.editingBanner}</span>
+          {movingButton.value ? (
+            <span class="edit-badge edit-status" role="status">
+              Tap where "{movingButton.value.label}" should go.
+              <button type="button" class="sm-btn" onClick={() => (movingButton.value = null)}>
+                Cancel
+              </button>
+            </span>
+          ) : clipboardButton.value ? (
+            <span class="edit-badge edit-status" role="status">
+              Tap an empty space to paste "{clipboardButton.value.label || 'button'}".
+              <button type="button" class="sm-btn" onClick={() => (clipboardButton.value = null)}>
+                Done
+              </button>
+            </span>
+          ) : (
+            <span class="edit-badge">{t.editingBanner}</span>
+          )}
           <div class="edit-actions">
             <button
               type="button"

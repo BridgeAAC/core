@@ -75,6 +75,7 @@ export interface EditTarget {
 }
 export const editTarget = signal<EditTarget | null>(null);
 export const clipboardButton = signal<Button | null>(null);
+export const movingButton = signal<{ pageId: ID; buttonId: ID; label: string } | null>(null);
 
 export const savedMessages = signal<string[]>([]);
 export const spokenHistory = signal<string[]>([]);
@@ -157,11 +158,22 @@ export async function boot(): Promise<void> {
     const last = (await kvGet<string>('lastVocab')) ?? '';
     const pick = list.find((l) => l.id === last) ?? list[0];
     await openVocab(pick.id);
-    warmupOfflineVoice(vocab.value?.locale ?? 'en');
+    whenIdle(() => warmupOfflineVoice(vocab.value?.locale ?? 'en'));
   } catch (e) {
     fatalError.value = e instanceof Error ? e.message : String(e);
   } finally {
     booted.value = true;
+  }
+}
+
+function whenIdle(run: () => void): void {
+  const w = globalThis as typeof globalThis & {
+    requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+  };
+  if (typeof w.requestIdleCallback === 'function') {
+    w.requestIdleCallback(run, { timeout: 4000 });
+  } else {
+    setTimeout(run, 1500);
   }
 }
 
@@ -181,6 +193,7 @@ export async function openVocab(id: ID): Promise<void> {
     redoStack = [];
     mode.value = 'use';
     editTarget.value = null;
+    movingButton.value = null;
   });
   void kvSet('lastVocab', id);
   const labels: string[] = [];
@@ -616,6 +629,7 @@ export function enterEditMode(): void {
 export function exitEditMode(): void {
   mode.value = 'use';
   editTarget.value = null;
+  movingButton.value = null;
   void flushSave();
 }
 

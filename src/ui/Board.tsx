@@ -8,12 +8,13 @@ import {
   editTarget,
   form,
   mode,
+  movingButton,
   resolveButton,
   speakText,
   toast,
 } from '../state';
 import { settings } from '../settings';
-import { moveButton, occupancy, pasteButton } from '../edit';
+import { moveButton, occupancy, pasteButton, planMove, transferButton } from '../edit';
 import { readableText } from '../data/palette';
 import { Scanner, type ScanLevel } from '../engine/scan';
 import { getAudioContext, unlockAudio } from '../engine/speech';
@@ -26,6 +27,28 @@ export interface GuidedStep {
 }
 export const guidedPath = signal<GuidedStep[]>([]);
 
+const DRAG_THRESHOLD_PX = 10;
+
+interface DragState {
+  id: string;
+  pointerId: number;
+  startX: number;
+  startY: number;
+  grabRow: number;
+  grabCol: number;
+  active: boolean;
+  el: HTMLElement;
+}
+
+interface DropTarget {
+  id: string;
+  row: number;
+  col: number;
+  rowSpan: number;
+  colSpan: number;
+  ok: boolean;
+}
+
 export function Board() {
   const page = currentPage.value;
   const isEdit = mode.value === 'edit';
@@ -34,7 +57,8 @@ export function Board() {
 
   const [scanHighlightIds, setScanHighlightIds] = useState<Set<string>>(new Set());
   const [scanLevel, setScanLevel] = useState<ScanLevel>('item');
-  const [dragSourceId, setDragSourceId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dwellBtnId, setDwellBtnId] = useState<string | null>(null);
 
   const lastActivationRef = useRef<{ id: string; time: number }>({ id: '', time: 0 });
@@ -42,6 +66,16 @@ export function Board() {
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const dwellTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const scannerRef = useRef<Scanner | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<DragState | null>(null);
+  const dropTargetRef = useRef<DropTarget | null>(null);
+
+  useEffect(() => {
+    if (!isEdit) {
+      endDrag();
+      movingButton.value = null;
+    }
+  }, [isEdit]);
 
   useEffect(() => {
     if (!page || isEdit || cfg.access !== 'scan') {
@@ -236,6 +270,149 @@ export function Board() {
     if (dwellBtnId) setDwellBtnId(null);
   }
 
+  function cellAt(clientX: number, clientY: number): { row: number; col: number } | null {
+    const grid = gridRef.current;
+    if (!grid || !page) return null;
+    const rect = grid.getBoundingClientRect();
+    const gap = cfg.buttonGap;
+    const pad = Math.max(4, gap);
+    const cw = (rect.width - pad * 2 - gap * (page.cols - 1)) / page.cols;
+    const ch = (rect.height - pad * 2 - gap * (page.rows - 1)) / page.rows;
+    if (cw <= 0 || ch <= 0) return null;
+    let col = Math.floor((clientX - rect.left - pad + gap / 2) / (cw + gap));
+    const row = Math.floor((clientY - rect.top - pad + gap / 2) / (ch + gap));
+    if (getComputedStyle(grid).direction === 'rtl') col = page.cols - 1 - col;
+    return {
+      row: Math.max(0, Math.min(page.rows - 1, row)),
+      col: Math.max(0, Math.min(page.cols - 1, col)),
+    };
+  }
+
+  function setDrop(next: DropTarget | null) {
+    const cur = dropTargetRef.current;
+    if (
+      cur === next ||
+      (cur && next && cur.row === next.row && cur.col === next.col && cur.id === next.id)
+    ) {
+      return;
+    }
+    dropTargetRef.current = next;
+    setDropTarget(next);
+  }
+
+  function endDrag() {
+    const d = dragRef.current;
+    dragRef.current = null;
+    if (d) {
+      d.el.style.transform = '';
+      try {
+        d.el.releasePointerCapture(d.pointerId);
+      } catch {}
+    }
+    setDrop(null);
+    setDraggingId(null);
+  }
+
+  function openEditor(b: Button) {
+    editTarget.value = { pageId: page!.id, buttonId: b.id, row: b.row, col: b.col };
+  }
+
+  function placeMoving(row: number, col: number): boolean {
+    const mv = movingButton.value;
+    if (!mv) return false;
+    const ok = transferButton(mv.pageId, mv.buttonId, page!.id, row, col);
+    if (ok) {
+      movingButton.value = null;
+      toast(`Moved "${mv.label}"`, 'success');
+    } else {
+      toast(
+        mv.pageId === page!.id
+          ? "That spot doesn't fit this button. Try an empty space."
+          : 'Pick an empty space on this page.',
+        'error',
+      );
+    }
+    return true;
+  }
+
+  function handleEditTap(b: Button) {
+    const mv = movingButton.value;
+    if (mv) {
+      if (mv.buttonId === b.id) {
+        movingButton.value = null;
+        return;
+      }
+      placeMoving(b.row, b.col);
+      return;
+    }
+    openEditor(b);
+  }
+
+  function handleEditPointerDown(e: PointerEvent, b: Button) {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (dragRef.current) endDrag();
+    const el = e.currentTarget as HTMLElement;
+    const cell = cellAt(e.clientX, e.clientY);
+    dragRef.current = {
+      id: b.id,
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      grabRow: Math.max(0, Math.min(b.rowSpan - 1, (cell?.row ?? b.row) - b.row)),
+      grabCol: Math.max(0, Math.min(b.colSpan - 1, (cell?.col ?? b.col) - b.col)),
+      active: false,
+      el,
+    };
+    try {
+      el.setPointerCapture(e.pointerId);
+    } catch {}
+  }
+
+  function handleEditPointerMove(e: PointerEvent, b: Button) {
+    const d = dragRef.current;
+    if (!d || d.pointerId !== e.pointerId || d.id !== b.id) return;
+    const dx = e.clientX - d.startX;
+    const dy = e.clientY - d.startY;
+    if (!d.active) {
+      if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
+      d.active = true;
+      setDraggingId(b.id);
+    }
+    d.el.style.transform = `translate(${dx}px, ${dy}px) scale(1.04)`;
+    const cell = cellAt(e.clientX, e.clientY);
+    if (!cell) return;
+    const row = Math.max(0, Math.min(page!.rows - b.rowSpan, cell.row - d.grabRow));
+    const col = Math.max(0, Math.min(page!.cols - b.colSpan, cell.col - d.grabCol));
+    if (row === b.row && col === b.col) {
+      setDrop(null);
+      return;
+    }
+    setDrop({
+      id: b.id,
+      row,
+      col,
+      rowSpan: b.rowSpan,
+      colSpan: b.colSpan,
+      ok: !!planMove(page!, b.id, row, col),
+    });
+  }
+
+  function handleEditPointerUp(e: PointerEvent, b: Button) {
+    const d = dragRef.current;
+    if (!d || d.pointerId !== e.pointerId) return;
+    const wasDrag = d.active;
+    const target = dropTargetRef.current;
+    endDrag();
+    if (!wasDrag) {
+      handleEditTap(b);
+      return;
+    }
+    if (!target) return;
+    if (!moveButton(page!.id, b.id, target.row, target.col)) {
+      toast("That spot doesn't fit this button. Try an empty space.", 'error');
+    }
+  }
+
   const occ = isEdit ? occupancy(page) : null;
   const emptyCells: { row: number; col: number }[] = [];
   if (isEdit && occ) {
@@ -270,6 +447,7 @@ export function Board() {
       )}
 
       <div
+        ref={gridRef}
         class={`board-grid ${isEdit ? 'is-edit' : ''}`}
         style={{
           gridTemplateColumns: `repeat(${page.cols}, minmax(0, 1fr))`,
@@ -327,28 +505,20 @@ export function Board() {
               data-btn-id={b.id}
               data-row={b.row}
               data-col={b.col}
-              draggable={isEdit}
-              onDragStart={() => setDragSourceId(b.id)}
-              onDragOver={(e) => {
-                if (isEdit) e.preventDefault();
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                if (isEdit && dragSourceId && dragSourceId !== b.id) {
-                  moveButton(page.id, dragSourceId, b.row, b.col);
-                }
-                setDragSourceId(null);
-              }}
-              onPointerDown={() => handlePointerDown(b)}
-              onPointerUp={() => handlePointerUp(b)}
-              onPointerCancel={() => handlePointerLeave()}
+              onPointerDown={(e) => (isEdit ? handleEditPointerDown(e, b) : handlePointerDown(b))}
+              onPointerMove={isEdit ? (e) => handleEditPointerMove(e, b) : undefined}
+              onPointerUp={(e) => (isEdit ? handleEditPointerUp(e, b) : handlePointerUp(b))}
+              onPointerCancel={() => (isEdit ? endDrag() : handlePointerLeave())}
               onPointerEnter={() => handlePointerEnter(b)}
-              onPointerLeave={() => handlePointerLeave()}
+              onPointerLeave={() => {
+                if (!isEdit) handlePointerLeave();
+              }}
+              onContextMenu={isEdit ? (e) => e.preventDefault() : undefined}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
                   if (isEdit) {
-                    editTarget.value = { pageId: page.id, buttonId: b.id, row: b.row, col: b.col };
+                    handleEditTap(b);
                   } else {
                     handleTriggerButton(b);
                   }
@@ -397,6 +567,8 @@ export function Board() {
                 resolved.hidden ? 'is-hidden-edit' : '',
                 isScanned ? `scan-highlight scan-${scanLevel}` : '',
                 isGuided ? 'guided-pulse' : '',
+                movingButton.value?.buttonId === b.id ? 'is-moving' : '',
+                draggingId === b.id ? 'is-dragging' : '',
                 dwellBtnId === b.id ? 'dwell-active' : '',
               ]
                 .filter(Boolean)
@@ -435,43 +607,62 @@ export function Board() {
         })}
 
         {isEdit &&
-          emptyCells.map(({ row, col }) => (
-            <button
-              key={`empty-${row}-${col}`}
-              type="button"
-              class="aac-empty-cell"
-              style={{
-                gridColumn: `${col + 1} / span 1`,
-                gridRow: `${row + 1} / span 1`,
-              }}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                if (dragSourceId) {
-                  moveButton(page.id, dragSourceId, row, col);
-                  setDragSourceId(null);
+          emptyCells.map(({ row, col }) => {
+            const moving = movingButton.value;
+            const clip = clipboardButton.value;
+            const verb = moving ? 'Here' : clip ? 'Paste' : '+';
+            return (
+              <button
+                key={`empty-${row}-${col}`}
+                type="button"
+                class={`aac-empty-cell ${moving ? 'is-target' : ''}`}
+                style={{
+                  gridColumn: `${col + 1} / span 1`,
+                  gridRow: `${row + 1} / span 1`,
+                }}
+                onClick={() => {
+                  if (moving) {
+                    placeMoving(row, col);
+                  } else if (clip) {
+                    pasteButton(page.id, clip, row, col);
+                    toast(`Pasted "${clip.label}"`, 'success', {
+                      label: 'Done pasting',
+                      run: () => (clipboardButton.value = null),
+                    });
+                  } else {
+                    editTarget.value = { pageId: page.id, row, col };
+                  }
+                }}
+                title={
+                  moving
+                    ? `Put "${moving.label}" at row ${row + 1}, column ${col + 1}`
+                    : clip
+                      ? `Paste "${clip.label}" at row ${row + 1}, column ${col + 1}`
+                      : `Add a button at row ${row + 1}, column ${col + 1}`
                 }
-              }}
-              onClick={() => {
-                if (clipboardButton.value) {
-                  pasteButton(page.id, clipboardButton.value, row, col);
-                  toast(`Pasted "${clipboardButton.value.label}"`, 'success', {
-                    label: 'Clear clipboard',
-                    run: () => (clipboardButton.value = null),
-                  });
-                } else {
-                  editTarget.value = { pageId: page.id, row, col };
+                aria-label={
+                  moving
+                    ? `Put "${moving.label}" here`
+                    : clip
+                      ? `Paste "${clip.label}" here`
+                      : `Add a button at row ${row + 1}, column ${col + 1}`
                 }
-              }}
-              title={
-                clipboardButton.value
-                  ? `Paste "${clipboardButton.value.label}" at row ${row + 1}, col ${col + 1}`
-                  : `Add button at row ${row + 1}, col ${col + 1}`
-              }
-            >
-              <span>{clipboardButton.value ? 'Paste' : '+'}</span>
-            </button>
-          ))}
+              >
+                <span>{verb}</span>
+              </button>
+            );
+          })}
+
+        {isEdit && dropTarget && (
+          <div
+            class={`drop-indicator ${dropTarget.ok ? 'is-ok' : 'is-bad'}`}
+            style={{
+              gridColumn: `${dropTarget.col + 1} / span ${dropTarget.colSpan}`,
+              gridRow: `${dropTarget.row + 1} / span ${dropTarget.rowSpan}`,
+            }}
+            aria-hidden="true"
+          />
+        )}
       </div>
 
       {cfg.access === 'scan' && !isEdit && (

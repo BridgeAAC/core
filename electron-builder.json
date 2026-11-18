@@ -70,10 +70,29 @@
   "mac": {
     "artifactName": "BridgeAAC-macOS.${ext}",
     "target": [
-      "dmg",
-      "zip"
+      {
+        "target": "dmg",
+        "arch": [
+          "universal"
+        ]
+      },
+      {
+        "target": "zip",
+        "arch": [
+          "universal"
+        ]
+      }
     ],
     "category": "public.app-category.education",
-    "icon": "public/icon-512.png"
-  }
+    "icon": "public/icon-512.png",
+    "hardenedRuntime": true,
+    "gatekeeperAssess": false,
+    "entitlements": "resources/mac/entitlements.mac.plist",
+    "entitlementsInherit": "resources/mac/entitlements.mac.plist",
+    "notarize": true
+  },
+  "dmg": {
+    "sign": false
+  },
+  "afterPack": "scripts/mac-adhoc-sign.cjs"
 }

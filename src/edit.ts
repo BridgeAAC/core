@@ -97,51 +97,112 @@ export function deleteButton(pId: ID, buttonId: ID): void {
   );
 }
 
-export function moveButton(pId: ID, buttonId: ID, row: number, col: number): boolean {
-  const v = vocab.value;
-  const page = v?.pages.find((p) => p.id === pId);
-  const btn = page?.buttons.find((b) => b.id === buttonId);
-  if (!v || !page || !btn) return false;
+export function planMove(page: Page, buttonId: ID, row: number, col: number): Button[] | null {
+  const btn = page.buttons.find((b) => b.id === buttonId);
+  if (!btn) return null;
   if (row < 0 || col < 0 || row + btn.rowSpan > page.rows || col + btn.colSpan > page.cols) {
-    return false;
+    return null;
   }
-  if (row === btn.row && col === btn.col) return true;
+  if (row === btn.row && col === btn.col) return page.buttons;
   const occ = occupancy(page, buttonId);
   const blockers = new Set<ID>();
   for (let r = row; r < row + btn.rowSpan; r++) {
     for (let c = col; c < col + btn.colSpan; c++) {
-      if (occ[r][c]) blockers.add(occ[r][c]!);
+      const id = occ[r][c];
+      if (id) blockers.add(id);
     }
   }
   if (blockers.size === 0) {
-    commit((vv) =>
-      mapPage(vv, pId, (p) => ({
-        ...p,
-        buttons: p.buttons.map((b) => (b.id === buttonId ? { ...b, row, col } : b)),
-      })),
-    );
-    return true;
+    return page.buttons.map((b) => (b.id === buttonId ? { ...b, row, col } : b));
   }
-  if (blockers.size === 1) {
-    const otherId = [...blockers][0];
-    const other = page.buttons.find((b) => b.id === otherId)!;
-    if (btn.rowSpan === 1 && btn.colSpan === 1 && other.rowSpan === 1 && other.colSpan === 1) {
-      commit((vv) =>
-        mapPage(vv, pId, (p) => ({
-          ...p,
-          buttons: p.buttons.map((b) =>
-            b.id === buttonId
-              ? { ...b, row, col }
-              : b.id === otherId
-                ? { ...b, row: btn.row, col: btn.col }
-                : b,
-          ),
-        })),
-      );
-      return true;
+  if (blockers.size !== 1) return null;
+  const otherId = [...blockers][0];
+  const other = page.buttons.find((b) => b.id === otherId);
+  if (!other) return null;
+  const dRow = row - btn.row;
+  const dCol = col - btn.col;
+  const candidates = [
+    { row: btn.row, col: btn.col },
+    { row: other.row - dRow, col: other.col - dCol },
+  ];
+  for (const spot of candidates) {
+    if (
+      spot.row < 0 ||
+      spot.col < 0 ||
+      spot.row + other.rowSpan > page.rows ||
+      spot.col + other.colSpan > page.cols
+    ) {
+      continue;
+    }
+    const moved = page.buttons.map((b) =>
+      b.id === buttonId ? { ...b, row, col } : b.id === otherId ? { ...b, ...spot } : b,
+    );
+    if (!overlaps(page.rows, page.cols, moved)) return moved;
+  }
+  return null;
+}
+
+function overlaps(rows: number, cols: number, buttons: Button[]): boolean {
+  const seen: boolean[][] = Array.from({ length: rows }, () => Array<boolean>(cols).fill(false));
+  for (const b of buttons) {
+    for (let r = b.row; r < Math.min(rows, b.row + b.rowSpan); r++) {
+      for (let c = b.col; c < Math.min(cols, b.col + b.colSpan); c++) {
+        if (seen[r][c]) return true;
+        seen[r][c] = true;
+      }
     }
   }
   return false;
+}
+
+export function moveButton(pId: ID, buttonId: ID, row: number, col: number): boolean {
+  const page = vocab.value?.pages.find((p) => p.id === pId);
+  if (!page) return false;
+  const next = planMove(page, buttonId, row, col);
+  if (!next) return false;
+  if (next !== page.buttons) {
+    commit((v) => mapPage(v, pId, (p) => ({ ...p, buttons: next })));
+  }
+  return true;
+}
+
+export function transferButton(
+  fromPageId: ID,
+  buttonId: ID,
+  toPageId: ID,
+  row: number,
+  col: number,
+): boolean {
+  if (fromPageId === toPageId) return moveButton(fromPageId, buttonId, row, col);
+  const v = vocab.value;
+  const from = v?.pages.find((p) => p.id === fromPageId);
+  const to = v?.pages.find((p) => p.id === toPageId);
+  const btn = from?.buttons.find((b) => b.id === buttonId);
+  if (!from || !to || !btn) return false;
+  const occ = occupancy(to);
+  if (occ[row]?.[col] !== null) return false;
+  let colSpan = Math.max(1, Math.min(btn.colSpan, to.cols - col));
+  let rowSpan = Math.max(1, Math.min(btn.rowSpan, to.rows - row));
+  for (let r = row; r < row + rowSpan; r++) {
+    for (let c = col; c < col + colSpan; c++) {
+      if (occ[r][c]) {
+        if (c > col) colSpan = Math.min(colSpan, c - col);
+        else if (r > row) rowSpan = Math.min(rowSpan, r - row);
+      }
+    }
+  }
+  const placed: Button = { ...btn, row, col, rowSpan, colSpan };
+  commit((vv) => ({
+    ...vv,
+    pages: vv.pages.map((p) =>
+      p.id === fromPageId
+        ? { ...p, buttons: p.buttons.filter((b) => b.id !== buttonId) }
+        : p.id === toPageId
+          ? { ...p, buttons: [...p.buttons, placed] }
+          : p,
+    ),
+  }));
+  return true;
 }
 
 export function pasteButton(pId: ID, source: Button, row: number, col: number): void {

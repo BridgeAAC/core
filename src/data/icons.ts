@@ -1270,8 +1270,16 @@ export function resolveIconForButton(
   return `badge:word:${initials || Array.from(trimmed).slice(0, 2).join('').toUpperCase()}`;
 }
 
+const iconCache = new Map<string, ImageRef | undefined>();
+
 export function ensureButtonImage(b: Pick<Button, 'label' | 'message' | 'actions' | 'image'>): ImageRef | undefined {
   if (b.image === 'none:') return undefined;
   if (b.image) return b.image;
-  return resolveIconForButton(b.label, b.message, b.actions);
+  const actions = b.actions ?? [];
+  const key = `${b.label ?? ''}\u0000${b.message ?? ''}\u0000${actions.map((a) => a.type).join(',')}`;
+  if (iconCache.has(key)) return iconCache.get(key);
+  const hit = resolveIconForButton(b.label, b.message, actions);
+  if (iconCache.size > 4000) iconCache.clear();
+  iconCache.set(key, hit);
+  return hit;
 }
