@@ -1220,6 +1220,14 @@ export function SettingsModal() {
                   )}
                 </div>
               </div>
+              <p class="hint" style={{ marginTop: '14px' }}>
+                Picture credits: BridgeAAC symbols are original and MIT licensed. Pictograms marked
+                ARASAAC are by Sergio Palao, owned by the Government of Aragón (Spain), from{' '}
+                <a href="https://arasaac.org" target="_blank" rel="noopener noreferrer">
+                  arasaac.org
+                </a>
+                , licensed under CC BY-NC-SA 4.0.
+              </p>
             </div>
           )}
 
