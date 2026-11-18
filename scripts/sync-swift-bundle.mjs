@@ -17,6 +17,17 @@ fs.cpSync(distDir, targetDir, {
   filter: (src) => !webOnly.has(path.relative(distDir, src).split(path.sep)[0]),
 });
 
+const indexPath = path.join(targetDir, 'index.html');
+const html = fs.readFileSync(indexPath, 'utf8');
+const stripped = html
+  .replace(/<div id="intro"[\s\S]*?<\/div>\s*<style>[\s\S]*?<\/style>/, '')
+  .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/, '');
+if (stripped.includes('id="intro"')) {
+  console.error('[sync-swift-bundle] Could not remove the website intro from index.html.');
+  process.exit(1);
+}
+fs.writeFileSync(indexPath, stripped);
+
 const icon512 = path.resolve('public/icon-512.png');
 const appIcon = path.resolve('AppIcon.png');
 if (!fs.existsSync(appIcon) && fs.existsSync(icon512)) {

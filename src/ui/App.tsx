@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import {
   boot,
   booted,
@@ -116,6 +116,35 @@ function PinModal() {
   );
 }
 
+function closeTopOverlay(): boolean {
+  if (pinRequest.value) {
+    pinRequest.value = null;
+  } else if (editTarget.value) {
+    editTarget.value = null;
+  } else if (movingButton.value) {
+    movingButton.value = null;
+  } else if (keyboardOpen.value) {
+    keyboardOpen.value = false;
+  } else if (panel.value) {
+    panel.value = null;
+  } else {
+    return false;
+  }
+  return true;
+}
+
+function overlayKey(): string {
+  return [
+    pinRequest.value ? 'pin' : '',
+    editTarget.value ? 'edit' : '',
+    movingButton.value ? 'move' : '',
+    keyboardOpen.value ? 'kb' : '',
+    panel.value ?? '',
+  ]
+    .filter(Boolean)
+    .join('|');
+}
+
 const FONT_STACKS: Record<string, string> = {
   system:
     "system-ui, -apple-system, 'Segoe UI', Roboto, Ubuntu, sans-serif, 'Apple Color Emoji', 'Noto Color Emoji'",
@@ -169,6 +198,26 @@ export function App() {
     s.iconScale,
   ]);
 
+  const openOverlays = overlayKey();
+  const backGuard = useRef(false);
+
+  useEffect(() => {
+    if (!openOverlays || backGuard.current) return;
+    try {
+      history.pushState({ bridgeOverlay: true }, '');
+      backGuard.current = true;
+    } catch {}
+  }, [openOverlays]);
+
+  useEffect(() => {
+    function onPopState() {
+      backGuard.current = false;
+      closeTopOverlay();
+    }
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
   useEffect(() => {
     document.documentElement.setAttribute('lang', lang);
     document.documentElement.setAttribute('dir', dir);
@@ -220,22 +269,7 @@ export function App() {
 
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
-        if (pinRequest.value) {
-          pinRequest.value = null;
-          e.preventDefault();
-        } else if (editTarget.value) {
-          editTarget.value = null;
-          e.preventDefault();
-        } else if (movingButton.value) {
-          movingButton.value = null;
-          e.preventDefault();
-        } else if (keyboardOpen.value) {
-          keyboardOpen.value = false;
-          e.preventDefault();
-        } else if (panel.value) {
-          panel.value = null;
-          e.preventDefault();
-        }
+        if (closeTopOverlay()) e.preventDefault();
         return;
       }
       const tag = (e.target as HTMLElement | null)?.tagName;

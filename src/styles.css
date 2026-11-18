@@ -284,9 +284,9 @@ html[data-color-coding='monochrome'] .aac-btn {
   color: var(--fg-topbar);
   display: flex;
   flex-direction: column;
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-left: env(safe-area-inset-left, 0px);
-  padding-right: env(safe-area-inset-right, 0px);
+  padding-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  padding-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+  padding-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
   border-bottom: 1px solid var(--chrome-border);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   backdrop-filter: saturate(180%) blur(20px);
@@ -587,9 +587,9 @@ html[data-color-coding='monochrome'] .aac-btn {
   overscroll-behavior: none;
   touch-action: none;
   background: var(--bg-shell);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  padding-left: env(safe-area-inset-left, 0px);
-  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  padding-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+  padding-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
 }
 
 .guided-banner {
@@ -927,7 +927,7 @@ html[data-color-coding='monochrome'] .aac-btn {
   align-items: center;
   justify-content: center;
   padding: 14px;
-  padding: max(14px, env(safe-area-inset-top, 0px)) 14px max(14px, env(safe-area-inset-bottom, 0px));
+  padding: max(14px, var(--safe-area-inset-top, env(safe-area-inset-top, 0px))) 14px max(14px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
   z-index: 100;
   overflow: hidden;
 }
@@ -954,7 +954,7 @@ html[data-color-coding='monochrome'] .aac-btn {
 @media (max-height: 640px) {
   .modal-backdrop {
     padding: 6px;
-    padding: max(6px, env(safe-area-inset-top, 0px)) 6px max(6px, env(safe-area-inset-bottom, 0px));
+    padding: max(6px, var(--safe-area-inset-top, env(safe-area-inset-top, 0px))) 6px max(6px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
   }
 
   .modal-card {
@@ -1022,6 +1022,7 @@ html[data-color-coding='monochrome'] .aac-btn {
 
 .modal-footer {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
@@ -1031,12 +1032,18 @@ html[data-color-coding='monochrome'] .aac-btn {
 .footer-left,
 .footer-right {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+}
+
+.footer-right {
+  margin-left: auto;
 }
 
 .editor-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
   gap: 16px;
 }
 
@@ -1664,7 +1671,7 @@ a.btn {
 .toast-stack {
   position: fixed;
   left: 50%;
-  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(16px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
   transform: translateX(-50%);
   width: max-content;
   max-width: calc(100vw - 32px);
