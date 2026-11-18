@@ -45,7 +45,7 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: Install Electron & Electron Builder
-        run: npm install --no-save --legacy-peer-deps electron@35.0.0 electron-builder@26.0.12
+        run: npm install --no-save --legacy-peer-deps electron@35.0.0 electron-builder@26.18.0
 
       - name: Build Web Bundle & Package Desktop App
         if: matrix.platform != 'mac'
