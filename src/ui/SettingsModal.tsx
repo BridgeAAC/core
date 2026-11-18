@@ -54,6 +54,7 @@ export function SettingsModal() {
   const [newPin, setNewPin] = useState('');
   const [confirmErase, setConfirmErase] = useState(false);
   const [savingPin, setSavingPin] = useState(false);
+  const storeApp = isStoreApp();
 
   function setOnlineSpeech(on: boolean) {
     if (on) {
@@ -252,7 +253,9 @@ export function SettingsModal() {
                   }
                 >
                   <option value="">System Default</option>
-                  {voices.map((voice) => {
+                  {voices
+                    .filter((voice) => !(storeApp && voice.uri.startsWith('bridge:natural-')))
+                    .map((voice) => {
                     const isPiper = voice.uri.startsWith('bridge:piper-');
                     const piperModelId = isPiper ? voice.uri.slice('bridge:piper-'.length) : '';
                     const isPiperInstalled = isPiper
@@ -347,6 +350,7 @@ export function SettingsModal() {
                 </button>
               </div>
 
+              {!storeApp && (
               <div class="section-box" style={{ marginTop: '8px' }}>
                 <label class="check-row" style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                   <input
@@ -375,6 +379,7 @@ export function SettingsModal() {
                   </p>
                 )}
               </div>
+              )}
 
               <div class="section-box" style={{ marginTop: '8px' }}>
                 <div
