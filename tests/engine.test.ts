@@ -537,8 +537,18 @@ describe('starter vocabulary & edit operations', () => {
     expect(arasaacButtons.length).toBe(50);
 
     const collectedIds = collectArasaacIds(arasaacVocab);
-    expect(collectedIds.length).toBe(50);
+    expect(collectedIds.length).toBeGreaterThanOrEqual(50);
     expect(collectedIds).toContain('2793');
+
+    const missingSubpageArt = arasaacVocab.pages
+      .filter((p) => p.id !== 'home' && p.id !== 'colors')
+      .flatMap((p) => p.buttons.filter((b) => !b.image?.startsWith('arasaac:')).map((b) => `${p.id}:${b.label}`));
+    expect(missingSubpageArt).toEqual([]);
+
+    const bridgeSubpageArt = createStarterVocabulary('en', 60).vocab.pages
+      .find((p) => p.id === 'questions')!
+      .buttons.filter((b) => b.image?.startsWith('arasaac:'));
+    expect(bridgeSubpageArt.length).toBe(0);
     const byLabel = Object.fromEntries(arasaacHome.buttons.map((btn) => [btn.label, btn.image]));
     expect(byLabel.I).toBe('arasaac:2617');
     expect(byLabel.want).toBe('arasaac:5441');

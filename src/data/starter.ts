@@ -4,6 +4,7 @@ import { resolveIconForButton } from './icons';
 import { symbolIdForWord } from './symbols';
 import { normalizeLangCode } from '../i18n';
 import { translateVocabularyToLocale } from './multilingual';
+import { getArasaacIdForWord } from './arasaac';
 
 type Kind = keyof typeof WORD_CLASS;
 
@@ -74,6 +75,110 @@ function ara(label: string, id: number, kind: Kind, message?: string): Item {
 
 function araFolder(label: string, id: number, go: string): Item {
   return { l: label, img: `arasaac:${id}`, k: 'folder', go };
+}
+
+const ARASAAC_NUMBER_IDS = [
+  2626, 2627, 2628, 2629, 2630, 2631, 2632, 2633, 2634, 2635, 7025, 29260, 29262, 29264, 29266, 29268, 29270, 29272, 29274, 29276, 29550,
+];
+
+const ARASAAC_SUBPAGE_OVERRIDES: Record<string, number | string> = {
+  ...Object.fromEntries(ARASAAC_NUMBER_IDS.map((id, n) => [String(n), id])),
+  'how much': 7073,
+  'how many': 24731,
+  'what time': 'time',
+  'what is that': 'what',
+  'where is': 'where',
+  "you're welcome": 6936,
+  'maybe': 7180,
+  "i don't know": 7180,
+  'my turn': 7158,
+  'your turn': 7158,
+  'nice to meet you': 8484,
+  "i'm fine": 13630,
+  'i love you': 11519,
+  'congratulations': 13018,
+  'i agree': 37861,
+  'helper': 2476,
+  'everybody': 36081,
+  'aunt': 30271,
+  'uncle': 30255,
+  'cousin': 30340,
+  'neighbor': 37228,
+  'driver': 3019,
+  'coffee': 24479,
+  'tea': 29802,
+  'soda': 4732,
+  'smoothie': 'juice',
+  'lonely': 7253,
+  'frustrated': 'angry',
+  'upset': 'sad',
+  'dizzy': 2464,
+  'headache': 28651,
+  'stomach ache': 28766,
+  'need bathroom': 15810,
+  'need medicine': 8163,
+  'need a break': 'need',
+  'need help': 'help',
+  'living room': 6211,
+  "doctor's office": 9918,
+  "friend's house": 'friend',
+  'soon': 'later',
+  'always': 17322,
+  'never': 5527,
+  'week': 37732,
+  'again': 37163,
+  'first': 37753,
+  'what time is it?': 'time',
+  "today's date": 'today',
+  '30': 29298,
+  '40': 29320,
+  '50': 29342,
+  '60': 29364,
+  '70': 29388,
+  '80': 29410,
+  '90': 29430,
+  '100': 29256,
+  'colors': 'color',
+  'i need help': 'help',
+  'i need a break': 'need',
+  'bathroom': 15810,
+  "i'm hungry": 4962,
+  "i'm thirsty": 4963,
+  "i don't feel well": 'sick',
+  "i'm in pain": 2367,
+  'emergency': 38082,
+  'please wait': 'wait',
+  'say it again': 37163,
+  'slow down': 4676,
+  "i don't understand": 7180,
+  'my device': 2793,
+  'my name is…': 2617,
+  'thank you': 8129,
+  "i'm done": 28429,
+  'yes please': 5583,
+  'no thank you': 5525,
+  'look at me': 'look',
+  'come here': 'come',
+  'turn it up': 6218,
+  'turn it down': 5916,
+  'good job': 35875,
+};
+
+function toArasaacPage(page: Page): Page {
+  if (page.id === 'home' || page.id === 'colors') return page;
+  return {
+    ...page,
+    buttons: page.buttons.map((b) => {
+      if (b.image?.startsWith('arasaac:')) return b;
+      const key = b.label.trim().toLowerCase();
+      const override = ARASAAC_SUBPAGE_OVERRIDES[key];
+      const id =
+        typeof override === 'number'
+          ? override
+          : getArasaacIdForWord(typeof override === 'string' ? override : b.label);
+      return id ? { ...b, image: `arasaac:${id}` } : b;
+    }),
+  };
 }
 
 export type PageSetSize = 42 | 50 | 60 | 84 | 108;
@@ -440,7 +545,9 @@ export function createStarterVocabulary(
     locale: 'en',
     source: { kind: 'builtin', importedAt: now },
     homePageId: 'home',
-    pages: [home, questions, social, people, food, feelings, places, time, numbers, colors, quick],
+    pages: (size === 50
+      ? [home, questions, social, people, food, feelings, places, time, numbers, colors, quick].map(toArasaacPage)
+      : [home, questions, social, people, food, feelings, places, time, numbers, colors, quick]),
     createdAt: now,
     updatedAt: now,
     schema: 1,
