@@ -11,7 +11,8 @@
     <a href="#screenshots"><strong>Screenshots</strong></a> &bull;
     <a href="#install"><strong>Install</strong></a> &bull;
     <a href="#languages"><strong>Languages</strong></a> &bull;
-    <a href="#developing"><strong>Developing</strong></a>
+    <a href="#developing"><strong>Developing</strong></a> &bull;
+    <a href="https://ko-fi.com/kashcotton"><strong>Ko-fi</strong></a>
   </p>
 </div>
 
@@ -100,7 +101,7 @@ BridgeAAC has 10 starter vocabularies (11 pages each: Home, Questions, Social, P
 ## Install
 
 ### iPad & iPhone
-You don't need the App Store to use it right now:
+The App Store version is in the works — in the meantime, you can install it right now for free:
 1. Open **[bridgeaac.org](https://bridgeaac.org)** in **Safari**.
 2. Tap **Share** and choose **Add to Home Screen**.
 3. Open **BridgeAAC** from your Home Screen — it runs full-screen and works offline.
@@ -134,6 +135,14 @@ npm run build      # production PWA build into dist/
 GitHub Actions handles CI/CD automatically:
 - `.github/workflows/ci-deploy.yml` runs typecheck, tests, and builds/deploys the web app to Cloudflare Pages (`bridgeaac.org`).
 - `.github/workflows/build-apps.yml` builds desktop installers and the Android APK and updates GitHub Releases on pushes to `main` and `v*` tags.
+
+---
+
+## Support the project
+
+BridgeAAC is in the works to be published on the Apple App Store and Google Play. To make that happen, I bought a MacBook and paid for both the Apple Developer Program and Google Play developer accounts — and things are getting expensive.
+
+BridgeAAC will always be free, with no paywalls or ads. If it's helped your family and you're able to chip in toward the hardware and developer fees, it really helps: **[ko-fi.com/kashcotton](https://ko-fi.com/kashcotton)**.
 
 ---
 
