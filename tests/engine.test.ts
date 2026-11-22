@@ -30,6 +30,7 @@ import { SUPPORTED_LANGUAGES } from '../src/i18n';
 import { firstFreeCell, newButton, occupancy, saveButton, searchButtons } from '../src/edit';
 import { vocab as vocabSignal } from '../src/state';
 import { arasaacUrl, collectArasaacIds } from '../src/store/assets';
+import { repairLegacyArasaacPictures } from '../src/data/arasaac-legacy';
 
 describe('message engine', () => {
   it('inserts text with automatic spacing and capitalization', () => {
@@ -536,8 +537,24 @@ describe('starter vocabulary & edit operations', () => {
     expect(arasaacButtons.length).toBe(50);
 
     const collectedIds = collectArasaacIds(arasaacVocab);
-    expect(collectedIds.length).toBe(49);
-    expect(collectedIds).toContain('2495');
+    expect(collectedIds.length).toBe(50);
+    expect(collectedIds).toContain('2793');
+    const byLabel = Object.fromEntries(arasaacHome.buttons.map((btn) => [btn.label, btn.image]));
+    expect(byLabel.I).toBe('arasaac:2617');
+    expect(byLabel.want).toBe('arasaac:5441');
+    expect(byLabel.what).toBe('arasaac:22620');
+    expect(byLabel.Keyboard).toBe('arasaac:2793');
+
+    const legacy = createStarterVocabulary('en', 50).vocab;
+    const legacyHome = legacy.pages.find((p) => p.id === 'home')!;
+    legacyHome.buttons.find((btn) => btn.label === 'I')!.image = 'arasaac:6009';
+    legacyHome.buttons.find((btn) => btn.label === 'want')!.image = 'arasaac:2451';
+    legacyHome.buttons.find((btn) => btn.label === 'you')!.image = 'arasaac:9999';
+    expect(repairLegacyArasaacPictures(legacy)).toBe(true);
+    expect(legacyHome.buttons.find((btn) => btn.label === 'I')!.image).toBe('arasaac:2617');
+    expect(legacyHome.buttons.find((btn) => btn.label === 'want')!.image).toBe('arasaac:5441');
+    expect(legacyHome.buttons.find((btn) => btn.label === 'you')!.image).toBe('arasaac:9999');
+    expect(repairLegacyArasaacPictures(legacy)).toBe(false);
     expect(arasaacUrl(2495)).toBe('https://static.arasaac.org/pictograms/2495/2495_300.png');
     expect(arasaacUrl('2495', 500)).toBe('https://static.arasaac.org/pictograms/2495/2495_500.png');
   });

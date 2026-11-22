@@ -1,4 +1,5 @@
 import type { AssetBlob, Vocabulary } from '../model';
+import { repairLegacyArasaacPictures } from '../data/arasaac-legacy';
 
 const DB_NAME = 'bridgeaac';
 const DB_VERSION = 2;
@@ -130,6 +131,7 @@ export async function loadVocab(id: string): Promise<Vocabulary | undefined> {
       | undefined;
     if (v) {
       memVocabs.set(v.id, v);
+      if (repairLegacyArasaacPictures(v)) void saveVocab(v);
       return v;
     }
   } catch {}
