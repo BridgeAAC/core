@@ -331,6 +331,40 @@ describe('speech engine', () => {
     }
   });
 
+  it('uses a voice for the board language when the chosen voice speaks another language', () => {
+    const spoken: any[] = [];
+    class MockUtterance {
+      text: string; rate = 1; pitch = 1; volume = 1; lang = ''; voice: any = null;
+      onstart?: () => void; onend?: () => void; onerror?: (e: any) => void; onboundary?: (e: any) => void;
+      constructor(t: string) { this.text = t; }
+    }
+    const voices = [
+      { voiceURI: 'samantha', name: 'Samantha', lang: 'en-US', localService: true, default: true },
+      { voiceURI: 'eddy-es', name: 'Eddy (Spanish (Mexico))', lang: 'es-MX', localService: true, default: false },
+      { voiceURI: 'paulina', name: 'Paulina', lang: 'es-MX', localService: true, default: false },
+    ];
+    const prevSynth = (window as any).speechSynthesis;
+    const prevUtt = (window as any).SpeechSynthesisUtterance;
+    (window as any).SpeechSynthesisUtterance = MockUtterance;
+    (window as any).speechSynthesis = {
+      cancel: vi.fn(),
+      getVoices: () => voices,
+      speak: (u: any) => { spoken.push(u); u.onstart?.(); u.onend?.(); },
+    };
+    try {
+      for (const voiceURI of ['samantha', 'bridge:piper-en_US-amy-low', 'bridge:offline-f2']) {
+        spoken.length = 0;
+        speak('yo quiero jugar', { settings: { voiceURI, rate: 1, pitch: 1, volume: 1, muted: false }, lang: 'es-MX' });
+        expect(spoken.length, voiceURI).toBe(1);
+        expect(spoken[0].voice?.voiceURI, voiceURI).toBe('paulina');
+      }
+    } finally {
+      stopSpeaking();
+      (window as any).speechSynthesis = prevSynth;
+      (window as any).SpeechSynthesisUtterance = prevUtt;
+    }
+  });
+
   it('falls back to built-in offline mespeak WAV synthesis when OS speechSynthesis has 0 voices', async () => {
     const prevSynth = (window as any).speechSynthesis;
     const prevCtx = (window as any).AudioContext;

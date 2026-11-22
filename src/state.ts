@@ -1,3 +1,4 @@
+import { getLanguageInfo, normalizeLangCode } from './i18n';
 import { signal, computed, batch, effect } from '@preact/signals';
 import {
   type Action,
@@ -150,7 +151,8 @@ export async function boot(): Promise<void> {
 
     let list = await listVocabs();
     if (list.length === 0) {
-      const { vocab: starter } = createStarterVocabulary();
+      const deviceLang = typeof navigator !== 'undefined' ? normalizeLangCode(navigator.language) : 'en';
+      const { vocab: starter } = createStarterVocabulary(deviceLang);
       await saveVocab(starter);
       list = await listVocabs();
     }
@@ -355,6 +357,12 @@ export function resolveButton(b: Button, f: number = form.value): ResolvedButton
   };
 }
 
+/** Full language tag for speech, so "es" asks for Latin American Spanish rather than any voice. */
+function speechLang(locale?: string): string {
+  if (locale && /^[a-z]{2,3}[-_][A-Za-z]{2,4}$/.test(locale.trim())) return locale.trim().replace('_', '-');
+  return getLanguageInfo(locale).bcp47;
+}
+
 function speechSettings() {
   const s = settings.value;
   return {
@@ -378,7 +386,7 @@ export function speakText(
   unlockAudio();
   ttsSpeak(clean, {
     settings: speechSettings(),
-    lang: vocab.value?.locale,
+    lang: speechLang(vocab.value?.locale),
     replacements: settings.value.pronunciations,
     onStart: () => {
       speaking.value = true;

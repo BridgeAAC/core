@@ -10,7 +10,10 @@ import {
   speakText,
   spokenHistory,
   toast,
+  vocab,
 } from '../state';
+import { resolveActiveLang, type LangCode } from '../i18n';
+import { SOUNDBOARD_CATEGORY_NAMES, SOUNDBOARD_TRANSLATIONS, SOUNDBOARD_UI } from '../data/soundboard-i18n';
 import { kvGet, kvSet } from '../store/db';
 
 export type SoundboardCategory = 'wants' | 'needs' | 'feelings' | 'quick' | 'custom';
@@ -54,6 +57,14 @@ const DEFAULT_SOUNDBOARD: SoundboardItem[] = [
   { id: 'sb-q5', label: 'I love you', speech: 'I love you!', emoji: '❤️', category: 'quick', bg: '#fbcfe8' },
   { id: 'sb-q6', label: 'Tell me more', speech: 'Can you tell me more about that?', emoji: '💬', category: 'quick', bg: '#fbcfe8' },
 ];
+
+/** The built-in phrases in the board's language, so a Spanish board never speaks English sentences. */
+function localizedSoundboard(locale?: string): SoundboardItem[] {
+  const code = (locale || 'en').toLowerCase().replace('_', '-').split('-')[0].replace('fil', 'tl');
+  const tr = SOUNDBOARD_TRANSLATIONS[code as Exclude<LangCode, 'en'>];
+  if (!tr) return DEFAULT_SOUNDBOARD;
+  return DEFAULT_SOUNDBOARD.map((item, i) => (tr[i] ? { ...item, label: tr[i][0], speech: tr[i][1] } : item));
+}
 
 export function MessagesModal() {
   const saved = savedMessages.value;
@@ -126,7 +137,10 @@ export function MessagesModal() {
     toast('Saved phrase', 'success');
   }
 
-  const allSoundboard = [...customItems, ...DEFAULT_SOUNDBOARD];
+  const lang = resolveActiveLang(vocab.value?.locale) as LangCode;
+  const cats = SOUNDBOARD_CATEGORY_NAMES[lang];
+  const u = SOUNDBOARD_UI[lang];
+  const allSoundboard = [...customItems, ...localizedSoundboard(vocab.value?.locale)];
   const visibleSoundboard =
     catFilter === 'all'
       ? allSoundboard
@@ -150,14 +164,14 @@ export function MessagesModal() {
               class={`tab-btn ${tab === 'soundboard' ? 'active' : ''}`}
               onClick={() => setTab('soundboard')}
             >
-              Soundboard (Wants, Needs & Feelings)
+              {u.soundboard}
             </button>
             <button
               type="button"
               class={`tab-btn ${tab === 'phrases' ? 'active' : ''}`}
               onClick={() => setTab('phrases')}
             >
-              Saved and recent ({saved.length})
+              {u.saved} ({saved.length})
             </button>
           </div>
           <button type="button" class="icon-close" onClick={close} aria-label="Close">
@@ -183,35 +197,35 @@ export function MessagesModal() {
                     class={`tab-btn ${catFilter === 'all' ? 'active' : ''}`}
                     onClick={() => setCatFilter('all')}
                   >
-                    All
+                    {cats.all}
                   </button>
                   <button
                     type="button"
                     class={`tab-btn ${catFilter === 'wants' ? 'active' : ''}`}
                     onClick={() => setCatFilter('wants')}
                   >
-                    Wants
+                    {cats.wants}
                   </button>
                   <button
                     type="button"
                     class={`tab-btn ${catFilter === 'needs' ? 'active' : ''}`}
                     onClick={() => setCatFilter('needs')}
                   >
-                    Needs
+                    {cats.needs}
                   </button>
                   <button
                     type="button"
                     class={`tab-btn ${catFilter === 'feelings' ? 'active' : ''}`}
                     onClick={() => setCatFilter('feelings')}
                   >
-                    Feelings
+                    {cats.feelings}
                   </button>
                   <button
                     type="button"
                     class={`tab-btn ${catFilter === 'quick' ? 'active' : ''}`}
                     onClick={() => setCatFilter('quick')}
                   >
-                    Quick Chat
+                    {cats.quick}
                   </button>
                   {customItems.length > 0 && (
                     <button
@@ -219,7 +233,7 @@ export function MessagesModal() {
                       class={`tab-btn ${catFilter === 'custom' ? 'active' : ''}`}
                       onClick={() => setCatFilter('custom')}
                     >
-                      My Custom ({customItems.length})
+                      {u.mine} ({customItems.length})
                     </button>
                   )}
                 </div>
@@ -229,7 +243,7 @@ export function MessagesModal() {
                   class="btn primary sm"
                   onClick={() => setShowAddCustom(!showAddCustom)}
                 >
-                  {showAddCustom ? 'Cancel' : '+ Add Custom Sound'}
+                  {showAddCustom ? u.cancel : u.add}
                 </button>
               </div>
 
@@ -263,10 +277,10 @@ export function MessagesModal() {
                         setCustomCat((e.target as HTMLSelectElement).value as SoundboardCategory)
                       }
                     >
-                      <option value="wants">Wants</option>
-                      <option value="needs">Needs</option>
-                      <option value="feelings">Feelings</option>
-                      <option value="quick">Quick Chat</option>
+                      <option value="wants">{cats.wants}</option>
+                      <option value="needs">{cats.needs}</option>
+                      <option value="feelings">{cats.feelings}</option>
+                      <option value="quick">{cats.quick}</option>
                       <option value="custom">Custom</option>
                     </select>
                     <button type="submit" class="btn primary sm">
@@ -319,7 +333,7 @@ export function MessagesModal() {
                           {item.label}
                         </div>
                         <div style={{ fontSize: '0.76rem', opacity: 0.78, marginTop: '2px' }}>
-                          🔊 Tap to speak
+                          🔊 {u.tap}
                         </div>
                       </div>
                     </button>
@@ -333,7 +347,7 @@ export function MessagesModal() {
                           toast(`Added "${item.label}"`, 'info');
                         }}
                       >
-                        + Bar
+                        {u.toBar}
                       </button>
                       {item.custom && (
                         <button

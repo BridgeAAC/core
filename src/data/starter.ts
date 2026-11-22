@@ -243,6 +243,15 @@ export const PAGE_SETS: PageSetInfo[] = [
   },
 ];
 
+const CORE_WORD: Partial<Record<string, string>> = { es: 'Núcleo', fr: 'Base', de: 'Kern', pt: 'Núcleo', it: 'Base', ar: 'الأساسية', zh: '核心', hi: 'मूल', tl: 'Core' };
+
+/** Board names stay recognisable in every language; only "Core" is translated. */
+export function starterName(size: PageSetSize, locale = 'en'): string {
+  const lang = normalizeLangCode(locale);
+  if (size === 50) return `ARASAAC ${CORE_WORD[lang] ?? 'Core'} 50`;
+  return `BridgeWords ${size}`;
+}
+
 export function createStarterVocabulary(
   locale = 'en',
   size: PageSetSize = 60,
@@ -553,10 +562,8 @@ export function createStarterVocabulary(
     schema: 1,
   };
   const vocab = translateVocabularyToLocale(baseVocab, lang);
-  if (size === 50) {
-    vocab.name = lang === 'es' ? 'ARASAAC Núcleo 50' : 'ARASAAC Core 50';
-    vocab.description = pageSet.description;
-  }
+  vocab.name = starterName(size, lang);
+  if (size === 50) vocab.description = pageSet.description;
   return { vocab, assets: [] };
 }
 

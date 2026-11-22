@@ -827,6 +827,34 @@ final class BridgeNativeCoordinator: NSObject, ObservableObject, WKScriptMessage
         )
     }
 
+    private static func languagePrefix(_ tag: String) -> String {
+        let p = tag.replacingOccurrences(of: "_", with: "-").lowercased().split(separator: "-").first.map(String.init) ?? ""
+        return p == "fil" ? "tl" : p
+    }
+
+    /// The best installed voice for a language: the exact region first, then premium and
+    /// enhanced voices over compact ones, never a novelty voice such as Eddy or Grandma.
+    private static func bestVoice(for lang: String) -> AVSpeechSynthesisVoice? {
+        let wanted = lang.replacingOccurrences(of: "_", with: "-").lowercased()
+        let prefix = languagePrefix(lang)
+        let candidates = AVSpeechSynthesisVoice.speechVoices().filter { voice in
+            if languagePrefix(voice.language) != prefix { return false }
+            return !voice.voiceTraits.contains(.isNoveltyVoice)
+        }
+        func score(_ voice: AVSpeechSynthesisVoice) -> Int {
+            var s = 0
+            if voice.language.lowercased() == wanted { s += 15 }
+            switch voice.quality {
+            case .premium: s += 40
+            case .enhanced: s += 30
+            default: break
+            }
+            return s
+        }
+        if let best = candidates.max(by: { score($0) < score($1) }) { return best }
+        return AVSpeechSynthesisVoice(language: lang) ?? AVSpeechSynthesisVoice(language: prefix)
+    }
+
     private func speakNative(
         id: Int,
         text: String,
@@ -846,9 +874,11 @@ final class BridgeNativeCoordinator: NSObject, ObservableObject, WKScriptMessage
         }
         activeSpeechId = id
         let utterance = AVSpeechUtterance(string: text)
-        if let voiceId = voiceIdentifier, let matched = AVSpeechSynthesisVoice(identifier: voiceId) {
+        if let voiceId = voiceIdentifier,
+           let matched = AVSpeechSynthesisVoice(identifier: voiceId),
+           Self.languagePrefix(matched.language) == Self.languagePrefix(lang) {
             utterance.voice = matched
-        } else if let langVoice = AVSpeechSynthesisVoice(language: lang) {
+        } else if let langVoice = Self.bestVoice(for: lang) {
             utterance.voice = langVoice
         }
         let scaledRate = AVSpeechUtteranceDefaultSpeechRate * min(max(rate, 0.4), 2.0)

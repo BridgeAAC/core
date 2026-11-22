@@ -32,6 +32,8 @@
     "social:assets": "npm run build && node scripts/generate-social-assets.mjs"
   },
   "dependencies": {
+    "@capacitor-community/text-to-speech": "8.0.2",
+    "@capacitor/core": "8.0.0",
     "@diffusionstudio/vits-web": "^1.0.3",
     "@preact/preset-vite": "^2.10.6",
     "@preact/signals": "^2.11.4",

@@ -28,7 +28,21 @@ import {
 } from '../engine/speech';
 import { resetAllLocalData, ttsCacheClear, ttsCacheCount } from '../store/db';
 import { commit, panel, speakText, toast, vocab } from '../state';
-import { getLanguageInfo, SUPPORTED_LANGUAGES } from '../i18n';
+import { getLanguageInfo, normalizeLangCode, SUPPORTED_LANGUAGES, type LangCode } from '../i18n';
+import { translateVocabulary } from '../data/multilingual';
+
+const BOARD_LANGUAGE_CHANGED: Record<LangCode, string> = {
+  en: 'The board is now in English. Buttons you made yourself keep their words.',
+  es: 'El tablero ahora está en español. Los botones que creaste tú conservan sus palabras.',
+  fr: 'Le tableau est maintenant en français. Les boutons que vous avez créés gardent leurs mots.',
+  de: 'Die Tafel ist jetzt auf Deutsch. Selbst erstellte Tasten behalten ihre Wörter.',
+  pt: 'O quadro agora está em português. Os botões que você criou mantêm suas palavras.',
+  it: 'La tabella ora è in italiano. I pulsanti creati da te mantengono le loro parole.',
+  ar: 'اللوحة الآن باللغة العربية. الأزرار التي أنشأتها بنفسك تحتفظ بكلماتها.',
+  zh: '词板现在是中文。你自己创建的按钮保留原来的文字。',
+  hi: 'बोर्ड अब हिन्दी में है। आपके बनाए बटन अपने शब्द रखते हैं।',
+  tl: 'Nasa Tagalog na ang board. Ang mga button na ginawa mo ay mananatili ang mga salita.',
+};
 import { isStoreApp } from './InstallModal';
 import { saveFile } from '../io/save';
 
@@ -948,8 +962,9 @@ export function SettingsModal() {
                     <select
                       value={getLanguageInfo(v.locale).code}
                       onChange={(e) => {
-                        const code = (e.target as HTMLSelectElement).value;
-                        commit((cur) => ({ ...cur, locale: code }));
+                        const code = normalizeLangCode((e.target as HTMLSelectElement).value);
+                        commit((cur) => translateVocabulary(cur, code));
+                        toast(BOARD_LANGUAGE_CHANGED[code]);
                       }}
                     >
                       {SUPPORTED_LANGUAGES.map((l) => (

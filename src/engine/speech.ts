@@ -401,7 +401,7 @@ export async function listVoices(timeoutMs = 800): Promise<VoiceInfo[]> {
     native = sortVoices(
       swiftVoices.map((v: any) => ({
         uri: `swift:${v.identifier || v.uri}`,
-        name: `${v.name} (Apple Native)`,
+        name: `${v.name}${v.quality === 3 ? " (Premium)" : v.quality === 2 ? " (Enhanced)" : ""} (Apple Native)`,
         lang: v.lang || 'en-US',
         local: true,
         default: !!v.default,
@@ -438,6 +438,54 @@ function normLang(l: string): string {
   return l.replace(/_/g, '-').toLowerCase();
 }
 
+const NOVELTY_VOICES =
+  /\b(albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|eddy|flo|fred|good news|grandma|grandpa|hysterical|jester|junior|kathy|organ|pipe organ|ralph|reed|rocko|sandy|shelley|superstar|trinoids|whisper|wobble|zarvox)\b/i;
+
+/** Higher is better. Prefers the exact region, then natural-sounding voices, and avoids novelty voices. */
+export function voiceQuality(v: VoiceInfo, lang?: string): number {
+  let score = 0;
+  const name = v.name;
+  if (NOVELTY_VOICES.test(name)) score -= 100;
+  if (/premium/i.test(name)) score += 40;
+  if (/enhanced|neural|natural/i.test(name)) score += 30;
+  if (/google/i.test(name)) score += 25;
+  if (/microsoft .*online/i.test(name)) score += 25;
+  if (/compact|espeak/i.test(name)) score -= 10;
+  if (lang) {
+    const l = normLang(lang);
+    const vl = normLang(v.lang);
+    if (vl === l) score += 15;
+    else {
+      const region = l.split('-')[1];
+      const near: Record<string, string[]> = { mx: ['us', '419'], us: ['mx', '419'], au: ['gb', 'nz'], nz: ['au', 'gb'], gb: ['ie', 'au'], ie: ['gb'], in: ['gb'], br: [], cn: ['sg'], sa: ['ae', 'eg'] };
+      if (region && near[region]?.includes(vl.split('-')[1] ?? '')) score += 8;
+    }
+  }
+  if (v.default) score += 2;
+  return score;
+}
+
+export function langOfVoice(uri: string | undefined, voices: VoiceInfo[]): string | undefined {
+  if (!uri) return undefined;
+  if (uri.startsWith('bridge:natural-')) return undefined;
+  const m = uri.match(/^bridge:offline-(es|fr|de|pt|it|zh)$/);
+  if (m) return m[1];
+  if (uri.startsWith('bridge:offline-')) return 'en';
+  const known = [...BUILTIN_VOICES, ...voices].find((v) => v.uri === uri);
+  if (known) return known.lang;
+  const swift = (env().__bridgeSwiftVoices as any[] | undefined)?.find((v) => `swift:${v.identifier || v.uri}` === uri);
+  if (swift?.lang) return swift.lang;
+  const fromId = uri.match(/[._-]([a-z]{2,3})[-_][A-Z]{2}\b/);
+  return fromId?.[1];
+}
+
+export function sameLanguage(a?: string, b?: string): boolean {
+  if (!a || !b) return true;
+  const pa = normLang(a).split('-')[0].replace('fil', 'tl');
+  const pb = normLang(b).split('-')[0].replace('fil', 'tl');
+  return pa === pb;
+}
+
 export function pickVoice(
   voices: VoiceInfo[],
   voiceURI?: string,
@@ -445,15 +493,14 @@ export function pickVoice(
 ): VoiceInfo | undefined {
   if (voiceURI) {
     const exact = voices.find((v) => v.uri === voiceURI);
-    if (exact) return exact;
+    if (exact && (!lang || sameLanguage(exact.lang, lang))) return exact;
   }
   if (lang) {
-    const l = normLang(lang);
-    const same = voices.find((v) => normLang(v.lang) === l);
-    if (same) return same;
-    const prefix = l.split('-')[0];
-    const sameLanguage = voices.find((v) => normLang(v.lang).split('-')[0] === prefix);
-    if (sameLanguage) return sameLanguage;
+    const prefix = normLang(lang).split('-')[0];
+    const matching = voices.filter((v) => sameLanguage(v.lang, prefix));
+    if (matching.length) {
+      return [...matching].sort((a, b) => voiceQuality(b, lang) - voiceQuality(a, lang))[0];
+    }
   }
   return voices.find((v) => v.default) ?? voices[0];
 }
@@ -1680,8 +1727,78 @@ async function runFallbackAudioSpeech(
   }
 }
 
+function isAndroidApp(): boolean {
+  const cap = env().Capacitor;
+  return !!cap?.isNativePlatform?.() && cap?.getPlatform?.() === 'android';
+}
+
+/**
+ * The Android app's web view has no speech voices of its own, so speech goes through
+ * the phone's text-to-speech engine (usually Google's), which has natural voices for
+ * every language BridgeAAC supports.
+ */
+async function speakWithAndroidVoice(
+  chunks: Chunk[],
+  processed: Processed,
+  originalText: string,
+  opts: SpeakOptions,
+  me: Session,
+): Promise<void> {
+  const live = () => !me.cancelled && session === me;
+  let handle: { remove(): Promise<void> } | undefined;
+  try {
+    const { TextToSpeech } = await import('@capacitor-community/text-to-speech');
+    if (!live()) return;
+    const lang = opts.lang || 'en-US';
+    const prefix = normLang(lang).split('-')[0];
+    let useLang = lang;
+    const exact = await TextToSpeech.isLanguageSupported({ lang }).catch(() => ({ supported: true }));
+    if (!exact.supported) {
+      const { languages } = await TextToSpeech.getSupportedLanguages().catch(() => ({ languages: [] as string[] }));
+      const near = languages.find((l) => sameLanguage(l, prefix));
+      if (!near) throw new Error(`No ${lang} voice on this phone`);
+      useLang = near;
+    }
+    if (!live()) return;
+    me.stopCleanup = () => {
+      void TextToSpeech.stop().catch(() => {});
+    };
+    handle = await TextToSpeech.addListener('onRangeStart', (info) => {
+      if (!live()) return;
+      const start = mapStart(processed, info.start);
+      const end = mapEnd(processed, info.end);
+      opts.onBoundary?.(start, Math.max(1, end - start));
+    }).catch(() => undefined);
+    opts.onStart?.();
+    const { settings } = opts;
+    await TextToSpeech.speak({
+      text: processed.text,
+      lang: useLang,
+      rate: clamp(settings.rate, 0.4, 2.0, 1),
+      pitch: clamp(settings.pitch, 0.5, 2.0, 1),
+      volume: clamp(settings.volume, 0, 1, 1),
+      queueStrategy: 0,
+    });
+    void handle?.remove();
+    if (live()) me.finish(true);
+  } catch {
+    void handle?.remove();
+    if (live()) void runFallbackAudioSpeech(chunks, processed, originalText, opts, me);
+  }
+}
+
 export function speak(text: string, opts: SpeakOptions): void {
   stopSpeaking();
+  if (opts.settings.voiceURI && opts.lang) {
+    const synthNow = getSynth();
+    const known = synthNow ? synthNow.getVoices().map(toInfo) : [];
+    const voiceLang = langOfVoice(opts.settings.voiceURI, known);
+    if (voiceLang && !sameLanguage(voiceLang, opts.lang)) {
+      // The chosen voice speaks another language than this board. Reading Spanish words
+      // with an English voice sounds wrong, so use the best voice for the board's language.
+      opts = { ...opts, settings: { ...opts.settings, voiceURI: undefined } };
+    }
+  }
   const { settings } = opts;
   if (settings.muted || !text || !text.trim()) {
     opts.onEnd?.(false);
@@ -1726,7 +1843,12 @@ export function speak(text: string, opts: SpeakOptions): void {
   const hasDownloadedNeuralVoice =
     !isMockSynth &&
     !settings.voiceURI &&
-    getCachedDownloadedNeuralVoices().length > 0;
+    getCachedDownloadedNeuralVoices().some((m) => sameLanguage(m.split(/[_-]/)[0], opts.lang || 'en'));
+
+  if (isAndroidApp() && !wantsBuiltinVoice && !hasDownloadedNeuralVoice) {
+    void speakWithAndroidVoice(chunks, processed, text, opts, me);
+    return;
+  }
 
   if (
     swiftHandler &&
@@ -1789,10 +1911,9 @@ export function speak(text: string, opts: SpeakOptions): void {
   const voice = wanted ? nativeVoices.find((v) => v.voiceURI === wanted.uri) : undefined;
   const langMismatch =
     !isMockSynth &&
-    !settings.voiceURI &&
     !!opts.lang &&
     !!voice &&
-    normLang(voice.lang).split('-')[0] !== normLang(opts.lang).split('-')[0];
+    !sameLanguage(voice.lang, opts.lang);
 
   if (langMismatch) {
     void runFallbackAudioSpeech(chunks, processed, text, opts, me);

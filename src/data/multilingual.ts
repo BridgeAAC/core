@@ -1,4 +1,4 @@
-import type { LangCode } from '../i18n';
+import { normalizeLangCode, type LangCode } from '../i18n';
 import type { Vocabulary } from '../model';
 
 export interface VocabTranslationPack {
@@ -30,7 +30,7 @@ export const VOCAB_TRANSLATIONS: Record<Exclude<LangCode, 'en'>, VocabTranslatio
     words: {
       I: 'yo', me: 'me', you: 'tú', he: 'él', she: 'ella', it: 'eso', we: 'nosotros', they: 'ellos', my: 'mi', your: 'tu',
       want: 'quiero', go: 'ir', like: 'me gusta', have: 'tengo', get: 'tomar', make: 'hacer', do: 'hago', can: 'puedo', see: 'ver', help: 'ayuda',
-      stop: 'para', look: 'mira', eat: 'comer', play: 'jugar', put: 'poner', give: 'dar', come: 'ven', need: 'necesito', open: 'abrir', turn: 'girar',
+      stop: 'alto', look: 'mira', eat: 'comer', play: 'jugar', put: 'poner', give: 'dar', come: 'ven', need: 'necesito', open: 'abrir', turn: 'girar',
       more: 'más', finished: 'terminé', good: 'bueno', bad: 'malo', big: 'grande', little: 'pequeño', hot: 'caliente', cold: 'frío', happy: 'feliz', sad: 'triste',
       in: 'en', on: 'sobre', up: 'arriba', down: 'abajo', out: 'fuera', off: 'apagar', to: 'a', with: 'con', for: 'para', at: 'en',
       yes: 'sí', no: 'no', not: 'no', a: 'un', the: 'el', this: 'este', that: 'ese', and: 'y', is: 'es', here: 'aquí',
@@ -94,6 +94,7 @@ export const VOCAB_TRANSLATIONS: Record<Exclude<LangCode, 'en'>, VocabTranslatio
       'Turn it down': 'Baja el volumen', 'Can you turn it down, please?': '¿Puedes bajar el volumen, por favor?',
       'I love you.': 'Te quiero mucho.',
       'Good job': '¡Buen trabajo!', 'Good job!': '¡Buen trabajo!',
+      drink: 'beber', say: 'decir', close: 'cerrar', feel: 'sentir', know: 'saber', think: 'pensar', read: 'leer', write: 'escribir', listen: 'escuchar', find: 'encontrar', fast: 'rápido', slow: 'lento', but: 'pero', mine: 'mío', yours: 'tuyo', are: 'son', was: 'era', were: 'eran', will: 'va a', take: 'llevar', tell: 'contar', call: 'llamar', ask: 'preguntar', same: 'igual', different: 'diferente', new: 'nuevo', old: 'viejo', clean: 'limpio', dirty: 'sucio', from: 'de', without: 'sin', about: 'acerca de', or: 'o',
     },
     starters: ['yo', 'tú', 'quiero', 'necesito', 'puedo', 'ir', 'más', 'por favor', 'sí', 'no'],
     bigrams: {
@@ -188,6 +189,7 @@ export const VOCAB_TRANSLATIONS: Record<Exclude<LangCode, 'en'>, VocabTranslatio
       'Turn it down': 'Moins fort', 'Can you turn it down, please?': 'Pouvez-vous baisser le son ?',
       'I love you.': "Je t'aime.",
       'Good job': 'Bravo', 'Good job!': 'Bravo !',
+      drink: 'boire', say: 'dire', close: 'fermer', feel: 'sentir', know: 'savoir', think: 'penser', read: 'lire', write: 'écrire', listen: 'écouter', find: 'trouver', fast: 'vite', slow: 'lent', but: 'mais', mine: 'à moi', yours: 'à toi', are: 'sont', was: 'était', were: 'étaient', will: 'va', take: 'prendre', tell: 'raconter', call: 'appeler', ask: 'demander', same: 'pareil', different: 'différent', new: 'nouveau', old: 'vieux', clean: 'propre', dirty: 'sale', from: 'de', without: 'sans', about: 'à propos', or: 'ou',
     },
     starters: ['je', 'tu', 'veux', 'peux', 'aller', 'plus', 'oui', 'non', 'merci', 'aide'],
     bigrams: {
@@ -279,6 +281,7 @@ export const VOCAB_TRANSLATIONS: Record<Exclude<LangCode, 'en'>, VocabTranslatio
       'Turn it down': 'Leiser', 'Can you turn it down, please?': 'Kannst du es bitte leiser machen?',
       'I love you.': 'Ich hab dich lieb.',
       'Good job': 'Gut gemacht', 'Good job!': 'Gut gemacht!',
+      drink: 'trinken', say: 'sagen', close: 'schließen', feel: 'fühlen', know: 'wissen', think: 'denken', read: 'lesen', write: 'schreiben', listen: 'zuhören', find: 'finden', fast: 'schnell', slow: 'langsam', but: 'aber', mine: 'meins', yours: 'deins', are: 'sind', was: 'war', were: 'waren', will: 'werde', take: 'nehmen', tell: 'erzählen', call: 'anrufen', ask: 'fragen', same: 'gleich', different: 'anders', new: 'neu', old: 'alt', clean: 'sauber', dirty: 'schmutzig', from: 'von', without: 'ohne', about: 'über', or: 'oder',
     },
     starters: ['ich', 'du', 'will', 'brauche', 'kann', 'mehr', 'bitte', 'ja', 'nein', 'Hilfe'],
     bigrams: {
@@ -370,6 +373,7 @@ export const VOCAB_TRANSLATIONS: Record<Exclude<LangCode, 'en'>, VocabTranslatio
       'Turn it down': 'Abaixe o som', 'Can you turn it down, please?': 'Pode abaixar o volume, por favor?',
       'I love you.': 'Eu te amo.',
       'Good job': 'Muito bem', 'Good job!': 'Muito bem!',
+      drink: 'beber', say: 'dizer', close: 'fechar', feel: 'sentir', know: 'saber', think: 'pensar', read: 'ler', write: 'escrever', listen: 'ouvir', find: 'encontrar', fast: 'rápido', slow: 'devagar', but: 'mas', mine: 'é meu', yours: 'é seu', are: 'são', was: 'era', were: 'eram', will: 'vai', take: 'levar', tell: 'contar', call: 'ligar', ask: 'perguntar', same: 'igual', different: 'diferente', new: 'novo', old: 'velho', clean: 'limpo', dirty: 'sujo', from: 'de', without: 'sem', about: 'sobre', or: 'ou',
     },
     starters: ['eu', 'você', 'quero', 'preciso', 'posso', 'ir', 'mais', 'por favor', 'sim', 'não'],
     bigrams: {
@@ -461,6 +465,7 @@ export const VOCAB_TRANSLATIONS: Record<Exclude<LangCode, 'en'>, VocabTranslatio
       'Turn it down': 'Abbassa il volume', 'Can you turn it down, please?': 'Puoi abbassare il volume, per favore?',
       'I love you.': 'Ti voglio bene.',
       'Good job': 'Ottimo lavoro', 'Good job!': 'Ottimo lavoro!',
+      drink: 'bere', say: 'dire', close: 'chiudere', feel: 'sentire', know: 'sapere', think: 'pensare', read: 'leggere', write: 'scrivere', listen: 'ascoltare', find: 'trovare', fast: 'veloce', slow: 'lento', but: 'ma', mine: 'è mio', yours: 'è tuo', are: 'sono', was: 'era', were: 'erano', will: 'sarà', take: 'prendere', tell: 'raccontare', call: 'chiamare', ask: 'chiedere', same: 'uguale', different: 'diverso', new: 'nuovo', old: 'vecchio', clean: 'pulito', dirty: 'sporco', from: 'da', without: 'senza', about: 'di', or: 'o',
     },
     starters: ['io', 'tu', 'voglio', 'posso', 'andare', 'ancora', 'per favore', 'sì', 'no', 'aiuto'],
     bigrams: {
@@ -551,6 +556,7 @@ export const VOCAB_TRANSLATIONS: Record<Exclude<LangCode, 'en'>, VocabTranslatio
       'Turn it down': 'اخفض الصوت', 'Can you turn it down, please?': 'هل يمكنك خفض الصوت من فضلك؟',
       'I love you.': 'أنا أحبك.',
       'Good job': 'عمل رائع', 'Good job!': 'عمل رائع!',
+      drink: 'أشرب', say: 'أقول', close: 'أغلق', feel: 'أشعر', know: 'أعرف', think: 'أفكر', read: 'أقرأ', write: 'أكتب', listen: 'أستمع', find: 'أجد', fast: 'سريع', slow: 'بطيء', but: 'لكن', mine: 'ملكي', yours: 'ملكك', are: 'يكونون', was: 'كان', were: 'كانوا', will: 'سوف', take: 'آخذ', tell: 'أخبر', call: 'أتصل', ask: 'أسأل', same: 'نفس الشيء', different: 'مختلف', new: 'جديد', old: 'قديم', clean: 'نظيف', dirty: 'متسخ', from: 'من', without: 'بدون', about: 'عن', or: 'أو',
     },
     starters: ['أنا', 'أنت', 'أريد', 'أحتاج', 'أذهب', 'المزيد', 'من فضلك', 'نعم', 'لا', 'مساعدة'],
     bigrams: {
@@ -642,6 +648,7 @@ export const VOCAB_TRANSLATIONS: Record<Exclude<LangCode, 'en'>, VocabTranslatio
       'Turn it down': '声音小一点', 'Can you turn it down, please?': '请把声音调小一点好吗？',
       'I love you.': '我爱你。',
       'Good job': '太棒了', 'Good job!': '做得太棒了！',
+      drink: '喝', say: '说', close: '关上', feel: '感觉', know: '知道', think: '想', read: '读', write: '写', listen: '听', find: '找', fast: '快', slow: '慢', but: '但是', mine: '我的', yours: '你的', are: '是', was: '曾是', were: '曾是', will: '会', take: '拿', tell: '告诉', call: '打电话', ask: '问', same: '一样', different: '不一样', new: '新', old: '旧', clean: '干净', dirty: '脏', from: '从', without: '没有', about: '关于', or: '或者',
     },
     starters: ['我', '你', '想要', '需要', '去', '更多', '请', '是', '不', '帮忙'],
     bigrams: {
@@ -733,6 +740,7 @@ export const VOCAB_TRANSLATIONS: Record<Exclude<LangCode, 'en'>, VocabTranslatio
       'Turn it down': 'आवाज़ कम करें', 'Can you turn it down, please?': 'क्या आप कृपया आवाज़ कम कर सकते हैं?',
       'I love you.': 'मैं आपसे प्यार करता हूँ।',
       'Good job': 'शाबाश', 'Good job!': 'बहुत बढ़िया!',
+      drink: 'पीना', say: 'कहना', close: 'बंद करना', feel: 'महसूस करना', know: 'जानना', think: 'सोचना', read: 'पढ़ना', write: 'लिखना', listen: 'सुनना', find: 'ढूँढना', fast: 'तेज़', slow: 'धीमा', but: 'लेकिन', mine: 'मेरा है', yours: 'तुम्हारा है', are: 'हैं', was: 'था', were: 'थे', will: 'होगा', take: 'लेना', tell: 'बताना', call: 'बुलाना', ask: 'पूछना', same: 'एक जैसा', different: 'अलग', new: 'नया', old: 'पुराना', clean: 'साफ़', dirty: 'गंदा', from: 'से', without: 'बिना', about: 'के बारे में', or: 'या',
     },
     starters: ['मैं', 'मुझे', 'तुम', 'चाहिए', 'मदद', 'पानी', 'खाना', 'कृपया', 'हाँ', 'नहीं'],
     bigrams: {
@@ -823,6 +831,7 @@ export const VOCAB_TRANSLATIONS: Record<Exclude<LangCode, 'en'>, VocabTranslatio
       'Turn it down': 'Hinaan ang tunog', 'Can you turn it down, please?': 'Paki-hinaan po ang volume?',
       'I love you.': 'Mahal kita.',
       'Good job': 'Magaling', 'Good job!': 'Ang galing mo!',
+      drink: 'inom', say: 'sabihin', close: 'isara', feel: 'pakiramdam', know: 'alam', think: 'isip', read: 'basa', write: 'sulat', listen: 'makinig', find: 'hanapin', fast: 'mabilis', slow: 'mabagal', but: 'pero', mine: 'sa akin', yours: 'sa iyo', are: 'ay', was: 'dati', were: 'dati', will: 'gagawin', take: 'kunin', tell: 'sabihan', call: 'tawagan', ask: 'tanong', same: 'pareho', different: 'iba', new: 'bago', old: 'luma', clean: 'malinis', dirty: 'marumi', from: 'mula sa', without: 'wala', about: 'tungkol sa', or: 'o',
     },
     starters: ['ako', 'ikaw', 'gusto', 'kailangan', 'punta', 'pa', 'pakiusap', 'oo', 'hindi', 'tulong'],
     bigrams: {
@@ -833,43 +842,79 @@ export const VOCAB_TRANSLATIONS: Record<Exclude<LangCode, 'en'>, VocabTranslatio
   },
 };
 
-export function translateVocabularyToLocale(vocab: Vocabulary, lang: LangCode): Vocabulary {
-  if (lang === 'en') return vocab;
-  const pack = VOCAB_TRANSLATIONS[lang];
-  if (!pack) return vocab;
+const reverseIndex = new Map<LangCode, { words: Map<string, string>; pages: Map<string, string> }>();
 
+function toEnglish(lang: LangCode) {
+  let idx = reverseIndex.get(lang);
+  if (!idx) {
+    const pack = lang === 'en' ? undefined : VOCAB_TRANSLATIONS[lang];
+    const words = new Map<string, string>();
+    const pages = new Map<string, string>();
+    if (pack) {
+      for (const [en, local] of Object.entries(pack.words)) {
+        if (!words.has(local)) words.set(local, en);
+        const lower = local.toLowerCase();
+        if (!words.has(lower)) words.set(lower, en);
+      }
+      for (const [en, local] of Object.entries(pack.pages)) if (!pages.has(local)) pages.set(local, en);
+    }
+    idx = { words, pages };
+    reverseIndex.set(lang, idx);
+  }
+  return idx;
+}
+
+const STARTER_NAMES = new Set<string>(Object.values(VOCAB_TRANSLATIONS).map((p) => p.name));
+
+/**
+ * Translates the built-in words of a board from its current language to another one.
+ * Words the dictionaries don't know (the user's own buttons) are left as they are.
+ */
+export function translateVocabulary(vocab: Vocabulary, to: LangCode, from: LangCode = normalizeLangCode(vocab.locale)): Vocabulary {
+  if (from === to) return { ...vocab, locale: to };
+  const src = toEnglish(from);
+  const pack = to === 'en' ? undefined : VOCAB_TRANSLATIONS[to];
+  const wordToEn = (s: string): string | undefined => {
+    if (from === 'en') return s;
+    const t = s.trim();
+    return src.words.get(t) ?? src.words.get(t.toLowerCase());
+  };
   const tr = (s?: string): string | undefined => {
     if (!s) return s;
-    return pack.words[s] ?? pack.words[s.trim()] ?? s;
+    const en = wordToEn(s) ?? wordToEn(s.trim());
+    if (en === undefined) return s;
+    if (!pack) return en;
+    return pack.words[en] ?? pack.words[en.trim()] ?? s;
   };
+  const page = (name: string): string => {
+    const en = from === 'en' ? name : src.pages.get(name);
+    if (en === undefined) return name;
+    return pack ? (pack.pages[en] ?? en) : en;
+  };
+  const isStarterName = STARTER_NAMES.has(vocab.name) || vocab.source?.kind === 'builtin';
 
   return {
     ...vocab,
-    name: pack.name,
-    description: pack.description,
-    locale: lang,
+    description: pack && isStarterName ? pack.description : vocab.description,
+    locale: to,
     pages: vocab.pages.map((p) => ({
       ...p,
-      name: pack.pages[p.name] ?? p.name,
-      buttons: p.buttons.map((b) => {
-        const newLabel = tr(b.label) ?? b.label;
-        const newMsg = b.message !== undefined ? tr(b.message) : undefined;
-        const newActions = b.actions.map((a) => {
-          if (a.type === 'speak' && a.text) {
-            return { ...a, text: tr(a.text) ?? a.text };
-          }
-          if (a.type === 'insert' && a.text) {
-            return { ...a, text: tr(a.text) ?? a.text };
-          }
-          return a;
-        });
-        return {
-          ...b,
-          label: newLabel,
-          message: newMsg,
-          actions: newActions,
-        };
-      }),
+      name: page(p.name),
+      buttons: p.buttons.map((b) => ({
+        ...b,
+        label: tr(b.label) ?? b.label,
+        message: b.message !== undefined ? tr(b.message) : undefined,
+        actions: b.actions.map((a) =>
+          (a.type === 'speak' || a.type === 'insert') && a.text ? { ...a, text: tr(a.text) ?? a.text } : a,
+        ),
+      })),
     })),
   };
+}
+
+export function translateVocabularyToLocale(vocab: Vocabulary, lang: LangCode): Vocabulary {
+  if (lang === 'en') return vocab;
+  const out = translateVocabulary(vocab, lang, 'en');
+  const pack = VOCAB_TRANSLATIONS[lang];
+  return pack ? { ...out, description: pack.description } : out;
 }
