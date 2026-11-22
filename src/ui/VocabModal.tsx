@@ -1,3 +1,4 @@
+import { t } from '../i18n/t';
 import { useRef, useState } from 'preact/hooks';
 import {
   importBoardFile,
@@ -72,7 +73,7 @@ export function VocabModal() {
         },
       );
       setLastImport(res);
-      toast(`Opened "${res.vocab.name}" (${res.stats.pages} pages)`, 'success');
+      toast(t("Opened \"{0}\" ({1} pages)", res.vocab.name, res.stats.pages), 'success');
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : String(e));
     } finally {
@@ -89,25 +90,25 @@ export function VocabModal() {
       if (format === 'bridge') {
         const bytes = exportBridge(v, assets);
         await downloadBytes(`${safeName}.bridge`, bytes, 'application/zip');
-        toast(`Exported ${safeName}.bridge`, 'success');
+        toast(t("Exported {0}.bridge", safeName), 'success');
       } else {
         const packed = await embedBuiltInPictures(v, new Map(assets.map((a) => [a.id, a])));
         const bytes = format === 'obz' ? exportObz(packed.vocab, packed.assetsById) : await exportCe(packed.vocab, packed.assetsById);
         await downloadBytes(`${safeName}.${format}`, bytes, 'application/zip');
-        toast(`Exported ${safeName}.${format}`, 'success');
+        toast(t("Exported {0}.{1}", safeName, format), 'success');
       }
     } catch (e) {
-      toast(`Couldn't export ${safeName}.${format}: ${e instanceof Error ? e.message : String(e)}`, 'error');
+      toast(t("Couldn't export {0}.{1}: {2}", safeName, format, e instanceof Error ? e.message : String(e)), 'error');
     }
   }
 
   async function handleEnrich(id: string) {
     if (!settings.value.onlineSymbolSearch) {
       toast(
-        'This looks up your button labels on ARASAAC (api.arasaac.org). Turn on symbol search to use it.',
+        t("This looks up your button labels on ARASAAC (api.arasaac.org). Turn on symbol search to use it."),
         'info',
         {
-          label: 'Turn on',
+          label: t('Turn on'),
           run: () => {
             updateSettings({ onlineSymbolSearch: true });
             void handleEnrich(id);
@@ -130,7 +131,7 @@ export function VocabModal() {
         await openVocab(id);
       }
       toast(
-        `Added pictures to ${res.newlyMatched.toLocaleString()} buttons`,
+        t("Added pictures to {0} buttons", res.newlyMatched.toLocaleString()),
         'success',
       );
     } catch (e) {
@@ -153,7 +154,7 @@ export function VocabModal() {
     await refreshVocabList();
     await openVocab(blank.id);
     setNewVocabName('');
-    toast(`Created "${blank.name}"`, 'success');
+    toast(t("Created \"{0}\"", blank.name), 'success');
     close();
   }
 
@@ -163,12 +164,12 @@ export function VocabModal() {
         class="modal-card modal-lg"
         role="dialog"
         aria-modal="true"
-        aria-label="Vocabularies"
+        aria-label={t("Vocabularies")}
         onClick={(e) => e.stopPropagation()}
       >
         <div class="modal-header">
-          <h2>Vocabularies</h2>
-          <button type="button" class="icon-close" onClick={close} aria-label="Close">
+          <h2>{t("Vocabularies")}</h2>
+          <button type="button" class="icon-close" onClick={close} aria-label={t("Close")}>
             ×
           </button>
         </div>
@@ -197,10 +198,10 @@ export function VocabModal() {
               onChange={(e) => void handleFile((e.target as HTMLInputElement).files?.[0])}
             />
             <div class="drop-title">
-              <strong>Import a board</strong>
+              <strong>{t("Import a board")}</strong>
             </div>
             <div class="drop-sub">
-              .ce, .wf, .c4v, .obf, .obz or .bridge. Tap to choose a file, or drag one here.
+              {t(".ce, .wf, .c4v, .obf, .obz or .bridge. Tap to choose a file, or drag one here.")}
             </div>
           </div>
 
@@ -229,34 +230,34 @@ export function VocabModal() {
                 />
               </div>
               <div class="progress-text">
-                Matching ARASAAC symbols: {enrichProgress.processed.toLocaleString()} /{' '}
-                {enrichProgress.total.toLocaleString()} ({enrichProgress.matched.toLocaleString()} found)
+                {t("Matching ARASAAC symbols: {0} /", enrichProgress.processed.toLocaleString())}{' '}
+                {t("{0} ({1} found)", enrichProgress.total.toLocaleString(), enrichProgress.matched.toLocaleString())}
               </div>
             </div>
           )}
 
           {errorMsg && (
             <div class="alert-box error" role="alert">
-              <strong>Import Error:</strong> {errorMsg}
+              <strong>{t("Import Error:")}</strong> {errorMsg}
             </div>
           )}
 
           {lastImport && (
             <div class="alert-box success" role="status">
               <div>
-                <strong>Loaded "{lastImport.vocab.name}"</strong> ({lastImport.stats.pages.toLocaleString()}{' '}
-                pages, {lastImport.stats.buttons.toLocaleString()} buttons,{' '}
-                {lastImport.stats.images.toLocaleString()} embedded images,{' '}
-                {lastImport.stats.sounds.toLocaleString()} sounds)
+                <strong>{t("Loaded \"{0}\"", lastImport.vocab.name)}</strong> ({lastImport.stats.pages.toLocaleString()}{' '}
+                {t("pages, {0} buttons,", lastImport.stats.buttons.toLocaleString())}{' '}
+                {t("{0} embedded images,", lastImport.stats.images.toLocaleString())}{' '}
+                {t("{0} sounds)", lastImport.stats.sounds.toLocaleString())}
               </div>
               {lastImport.warnings.map((w, i) => (
                 <div key={i} class="import-warning">
-                  Note: {w}
+                  {t("Note: {0}", w)}
                 </div>
               ))}
               <div style={{ marginTop: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <button type="button" class="btn primary" onClick={close}>
-                  Open Board
+                  {t("Open Board")}
                 </button>
                 <button
                   type="button"
@@ -264,7 +265,7 @@ export function VocabModal() {
                   disabled={enriching}
                   onClick={() => void handleEnrich(lastImport.vocab.id)}
                 >
-                  {enriching ? 'Adding pictures…' : 'Add ARASAAC pictures'}
+                  {enriching ? t("Adding pictures…") : t("Add ARASAAC pictures")}
                 </button>
               </div>
             </div>
@@ -272,10 +273,10 @@ export function VocabModal() {
 
           <div class="section-box">
             <div class="section-head" style={{ flexWrap: 'wrap', gap: '8px' }}>
-              <strong>On this device ({list.length})</strong>
+              <strong>{t("On this device ({0})", list.length)}</strong>
               <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <select
-                  aria-label="Starter board language"
+                  aria-label={t("Starter board language")}
                   value={starterLocale}
                   onChange={(e) =>
                     setStarterLocale((e.target as HTMLSelectElement).value as LangCode)
@@ -294,9 +295,9 @@ export function VocabModal() {
                   onClick={() => {
                     panel.value = 'pageset';
                   }}
-                  title="BridgeWords 42, 60, 84 or 108, or ARASAAC Core"
+                  title={t("BridgeWords 42, 60, 84 or 108, or ARASAAC Core")}
                 >
-                  Choose starting board
+                  {t("Choose starting board")}
                 </button>
                 <button
                   type="button"
@@ -305,10 +306,10 @@ export function VocabModal() {
                     const id = await installStarter(starterLocale);
                     await openVocab(id);
                     const info = SUPPORTED_LANGUAGES.find((l) => l.code === starterLocale);
-                    toast(`Added ${info?.nativeName ?? 'Starter'} Vocabulary`, 'success');
+                    toast(t("Added {0} Vocabulary", info?.nativeName ?? 'Starter'), 'success');
                   }}
                 >
-                  + Add Starter Board
+                  {t("+ Add Starter Board")}
                 </button>
               </div>
             </div>
@@ -322,10 +323,10 @@ export function VocabModal() {
                       <div class="vocab-title">
                         <strong>{item.name}</strong>
                         <span class={`source-tag tag-${item.kind}`}>{item.kind}</span>
-                        {isCurrent && <span class="active-pill">Active</span>}
+                        {isCurrent && <span class="active-pill">{t("Active")}</span>}
                       </div>
                       <div class="vocab-meta">
-                        {item.pages.toLocaleString()} pages, {item.buttons.toLocaleString()} buttons
+                        {t("{0} pages, {1} buttons", item.pages.toLocaleString(), item.buttons.toLocaleString())}
                         {item.filename ? ` (${item.filename})` : ''}
                       </div>
                     </div>
@@ -337,11 +338,11 @@ export function VocabModal() {
                           class="btn primary sm"
                           onClick={async () => {
                             await openVocab(item.id);
-                            toast(`Switched to "${item.name}"`, 'info');
+                            toast(t("Switched to \"{0}\"", item.name), 'info');
                             close();
                           }}
                         >
-                          Open
+                          {t("Open")}
                         </button>
                       )}
                       <button
@@ -349,33 +350,33 @@ export function VocabModal() {
                         class="sm-btn"
                         disabled={enriching}
                         onClick={() => void handleEnrich(item.id)}
-                        title="Find ARASAAC pictures for buttons that don't have one (uses the internet)"
+                        title={t("Find ARASAAC pictures for buttons that don't have one (uses the internet)")}
                       >
-                        Add pictures
+                        {t("Add pictures")}
                       </button>
                       <button
                         type="button"
                         class="sm-btn"
                         onClick={() => void handleExport(item.id, 'ce')}
-                        title="Export as compatible .ce file"
+                        title={t("Export as compatible .ce file")}
                       >
-                        Export .ce
+                        {t("Export .ce")}
                       </button>
                       <button
                         type="button"
                         class="sm-btn"
                         onClick={() => void handleExport(item.id, 'obz')}
-                        title="Export as Open Board .obz file"
+                        title={t("Export as Open Board .obz file")}
                       >
-                        Export .obz
+                        {t("Export .obz")}
                       </button>
                       <button
                         type="button"
                         class="sm-btn"
                         onClick={() => void handleExport(item.id, 'bridge')}
-                        title="Export as BridgeAAC .bridge backup"
+                        title={t("Export as BridgeAAC .bridge backup")}
                       >
-                        Export .bridge
+                        {t("Export .bridge")}
                       </button>
                       {list.length > 1 && (
                         <button
@@ -388,11 +389,11 @@ export function VocabModal() {
                             if (isCurrent && vocabList.value[0]) {
                               await openVocab(vocabList.value[0].id);
                             }
-                            toast(`Deleted "${item.name}"`, 'info');
+                            toast(t("Deleted \"{0}\"", item.name), 'info');
                           }}
-                          title="Delete vocabulary"
+                          title={t("Delete vocabulary")}
                         >
-                          Delete
+                          {t("Delete")}
                         </button>
                       )}
                     </div>
@@ -403,16 +404,16 @@ export function VocabModal() {
           </div>
 
           <form class="section-box" onSubmit={(e) => void handleCreateBlank(e)}>
-            <strong>New blank vocabulary</strong>
+            <strong>{t("New blank vocabulary")}</strong>
             <div class="inline-row" style={{ marginTop: '8px', flexWrap: 'wrap' }}>
               <input
                 type="text"
-                placeholder="Vocabulary name"
+                placeholder={t("Vocabulary name")}
                 value={newVocabName}
                 onInput={(e) => setNewVocabName((e.target as HTMLInputElement).value)}
               />
               <select
-                aria-label="Vocabulary language"
+                aria-label={t("Vocabulary language")}
                 value={newLocale}
                 onChange={(e) => setNewLocale((e.target as HTMLSelectElement).value as LangCode)}
                 style={{ padding: '6px 8px', borderRadius: '6px' }}
@@ -424,7 +425,7 @@ export function VocabModal() {
                 ))}
               </select>
               <label class="inline-num">
-                Cols:
+                {t("Cols:")}
                 <input
                   type="number"
                   min={1}
@@ -434,7 +435,7 @@ export function VocabModal() {
                 />
               </label>
               <label class="inline-num">
-                Rows:
+                {t("Rows:")}
                 <input
                   type="number"
                   min={1}
@@ -444,7 +445,7 @@ export function VocabModal() {
                 />
               </label>
               <button type="submit" class="btn secondary">
-                Create
+                {t("Create")}
               </button>
             </div>
           </form>

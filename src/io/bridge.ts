@@ -1,3 +1,4 @@
+import { t } from '../i18n/t';
 import { zipSync } from 'fflate';
 import type {
   Action,
@@ -68,20 +69,20 @@ export async function importBridge(
   opts: ImportOptions = {},
 ): Promise<ImportResult> {
   if (!isZip(data)) {
-    throw new Error('Not a valid BridgeAAC (.bridge) archive.');
+    throw new Error(t("Not a valid BridgeAAC (.bridge) archive."));
   }
   let entries: Record<string, Uint8Array>;
   try {
     entries = safeUnzip(data);
   } catch (e) {
     throw new Error(
-      `Could not unpack BridgeAAC backup (${e instanceof Error ? e.message : 'corrupt zip'}).`,
+      t("Could not unpack BridgeAAC backup ({0}).", e instanceof Error ? e.message : 'corrupt zip'),
     );
   }
 
   const vocabBytes = entries['vocabulary.json'];
   if (!vocabBytes) {
-    throw new Error('This archive is missing vocabulary.json and is not a BridgeAAC backup.');
+    throw new Error(t("This archive is missing vocabulary.json and is not a BridgeAAC backup."));
   }
 
   const dec = new TextDecoder('utf-8');
@@ -90,11 +91,11 @@ export async function importBridge(
     rawVocab = JSON.parse(dec.decode(vocabBytes)) as Vocabulary;
   } catch (e) {
     throw new Error(
-      `Invalid vocabulary.json in backup (${e instanceof Error ? e.message : 'parse error'}).`,
+      t("Invalid vocabulary.json in backup ({0}).", e instanceof Error ? e.message : 'parse error'),
     );
   }
   if (!rawVocab || !Array.isArray(rawVocab.pages)) {
-    throw new Error('Backup vocabulary.json is missing pages.');
+    throw new Error(t("Backup vocabulary.json is missing pages."));
   }
 
   const newVocabId = opts.vocabId ?? `br-${newId()}`;

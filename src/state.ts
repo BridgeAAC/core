@@ -1,3 +1,4 @@
+import { boardLocale, loadLanguage, t } from './i18n/t';
 import { getLanguageInfo, normalizeLangCode } from './i18n';
 import { signal, computed, batch, effect } from '@preact/signals';
 import {
@@ -56,6 +57,17 @@ export type Panel =
 
 export const vocabList = signal<VocabSummary[]>([]);
 export const vocab = signal<Vocabulary | null>(null);
+
+effect(() => {
+  const locale = vocab.value?.locale;
+  if (locale) {
+    void loadLanguage(normalizeLangCode(locale));
+    try {
+      localStorage.setItem('bridgeaac.boardLocale', locale);
+    } catch {}
+  }
+  boardLocale.value = locale;
+});
 export const pageId = signal<ID>('');
 export const backStack = signal<ID[]>([]);
 export const form = signal<number>(FORM_DEFAULT);
@@ -185,7 +197,7 @@ export async function refreshVocabList(): Promise<void> {
 
 export async function openVocab(id: ID): Promise<void> {
   const v = await loadVocab(id);
-  if (!v) throw new Error('That vocabulary could not be found.');
+  if (!v) throw new Error(t("That vocabulary could not be found."));
   batch(() => {
     vocab.value = v;
     pageId.value = v.homePageId;
@@ -416,12 +428,12 @@ export function stopAllSpeech(): void {
 }
 
 function pushHistory(text: string): void {
-  const t = text.trim();
-  if (!t) return;
-  const next = [t, ...spokenHistory.value.filter((m) => m !== t)].slice(0, 60);
+  const txt = text.trim();
+  if (!txt) return;
+  const next = [txt, ...spokenHistory.value.filter((m) => m !== txt)].slice(0, 60);
   spokenHistory.value = next;
   void kvSet('history', next);
-  predictor.learn(t);
+  predictor.learn(txt);
   schedulePredictorSave();
 }
 
@@ -474,15 +486,15 @@ export function deleteWordFromMessage(): void {
 }
 
 export function saveCurrentMessage(): void {
-  const t = message.value.trim();
-  if (!t) {
-    toast('Nothing to save yet', 'info');
+  const txt = message.value.trim();
+  if (!txt) {
+    toast(t("Nothing to save yet"), 'info');
     return;
   }
-  const next = [t, ...savedMessages.value.filter((m) => m !== t)];
+  const next = [txt, ...savedMessages.value.filter((m) => m !== txt)];
   savedMessages.value = next;
   void kvSet('savedMessages', next);
-  toast('Saved to Phrases', 'success');
+  toast(t("Saved to Phrases"), 'success');
 }
 
 export function removeSavedMessage(text: string): void {
@@ -567,7 +579,7 @@ export function runActions(r: ResolvedButton, _source?: Button): void {
         break;
       case 'toggleMute':
         settings.value = { ...settings.value, muted: !settings.value.muted };
-        toast(settings.value.muted ? 'Voice muted' : 'Voice on', 'info');
+        toast(settings.value.muted ? t("Voice muted") : t("Voice on"), 'info');
         break;
       case 'speakTime':
         speakText(
@@ -587,14 +599,14 @@ export function runActions(r: ResolvedButton, _source?: Button): void {
         );
         break;
       case 'copy':
-        void navigator.clipboard?.writeText(message.value).then(() => toast('Copied', 'success'));
+        void navigator.clipboard?.writeText(message.value).then(() => toast(t("Copied"), 'success'));
         break;
       case 'share':
         if (navigator.share) void navigator.share({ text: message.value }).catch(() => undefined);
         else {
           void navigator.clipboard
             ?.writeText(message.value)
-            .then(() => toast('Copied (sharing not available)', 'info'));
+            .then(() => toast(t("Copied (sharing not available)"), 'info'));
         }
         break;
       case 'saveMessage':
@@ -665,10 +677,10 @@ export async function importBoardFile(
 }
 
 export async function importBoardFileWithToasts(file: { name: string; bytes: Uint8Array }): Promise<void> {
-  toast(`Opening ${file.name}…`, 'info');
+  toast(t("Opening {0}…", file.name), 'info');
   try {
     const res = await importBoardFile(file);
-    toast(`Opened "${res.vocab.name}" (${res.stats.pages} pages)`, 'success');
+    toast(t("Opened \"{0}\" ({1} pages)", res.vocab.name, res.stats.pages), 'success');
     if (res.warnings.length) {
       toast(res.warnings[0], 'info', undefined, 8000);
     }

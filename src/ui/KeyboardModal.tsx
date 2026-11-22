@@ -1,3 +1,4 @@
+import { t } from '../i18n/t';
 import { computed } from '@preact/signals';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import {
@@ -64,7 +65,7 @@ const kbSuggestions = computed<string[]>(() => {
 export function KeyboardModal() {
   const isOpen = keyboardOpen.value;
   const lang = resolveActiveLang(vocab.value?.locale);
-  const t = ui(lang);
+  const u = ui(lang);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isShifted, setIsShifted] = useState(false);
   const [capsLock, setCapsLock] = useState(false);
@@ -145,12 +146,12 @@ export function KeyboardModal() {
         class="modal-card modal-lg keyboard-card"
         role="dialog"
         aria-modal="true"
-        aria-label="AAC Communication Keyboard"
+        aria-label={t("AAC Communication Keyboard")}
         onClick={(e) => e.stopPropagation()}
       >
         <div class="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h2 style={{ margin: 0 }}>{t.keyboard}</h2>
+            <h2 style={{ margin: 0 }}>{u.keyboard}</h2>
             {isMobile && (
               <button
                 type="button"
@@ -163,12 +164,12 @@ export function KeyboardModal() {
                   }
                 }}
               >
-                {showNativeInput ? 'Use High-Contrast Keys' : 'Use System Keyboard'}
+                {showNativeInput ? t("Use High-Contrast Keys") : t("Use System Keyboard")}
               </button>
             )}
           </div>
           <button type="button" class="btn primary sm" onClick={close}>
-            {t.done}
+            {u.done}
           </button>
         </div>
 
@@ -180,7 +181,7 @@ export function KeyboardModal() {
                 type="text"
                 class="kb-native-input"
                 value={message.value}
-                placeholder={t.messagePlaceholder}
+                placeholder={u.messagePlaceholder}
                 onInput={(e) => {
                   message.value = (e.target as HTMLInputElement).value;
                 }}
@@ -202,7 +203,7 @@ export function KeyboardModal() {
                   }
                 }}
               >
-                {message.value || <span class="message-placeholder">{t.messagePlaceholder}</span>}
+                {message.value || <span class="message-placeholder">{u.messagePlaceholder}</span>}
               </div>
             )}
             <button
@@ -211,14 +212,14 @@ export function KeyboardModal() {
               onClick={() => speakMessage()}
             >
               <Icon name="speak" size={18} />
-              <span>{t.speak}</span>
+              <span>{u.speak}</span>
             </button>
             <button
               type="button"
               class="btn secondary kb-action-btn"
               onClick={() => deleteWordFromMessage()}
             >
-              <span>{t.word}</span>
+              <span>{u.word}</span>
             </button>
             <button
               type="button"
@@ -226,7 +227,7 @@ export function KeyboardModal() {
               onClick={() => clearMessage()}
             >
               <Icon name="clear" size={18} />
-              <span>{t.clear}</span>
+              <span>{u.clear}</span>
             </button>
           </div>
 
@@ -259,10 +260,10 @@ export function KeyboardModal() {
                           setIsShifted(true);
                         }
                       }}
-                      title="Shift / Caps Lock"
-                      aria-label="Shift / Caps Lock"
+                      title={t("Shift / Caps Lock")}
+                      aria-label={t("Shift / Caps Lock")}
                     >
-                      {capsLock ? '⇪ CAPS' : isShifted ? '⇧ SHIFT' : '⇧'}
+                      {capsLock ? t("⇪ CAPS") : isShifted ? t("⇧ SHIFT") : '⇧'}
                     </button>
                   )}
                   {row.map((key) => (
@@ -280,8 +281,8 @@ export function KeyboardModal() {
                       type="button"
                       class="kb-key kb-wide kb-backspace"
                       onClick={() => backspaceMessage()}
-                      aria-label="Backspace"
-                      title="Backspace"
+                      aria-label={t("Backspace")}
+                      title={t("Backspace")}
                     >
                       <Icon name="backspace" size={20} />
                     </button>
@@ -295,35 +296,35 @@ export function KeyboardModal() {
                   onClick={() => {
                     if (!message.value.endsWith(' ')) message.value += ' ';
                   }}
-                  aria-label="Space bar"
+                  aria-label={t("Space bar")}
                 >
-                  SPACE
+                  {t("SPACE")}
                 </button>
                 <button
                   type="button"
                   class="kb-key kb-wide"
                   onClick={() => backspaceMessage()}
-                  aria-label="Delete letter"
+                  aria-label={t("Delete letter")}
                 >
                   <Icon name="backspace" size={18} />
-                  <span>{t.letter}</span>
+                  <span>{u.letter}</span>
                 </button>
                 <button
                   type="button"
                   class="kb-key kb-wide"
                   onClick={() => deleteWordFromMessage()}
-                  aria-label="Delete word"
+                  aria-label={t("Delete word")}
                 >
-                  <span>{t.word}</span>
+                  <span>{u.word}</span>
                 </button>
                 <button
                   type="button"
                   class="kb-key kb-wide kb-speak"
                   onClick={() => speakMessage()}
-                  aria-label="Speak message"
+                  aria-label={t("Speak message")}
                 >
                   <Icon name="speak" size={20} />
-                  <span>{t.speak}</span>
+                  <span>{u.speak}</span>
                 </button>
               </div>
             </div>

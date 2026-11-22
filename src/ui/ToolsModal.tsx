@@ -1,3 +1,4 @@
+import { t } from '../i18n/t';
 import { useEffect, useState } from 'preact/hooks';
 import { panel, speakText, toast } from '../state';
 import { settings, updateSettings, type ThemeSetting } from '../settings';
@@ -25,6 +26,8 @@ interface PlannerTask {
   period: 'Morning' | 'Afternoon' | 'Evening';
   done: boolean;
 }
+
+const DEFAULT_REWARD = '5 Stars = 15 mins of favorite activity!';
 
 const DEFAULT_PLANNER_TASKS: PlannerTask[] = [
   { id: 'pl-1', title: 'Wake Up & Stretch', emoji: '☀️', period: 'Morning', done: false },
@@ -263,11 +266,21 @@ interface CaregiverNote {
 }
 
 export function ToolsModal() {
+  // The built-in content is written in English and translated where it is shown or spoken.
+  const moods = MOODS.map((m) => ({ ...m, label: t(m.label), spoken: t(m.spoken), tip: t(m.tip), copingSpeech: t(m.copingSpeech) }));
+  const scenarios = EMOTION_SCENARIOS.map((sc) => ({ ...sc, situation: t(sc.situation), explanation: t(sc.explanation) }));
+  const challenges = SENTENCE_CHALLENGES.map((c) => ({
+    ...c,
+    prompt: t(c.prompt),
+    target: t(c.target.join(' ')).split(' '),
+    distractors: c.distractors.map((w) => t(w)),
+  }));
+
   const [tab, setTab] = useState<ToolsTab>('planner');
 
   const [tasks, setTasks] = useState<PlannerTask[]>(DEFAULT_PLANNER_TASKS);
   const [stars, setStars] = useState<number>(0);
-  const [rewardGoal, setRewardGoal] = useState<string>('5 Stars = 15 mins of favorite activity!');
+  const [rewardGoal, setRewardGoal] = useState<string>(DEFAULT_REWARD);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskEmoji, setNewTaskEmoji] = useState('⭐');
@@ -358,11 +371,11 @@ export function ToolsModal() {
     await kvSet('planner_tasks', next);
     if (item.done) {
       await awardStars(1);
-      const say = item.title.replace(/\s*&\s*/g, ' and ').replace(/\s*\/\s*/g, ' or ');
-      speakText(`Nice work! ${say} is done. You earned a star.`);
-      toast(`Star earned for "${item.title}"`, 'success');
+      const say = t(item.title).replace(/\s*&\s*/g, ' and ').replace(/\s*\/\s*/g, ' or ');
+      speakText(t("Nice work! {0} is done. You earned a star.", say));
+      toast(t("Star earned for \"{0}\"", t(item.title)), 'success');
     } else {
-      speakText(item.title);
+      speakText(t(item.title));
     }
   }
 
@@ -390,7 +403,7 @@ export function ToolsModal() {
     setTasks(next);
     await kvSet('planner_tasks', next);
     setNewTaskTitle('');
-    toast(`Added "${title}"`, 'success');
+    toast(t("Added \"{0}\"", title), 'success');
   }
 
   async function handleDeleteTask(id: string) {
@@ -403,7 +416,7 @@ export function ToolsModal() {
     const next = tasks.map((t) => ({ ...t, done: false }));
     setTasks(next);
     await kvSet('planner_tasks', next);
-    toast('Schedule reset', 'info');
+    toast(t("Schedule reset"), 'info');
   }
 
   async function handleLogMood(m: MoodDefinition) {
@@ -418,10 +431,10 @@ export function ToolsModal() {
     const next = [entry, ...moodLogs].slice(0, 120);
     setMoodLogs(next);
     await kvSet('mood_logs', next);
-    toast(`Logged mood: ${m.label}`, 'success');
+    toast(t("Logged mood: {0}", m.label), 'success');
   }
 
-  const currentChallenge = SENTENCE_CHALLENGES[sentenceIdx % SENTENCE_CHALLENGES.length];
+  const currentChallenge = challenges[sentenceIdx % challenges.length];
   const challengeWordPool = (() => {
     const all = [...currentChallenge.target, ...currentChallenge.distractors];
     return all
@@ -443,33 +456,33 @@ export function ToolsModal() {
       if (isCorrect) {
         const fullSentence = currentChallenge.target.join(' ');
         setTimeout(() => {
-          speakText(`Awesome! ${fullSentence}`);
+          speakText(t("Awesome! {0}", fullSentence));
         }, 350);
         void awardStars(2);
         setGameStreak((s) => s + 1);
-        toast('Correct sentence. +2 stars', 'success');
+        toast(t("Correct sentence. +2 stars"), 'success');
       } else {
         setTimeout(() => {
-          speakText('Almost! Let us try putting the words in order.');
+          speakText(t("Almost! Let us try putting the words in order."));
         }, 350);
         setGameStreak(0);
-        toast('Try again! Tap Clear or use a Hint.', 'info');
+        toast(t("Try again! Tap Clear or use a Hint."), 'info');
       }
     }
   }
 
-  const currentScenario = EMOTION_SCENARIOS[scenarioIdx % EMOTION_SCENARIOS.length];
+  const currentScenario = scenarios[scenarioIdx % scenarios.length];
 
   function handleGuessEmotion(m: MoodDefinition) {
     if (m.id === currentScenario.correctMoodId) {
-      speakText(`Yes! ${m.label}. ${currentScenario.explanation}`);
-      setEmotionFeedback(`✅ Correct! ${currentScenario.explanation}`);
+      speakText(t("Yes! {0}. {1}", m.label, currentScenario.explanation));
+      setEmotionFeedback(t('✅ Correct! {0}', currentScenario.explanation));
       void awardStars(2);
       setGameStreak((s) => s + 1);
-      toast('Great match. +2 stars', 'success');
+      toast(t("Great match. +2 stars"), 'success');
     } else {
-      speakText(`That is ${m.label}. Try another feeling for this story.`);
-      setEmotionFeedback(`Try again! Think about how "${currentScenario.situation}" feels.`);
+      speakText(t("That is {0}. Try another feeling for this story.", m.label));
+      setEmotionFeedback(t('Try again! Think about how "{0}" feels.', currentScenario.situation));
     }
   }
 
@@ -477,18 +490,18 @@ export function ToolsModal() {
     e.preventDefault();
     await kvSet('about_me_profile', aboutMe);
     setEditingAbout(false);
-    toast('About me saved', 'success');
+    toast(t("About me saved"), 'success');
   }
 
   function speakFullAboutMe() {
     const intro = [
-      aboutMe.name ? `Hi, my name is ${aboutMe.name}.` : 'Hi!',
-      aboutMe.age ? `I am ${aboutMe.age} years old.` : '',
-      aboutMe.communicationStyle,
-      aboutMe.likes ? `Things I love include: ${aboutMe.likes}.` : '',
-      aboutMe.dislikes ? `Please know that I dislike: ${aboutMe.dislikes}.` : '',
-      aboutMe.allergies ? `Important medical and allergy note: ${aboutMe.allergies}.` : '',
-      aboutMe.calmingStrategies ? `What helps me feel calm: ${aboutMe.calmingStrategies}.` : '',
+      aboutMe.name ? t('Hi, my name is {0}.', aboutMe.name) : t('Hi!'),
+      aboutMe.age ? t('I am {0} years old.', aboutMe.age) : '',
+      t(aboutMe.communicationStyle),
+      aboutMe.likes ? t('Things I love include: {0}.', t(aboutMe.likes)) : '',
+      aboutMe.dislikes ? t('Please know that I dislike: {0}.', t(aboutMe.dislikes)) : '',
+      aboutMe.allergies ? t('Important medical and allergy note: {0}.', t(aboutMe.allergies)) : '',
+      aboutMe.calmingStrategies ? t('What helps me feel calm: {0}.', t(aboutMe.calmingStrategies)) : '',
     ]
       .filter(Boolean)
       .join(' ');
@@ -519,7 +532,7 @@ export function ToolsModal() {
         await kvSet('caregiver_notes_open', false);
         setNotesKey(key);
         setSavedPasscode('encrypted');
-        toast('Passcode set. Notes are encrypted now.', 'success');
+        toast(t("Passcode set. Notes are encrypted now."), 'success');
       } else {
         await kvSet('caregiver_notes', notes);
         await kvSet('caregiver_notes_enc', null);
@@ -528,12 +541,12 @@ export function ToolsModal() {
         setNotesKey(null);
         setNotesEnv(null);
         setSavedPasscode('');
-        toast("Passcode removed. Notes aren't encrypted anymore.", 'info');
+        toast(t("Passcode removed. Notes aren't encrypted anymore."), 'info');
       }
       setNewPasscode('');
       setNotesUnlocked(true);
     } catch {
-      toast("Couldn't change the passcode in this browser.", 'error');
+      toast(t("Couldn't change the passcode in this browser."), 'error');
     } finally {
       setNotesBusy(false);
     }
@@ -573,7 +586,7 @@ export function ToolsModal() {
         await kvSet('caregiver_passcode', '');
         setNotesKey(key);
         setSavedPasscode('encrypted');
-        toast('Notes are encrypted with this passcode now.', 'success');
+        toast(t("Notes are encrypted with this passcode now."), 'success');
       }
       clearFailedAttempts('notes');
       setNotesUnlocked(true);
@@ -594,19 +607,19 @@ export function ToolsModal() {
 
   async function handleAddNote(e: Event) {
     e.preventDefault();
-    const t = noteText.trim();
-    if (!t) return;
+    const txt = noteText.trim();
+    if (!txt) return;
     const item: CaregiverNote = {
       id: 'note-' + Date.now().toString(36),
       category: noteCategory,
-      text: t,
+      text: txt,
       createdAt: Date.now(),
     };
     const next = [item, ...notes];
     setNotes(next);
     await persistNotes(next);
     setNoteText('');
-    toast('Note saved', 'success');
+    toast(t("Note saved"), 'success');
   }
 
   async function handleDeleteNote(id: string) {
@@ -626,19 +639,19 @@ export function ToolsModal() {
       ),
     ];
     void saveFile('BridgeAAC-Caregiver-Notes.txt', lines.join('\n'), 'text/plain;charset=utf-8').catch(() =>
-      toast("Couldn't save the notes file.", 'error'),
+      toast(t("Couldn't save the notes file."), 'error'),
     );
   }
 
   const completedTasks = tasks.filter((t) => t.done).length;
   const badgeName =
     stars >= 25
-      ? '🏆 AAC Champion'
+      ? t('🏆 AAC Champion')
       : stars >= 10
-        ? '🌟 Super Communicator'
+        ? t('🌟 Super Communicator')
         : stars >= 5
-          ? '🎖️ Routine Explorer'
-          : '⭐ Rising Star';
+          ? t('🎖️ Routine Explorer')
+          : t('⭐ Rising Star');
 
   return (
     <div class="modal-backdrop" onClick={close}>
@@ -646,12 +659,12 @@ export function ToolsModal() {
         class="modal-card modal-lg"
         role="dialog"
         aria-modal="true"
-        aria-label="Planner, moods, games, about me and notes"
+        aria-label={t("Planner, moods, games, about me and notes")}
         onClick={(e) => e.stopPropagation()}
       >
         <div class="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <h2>Tools</h2>
+            <h2>{t("Tools")}</h2>
             <span
               style={{
                 background: '#fef08a',
@@ -663,12 +676,12 @@ export function ToolsModal() {
                 border: '1px solid #facc15',
               }}
             >
-              ⭐ {stars} Stars &bull; {badgeName}
+              {t("⭐ {0} Stars • {1}", stars, badgeName)}
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <select
-              aria-label="Color Mode"
+              aria-label={t("Color Mode")}
               value={settings.value.theme}
               onChange={(e) =>
                 updateSettings({
@@ -677,13 +690,13 @@ export function ToolsModal() {
               }
               style={{ padding: '5px 8px', borderRadius: '8px', fontSize: '0.84rem' }}
             >
-              <option value="auto">Theme: Auto</option>
-              <option value="light">☀️ Light Mode</option>
-              <option value="dark">🌙 Dark Mode</option>
-              <option value="calm">🌿 Calm Mode</option>
-              <option value="contrast">⚡ High Contrast</option>
+              <option value="auto">{t("Theme: Auto")}</option>
+              <option value="light">{t("☀️ Light Mode")}</option>
+              <option value="dark">{t("🌙 Dark Mode")}</option>
+              <option value="calm">{t("🌿 Calm Mode")}</option>
+              <option value="contrast">{t("⚡ High Contrast")}</option>
             </select>
-            <button type="button" class="icon-close" onClick={close} aria-label="Close">
+            <button type="button" class="icon-close" onClick={close} aria-label={t("Close")}>
               ×
             </button>
           </div>
@@ -696,35 +709,35 @@ export function ToolsModal() {
               class={`tab-btn ${tab === 'planner' ? 'active' : ''}`}
               onClick={() => setTab('planner')}
             >
-              Planner
+              {t("Planner")}
             </button>
             <button
               type="button"
               class={`tab-btn ${tab === 'mood' ? 'active' : ''}`}
               onClick={() => setTab('mood')}
             >
-              Moods
+              {t("Moods")}
             </button>
             <button
               type="button"
               class={`tab-btn ${tab === 'games' ? 'active' : ''}`}
               onClick={() => setTab('games')}
             >
-              Games
+              {t("Games")}
             </button>
             <button
               type="button"
               class={`tab-btn ${tab === 'aboutme' ? 'active' : ''}`}
               onClick={() => setTab('aboutme')}
             >
-              About me
+              {t("About me")}
             </button>
             <button
               type="button"
               class={`tab-btn ${tab === 'notes' ? 'active' : ''}`}
               onClick={() => setTab('notes')}
             >
-              Notes
+              {t("Notes")}
             </button>
           </div>
 
@@ -742,7 +755,7 @@ export function ToolsModal() {
                 >
                   <div style={{ flex: 1, minWidth: '220px' }}>
                     <strong>
-                      {completedTasks} of {tasks.length} done today
+                      {t("{0} of {1} done today", completedTasks, tasks.length)}
                     </strong>
                     <div
                       class="progress-bar-track"
@@ -756,32 +769,32 @@ export function ToolsModal() {
                       />
                     </div>
                     <div class="hint" style={{ marginTop: '6px' }}>
-                      🎁 <strong>Reward:</strong> {rewardGoal}
+                      🎁 <strong>{t("Reward:")}</strong> {t(rewardGoal)}
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '6px' }}>
                     <button type="button" class="btn secondary sm" onClick={() => void resetPlannerDay()}>
-                      Start a new day
+                      {t("Start a new day")}
                     </button>
                   </div>
                 </div>
               </div>
 
               <form class="section-box" onSubmit={(e) => void handleAddTask(e)}>
-                <strong>Add an activity (drag rows to reorder)</strong>
+                <strong>{t("Add an activity (drag rows to reorder)")}</strong>
                 <div class="inline-row" style={{ marginTop: '8px', flexWrap: 'wrap' }}>
                   <input
                     type="text"
                     value={newTaskEmoji}
                     onInput={(e) => setNewTaskEmoji((e.target as HTMLInputElement).value)}
                     style={{ maxWidth: '70px' }}
-                    placeholder="Emoji"
+                    placeholder={t("Emoji")}
                   />
                   <input
                     type="text"
                     value={newTaskTitle}
                     onInput={(e) => setNewTaskTitle((e.target as HTMLInputElement).value)}
-                    placeholder="Activity name (e.g. Occupational Therapy)"
+                    placeholder={t("Activity name (e.g. Occupational Therapy)")}
                     required
                   />
                   <select
@@ -792,12 +805,12 @@ export function ToolsModal() {
                       )
                     }
                   >
-                    <option value="Morning">Morning</option>
-                    <option value="Afternoon">Afternoon</option>
-                    <option value="Evening">Evening</option>
+                    <option value="Morning">{t("Morning")}</option>
+                    <option value="Afternoon">{t("Afternoon")}</option>
+                    <option value="Evening">{t("Evening")}</option>
                   </select>
                   <button type="submit" class="btn primary sm">
-                    Add
+                    {t("Add")}
                   </button>
                 </div>
               </form>
@@ -840,9 +853,9 @@ export function ToolsModal() {
                             textDecoration: task.done ? 'line-through' : 'none',
                           }}
                         >
-                          {task.title}
+                          {t(task.title)}
                         </div>
-                        <div class="vocab-meta">{task.period}</div>
+                        <div class="vocab-meta">{t(task.period)}</div>
                       </div>
                     </div>
 
@@ -850,17 +863,17 @@ export function ToolsModal() {
                       <button
                         type="button"
                         class="sm-btn"
-                        onClick={() => speakText(task.title)}
-                        title="Speak step"
+                        onClick={() => speakText(t(task.title))}
+                        title={t("Speak step")}
                       >
-                        🔊 Speak
+                        {t("🔊 Speak")}
                       </button>
                       <button
                         type="button"
                         class="sm-btn"
                         disabled={idx === 0}
                         onClick={() => void moveTask(idx, idx - 1)}
-                        title="Move up"
+                        title={t("Move up")}
                       >
                         ↑
                       </button>
@@ -869,7 +882,7 @@ export function ToolsModal() {
                         class="sm-btn"
                         disabled={idx === tasks.length - 1}
                         onClick={() => void moveTask(idx, idx + 1)}
-                        title="Move down"
+                        title={t("Move down")}
                       >
                         ↓
                       </button>
@@ -877,7 +890,7 @@ export function ToolsModal() {
                         type="button"
                         class="sm-btn danger-text"
                         onClick={() => void handleDeleteTask(task.id)}
-                        title="Remove step"
+                        title={t("Remove step")}
                       >
                         ×
                       </button>
@@ -891,16 +904,16 @@ export function ToolsModal() {
           {tab === 'mood' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div class="section-box">
-                <strong>How are you feeling?</strong>
+                <strong>{t("How are you feeling?")}</strong>
                 <div class="inline-row" style={{ margin: '8px 0 12px', flexWrap: 'wrap' }}>
-                  <span class="hint">What is happening around you?</span>
+                  <span class="hint">{t("What is happening around you?")}</span>
                   <select
                     value={selectedTrigger}
                     onChange={(e) => setSelectedTrigger((e.target as HTMLSelectElement).value)}
                   >
                     {MOOD_TRIGGERS.map((tr) => (
                       <option key={tr} value={tr}>
-                        {tr}
+                        {t(tr)}
                       </option>
                     ))}
                   </select>
@@ -913,7 +926,7 @@ export function ToolsModal() {
                     gap: '8px',
                   }}
                 >
-                  {MOODS.map((m) => (
+                  {moods.map((m) => (
                     <button
                       key={m.id}
                       type="button"
@@ -953,7 +966,7 @@ export function ToolsModal() {
                 >
                   <div style={{ flex: 1, minWidth: '220px' }}>
                     <strong>
-                      {activeMoodTip.emoji} Supportive Tip for Feeling {activeMoodTip.label}
+                      {t("{0} Supportive Tip for Feeling {1}", activeMoodTip.emoji, activeMoodTip.label)}
                     </strong>
                     <p style={{ margin: '4px 0 0', fontSize: '0.92rem' }}>{activeMoodTip.tip}</p>
                   </div>
@@ -962,20 +975,20 @@ export function ToolsModal() {
                     class="btn primary sm"
                     onClick={() => speakText(activeMoodTip.copingSpeech)}
                   >
-                    🔊 Speak: "{activeMoodTip.copingSpeech}"
+                    {t("🔊 Speak: \"{0}\"", activeMoodTip.copingSpeech)}
                   </button>
                 </div>
               )}
 
               <div class="section-box">
-                <strong>Mood history ({moodLogs.length} check-ins)</strong>
+                <strong>{t("Mood history ({0} check-ins)", moodLogs.length)}</strong>
                 {moodLogs.length === 0 ? (
                   <p class="hint" style={{ marginTop: '6px' }}>
-                    Tap a feeling above to log it. Your history shows up here.
+                    {t("Tap a feeling above to log it. Your history shows up here.")}
                   </p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
-                    {MOODS.map((m) => {
+                    {moods.map((m) => {
                       const count = moodLogs.filter((l) => l.moodId === m.id).length;
                       if (count === 0) return null;
                       const pct = Math.round((count / moodLogs.length) * 100);
@@ -1011,12 +1024,12 @@ export function ToolsModal() {
 
                     <div class="phrase-list" style={{ marginTop: '8px', maxHeight: '140px' }}>
                       {moodLogs.slice(0, 12).map((entry) => {
-                        const m = MOODS.find((x) => x.id === entry.moodId);
+                        const m = moods.find((x) => x.id === entry.moodId);
                         return (
                           <div key={entry.id} class="vocab-row">
                             <span>
                               {m?.emoji} <strong>{m?.label}</strong> &mdash;{' '}
-                              <span class="hint">{entry.trigger}</span>
+                              <span class="hint">{t(entry.trigger)}</span>
                             </span>
                             <span class="vocab-meta">
                               {new Date(entry.timestamp).toLocaleTimeString([], {
@@ -1043,18 +1056,18 @@ export function ToolsModal() {
                     class={`tab-btn ${gameMode === 'sentence' ? 'active' : ''}`}
                     onClick={() => setGameMode('sentence')}
                   >
-                    🧩 Sentence Builder
+                    {t("🧩 Sentence Builder")}
                   </button>
                   <button
                     type="button"
                     class={`tab-btn ${gameMode === 'emotion' ? 'active' : ''}`}
                     onClick={() => setGameMode('emotion')}
                   >
-                    🎭 Emotion Match
+                    {t("🎭 Emotion Match")}
                   </button>
                 </div>
                 <span class="hint" style={{ fontWeight: 700 }}>
-                  🔥 Streak: {gameStreak}
+                  {t("🔥 Streak: {0}", gameStreak)}
                 </span>
               </div>
 
@@ -1066,7 +1079,7 @@ export function ToolsModal() {
                         {currentChallenge.emoji}
                       </span>
                       <strong style={{ fontSize: '1.05rem' }}>
-                        Goal: {currentChallenge.prompt}
+                        {t("Goal: {0}", currentChallenge.prompt)}
                       </strong>
                     </div>
                     <button
@@ -1074,7 +1087,7 @@ export function ToolsModal() {
                       class="btn secondary sm"
                       onClick={() => speakText(currentChallenge.target.join(' '))}
                     >
-                      🔊 Hear Target Sentence
+                      {t("🔊 Hear Target Sentence")}
                     </button>
                   </div>
 
@@ -1092,7 +1105,7 @@ export function ToolsModal() {
                     }}
                   >
                     {builtWords.length === 0 ? (
-                      <span class="hint">Tap the word tiles below in order to build the sentence...</span>
+                      <span class="hint">{t("Tap the word tiles below in order to build the sentence...")}</span>
                     ) : (
                       builtWords.map((w, idx) => (
                         <span
@@ -1131,7 +1144,7 @@ export function ToolsModal() {
                       class="btn secondary sm"
                       onClick={() => setBuiltWords([])}
                     >
-                      Clear Tiles
+                      {t("Clear Tiles")}
                     </button>
                     <button
                       type="button"
@@ -1140,11 +1153,11 @@ export function ToolsModal() {
                         const nextWord = currentChallenge.target[builtWords.length];
                         if (nextWord) {
                           speakText(nextWord);
-                          toast(`Hint: Next word is "${nextWord}"`, 'info');
+                          toast(t("Hint: Next word is \"{0}\"", nextWord), 'info');
                         }
                       }}
                     >
-                      💡 Hint
+                      {t("💡 Hint")}
                     </button>
                     <button
                       type="button"
@@ -1154,7 +1167,7 @@ export function ToolsModal() {
                         setSentenceIdx((i) => i + 1);
                       }}
                     >
-                      Next Sentence &rarr;
+                      {t("Next Sentence →")}
                     </button>
                   </div>
                 </div>
@@ -1172,7 +1185,7 @@ export function ToolsModal() {
                       class="btn secondary sm"
                       onClick={() => speakText(currentScenario.situation)}
                     >
-                      🔊 Read Story Aloud
+                      {t("🔊 Read Story Aloud")}
                     </button>
                   </div>
 
@@ -1189,7 +1202,7 @@ export function ToolsModal() {
                       gap: '8px',
                     }}
                   >
-                    {MOODS.slice(0, 6).map((m) => (
+                    {moods.slice(0, 6).map((m) => (
                       <button
                         key={m.id}
                         type="button"
@@ -1223,7 +1236,7 @@ export function ToolsModal() {
                         setScenarioIdx((i) => i + 1);
                       }}
                     >
-                      Next Story &rarr;
+                      {t("Next Story →")}
                     </button>
                   </div>
                 </div>
@@ -1235,9 +1248,9 @@ export function ToolsModal() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                 <div>
-                  <strong>About me</strong>
+                  <strong>{t("About me")}</strong>
                   <p class="hint" style={{ margin: '2px 0 0' }}>
-                    A quick page for teachers, nurses and sitters: likes, dislikes, allergies and how I communicate.
+                    {t("A quick page for teachers, nurses and sitters: likes, dislikes, allergies and how I communicate.")}
                   </p>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -1246,14 +1259,14 @@ export function ToolsModal() {
                     class="btn primary sm"
                     onClick={() => speakFullAboutMe()}
                   >
-                    🔊 Speak Full Intro
+                    {t("🔊 Speak Full Intro")}
                   </button>
                   <button
                     type="button"
                     class="btn secondary sm"
                     onClick={() => setEditingAbout(!editingAbout)}
                   >
-                    {editingAbout ? 'Cancel Edit' : '✏️ Edit Profile'}
+                    {editingAbout ? t("Cancel Edit") : t("✏️ Edit Profile")}
                   </button>
                 </div>
               </div>
@@ -1262,7 +1275,7 @@ export function ToolsModal() {
                 <form class="section-box" onSubmit={(e) => void saveAboutMeProfile(e)}>
                   <div class="inline-row">
                     <label class="field" style={{ flex: 1 }}>
-                      <span>My Name / Nickname</span>
+                      <span>{t("My Name / Nickname")}</span>
                       <input
                         type="text"
                         value={aboutMe.name}
@@ -1272,7 +1285,7 @@ export function ToolsModal() {
                       />
                     </label>
                     <label class="field" style={{ maxWidth: '140px' }}>
-                      <span>Age</span>
+                      <span>{t("Age")}</span>
                       <input
                         type="text"
                         value={aboutMe.age}
@@ -1283,10 +1296,10 @@ export function ToolsModal() {
                     </label>
                   </div>
                   <label class="field" style={{ marginTop: '8px' }}>
-                    <span>How I Communicate</span>
+                    <span>{t("How I Communicate")}</span>
                     <input
                       type="text"
-                      value={aboutMe.communicationStyle}
+                      value={t(aboutMe.communicationStyle)}
                       onInput={(e) =>
                         setAboutMe({
                           ...aboutMe,
@@ -1296,40 +1309,40 @@ export function ToolsModal() {
                     />
                   </label>
                   <label class="field" style={{ marginTop: '8px' }}>
-                    <span>Things I Love (Likes & Favorites)</span>
+                    <span>{t("Things I Love (Likes & Favorites)")}</span>
                     <input
                       type="text"
-                      value={aboutMe.likes}
+                      value={t(aboutMe.likes)}
                       onInput={(e) =>
                         setAboutMe({ ...aboutMe, likes: (e.target as HTMLInputElement).value })
                       }
                     />
                   </label>
                   <label class="field" style={{ marginTop: '8px' }}>
-                    <span>Things That Bother Me (Dislikes & Sensory Triggers)</span>
+                    <span>{t("Things That Bother Me (Dislikes & Sensory Triggers)")}</span>
                     <input
                       type="text"
-                      value={aboutMe.dislikes}
+                      value={t(aboutMe.dislikes)}
                       onInput={(e) =>
                         setAboutMe({ ...aboutMe, dislikes: (e.target as HTMLInputElement).value })
                       }
                     />
                   </label>
                   <label class="field" style={{ marginTop: '8px' }}>
-                    <span>Allergies & Medical Information</span>
+                    <span>{t("Allergies & Medical Information")}</span>
                     <input
                       type="text"
-                      value={aboutMe.allergies}
+                      value={t(aboutMe.allergies)}
                       onInput={(e) =>
                         setAboutMe({ ...aboutMe, allergies: (e.target as HTMLInputElement).value })
                       }
                     />
                   </label>
                   <label class="field" style={{ marginTop: '8px' }}>
-                    <span>What Helps Me Calm Down</span>
+                    <span>{t("What Helps Me Calm Down")}</span>
                     <input
                       type="text"
-                      value={aboutMe.calmingStrategies}
+                      value={t(aboutMe.calmingStrategies)}
                       onInput={(e) =>
                         setAboutMe({
                           ...aboutMe,
@@ -1339,10 +1352,10 @@ export function ToolsModal() {
                     />
                   </label>
                   <label class="field" style={{ marginTop: '8px' }}>
-                    <span>Family & Emergency Contacts</span>
+                    <span>{t("Family & Emergency Contacts")}</span>
                     <input
                       type="text"
-                      value={aboutMe.contacts}
+                      value={t(aboutMe.contacts)}
                       onInput={(e) =>
                         setAboutMe({ ...aboutMe, contacts: (e.target as HTMLInputElement).value })
                       }
@@ -1350,7 +1363,7 @@ export function ToolsModal() {
                   </label>
                   <div style={{ marginTop: '12px' }}>
                     <button type="submit" class="btn primary">
-                      Save About Me
+                      {t("Save About Me")}
                     </button>
                   </div>
                 </form>
@@ -1364,28 +1377,28 @@ export function ToolsModal() {
                 >
                   <div class="section-box">
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <strong>Who I am</strong>
+                      <strong>{t("Who I am")}</strong>
                       <button
                         type="button"
                         class="sm-btn"
                         onClick={() =>
                           speakText(
-                            `${aboutMe.name ? `My name is ${aboutMe.name}.` : ''} ${aboutMe.communicationStyle}`,
+                            `${aboutMe.name ? t('My name is {0}.', aboutMe.name) : ''} ${t(aboutMe.communicationStyle)}`,
                           )
                         }
                       >
-                        🔊 Speak
+                        {t("🔊 Speak")}
                       </button>
                     </div>
                     <p style={{ margin: '6px 0 0', fontSize: '0.92rem' }}>
                       {aboutMe.name && (
                         <>
-                          <strong>Name:</strong> {aboutMe.name}{' '}
+                          <strong>{t("Name:")}</strong> {aboutMe.name}{' '}
                           {aboutMe.age ? `(${aboutMe.age})` : ''}
                           <br />
                         </>
                       )}
-                      {aboutMe.communicationStyle}
+                      {t(aboutMe.communicationStyle)}
                     </p>
                   </div>
 
@@ -1394,65 +1407,65 @@ export function ToolsModal() {
                     style={{ borderColor: 'rgba(220, 38, 38, 0.45)', background: 'rgba(254, 226, 226, 0.2)' }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <strong>Allergies and medical</strong>
+                      <strong>{t("Allergies and medical")}</strong>
                       <button
                         type="button"
                         class="sm-btn"
-                        onClick={() => speakText(`Allergies and medical needs: ${aboutMe.allergies}`)}
+                        onClick={() => speakText(t("Allergies and medical needs: {0}", aboutMe.allergies))}
                       >
-                        🔊 Speak
+                        {t("🔊 Speak")}
                       </button>
                     </div>
-                    <p style={{ margin: '6px 0 0', fontSize: '0.92rem' }}>{aboutMe.allergies}</p>
+                    <p style={{ margin: '6px 0 0', fontSize: '0.92rem' }}>{t(aboutMe.allergies)}</p>
                   </div>
 
                   <div class="section-box">
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <strong>Things I like</strong>
+                      <strong>{t("Things I like")}</strong>
                       <button
                         type="button"
                         class="sm-btn"
-                        onClick={() => speakText(`Things I love include ${aboutMe.likes}`)}
+                        onClick={() => speakText(t("Things I love include {0}", aboutMe.likes))}
                       >
-                        🔊 Speak
+                        {t("🔊 Speak")}
                       </button>
                     </div>
-                    <p style={{ margin: '6px 0 0', fontSize: '0.92rem' }}>{aboutMe.likes}</p>
+                    <p style={{ margin: '6px 0 0', fontSize: '0.92rem' }}>{t(aboutMe.likes)}</p>
                   </div>
 
                   <div class="section-box">
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <strong>Things I don't like</strong>
+                      <strong>{t("Things I don't like")}</strong>
                       <button
                         type="button"
                         class="sm-btn"
-                        onClick={() => speakText(`Things that bother me include ${aboutMe.dislikes}`)}
+                        onClick={() => speakText(t("Things that bother me include {0}", aboutMe.dislikes))}
                       >
-                        🔊 Speak
+                        {t("🔊 Speak")}
                       </button>
                     </div>
-                    <p style={{ margin: '6px 0 0', fontSize: '0.92rem' }}>{aboutMe.dislikes}</p>
+                    <p style={{ margin: '6px 0 0', fontSize: '0.92rem' }}>{t(aboutMe.dislikes)}</p>
                   </div>
 
                   <div class="section-box">
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <strong>What helps me calm down</strong>
+                      <strong>{t("What helps me calm down")}</strong>
                       <button
                         type="button"
                         class="sm-btn"
-                        onClick={() => speakText(`What helps me feel calm: ${aboutMe.calmingStrategies}`)}
+                        onClick={() => speakText(t("What helps me feel calm: {0}", aboutMe.calmingStrategies))}
                       >
-                        🔊 Speak
+                        {t("🔊 Speak")}
                       </button>
                     </div>
                     <p style={{ margin: '6px 0 0', fontSize: '0.92rem' }}>
-                      {aboutMe.calmingStrategies}
+                      {t(aboutMe.calmingStrategies)}
                     </p>
                   </div>
 
                   <div class="section-box">
-                    <strong>Contacts</strong>
-                    <p style={{ margin: '6px 0 0', fontSize: '0.92rem' }}>{aboutMe.contacts}</p>
+                    <strong>{t("Contacts")}</strong>
+                    <p style={{ margin: '6px 0 0', fontSize: '0.92rem' }}>{t(aboutMe.contacts)}</p>
                   </div>
                 </div>
               )}
@@ -1467,14 +1480,14 @@ export function ToolsModal() {
                   onSubmit={(e) => void handleUnlockNotes(e)}
                   style={{ maxWidth: '400px' }}
                 >
-                  <strong>Caregiver notes are locked</strong>
+                  <strong>{t("Caregiver notes are locked")}</strong>
                   <p class="hint" style={{ margin: '4px 0 10px' }}>
-                    Enter the passcode to open them.
+                    {t("Enter the passcode to open them.")}
                   </p>
                   <div class="inline-row">
                     <input
                       type="password"
-                      placeholder="Passcode"
+                      placeholder={t("Passcode")}
                       value={passInput}
                       onInput={(e) => {
                         setPassInput((e.target as HTMLInputElement).value);
@@ -1483,7 +1496,7 @@ export function ToolsModal() {
                       autoFocus
                     />
                     <button type="submit" class="btn primary sm" disabled={notesBusy}>
-                      {notesBusy ? 'Unlocking…' : 'Unlock'}
+                      {notesBusy ? t("Unlocking…") : t("Unlock")}
                     </button>
                   </div>
                   {passError && (
@@ -1505,9 +1518,9 @@ export function ToolsModal() {
                       }}
                     >
                       <div>
-                        <strong>Caregiver notes</strong>
+                        <strong>{t("Caregiver notes")}</strong>
                         <p class="hint" style={{ margin: '2px 0 0' }}>
-                          Private, dated notes for parents, teachers and therapists.
+                          {t("Private, dated notes for parents, teachers and therapists.")}
                         </p>
                       </div>
                       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
@@ -1517,7 +1530,7 @@ export function ToolsModal() {
                             class="btn secondary sm"
                             onClick={lockNotes}
                           >
-                            Lock
+                            {t("Lock")}
                           </button>
                         )}
                         {notes.length > 0 && (
@@ -1526,7 +1539,7 @@ export function ToolsModal() {
                             class="btn secondary sm"
                             onClick={() => exportCaregiverNotes()}
                           >
-                            Export (.txt)
+                            {t("Export (.txt)")}
                           </button>
                         )}
                       </div>
@@ -1541,27 +1554,27 @@ export function ToolsModal() {
                         type="password"
                         placeholder={
                           savedPasscode
-                            ? 'New passcode (blank to remove)'
-                            : 'Set a passcode'
+                            ? t("New passcode (blank to remove)")
+                            : t("Set a passcode")
                         }
                         value={newPasscode}
                         onInput={(e) => setNewPasscode((e.target as HTMLInputElement).value)}
                         style={{ maxWidth: '280px' }}
                       />
                       <button type="submit" class="btn secondary sm" disabled={notesBusy}>
-                        {savedPasscode ? 'Update Passcode' : 'Set Passcode'}
+                        {savedPasscode ? t("Update Passcode") : t("Set Passcode")}
                       </button>
                     </form>
                     <p class="hint" style={{ margin: '8px 0 0', lineHeight: 1.5 }}>
                       {savedPasscode
-                        ? 'Notes are encrypted with your passcode. '
-                        : 'Notes aren\'t encrypted yet. Set a passcode to lock and encrypt them. '}
-                      Use 8 or more characters if you can. If you forget it, the notes can't be recovered.
+                        ? t("Notes are encrypted with your passcode. ")
+                        : t("Notes aren't encrypted yet. Set a passcode to lock and encrypt them. ")}
+                      {t("Use 8 or more characters if you can. If you forget it, the notes can't be recovered.")}
                     </p>
                   </div>
 
                   <form class="section-box" onSubmit={(e) => void handleAddNote(e)}>
-                    <strong>New note</strong>
+                    <strong>{t("New note")}</strong>
                     <div class="inline-row" style={{ marginTop: '8px', flexWrap: 'wrap' }}>
                       <select
                         value={noteCategory}
@@ -1571,43 +1584,43 @@ export function ToolsModal() {
                           )
                         }
                       >
-                        <option value="Communication">Communication</option>
-                        <option value="Sensory & Behavior">Sensory & Behavior</option>
-                        <option value="Medical & Health">Medical & Health</option>
-                        <option value="School & Therapy">School & Therapy</option>
+                        <option value="Communication">{t("Communication")}</option>
+                        <option value="Sensory & Behavior">{t("Sensory & Behavior")}</option>
+                        <option value="Medical & Health">{t("Medical & Health")}</option>
+                        <option value="School & Therapy">{t("School & Therapy")}</option>
                       </select>
                       <input
                         type="text"
-                        placeholder="Write observation note..."
+                        placeholder={t("Write observation note...")}
                         value={noteText}
                         onInput={(e) => setNoteText((e.target as HTMLInputElement).value)}
                         style={{ flex: 1, minWidth: '220px' }}
                         required
                       />
                       <button type="submit" class="btn primary sm">
-                        Save Note
+                        {t("Save Note")}
                       </button>
                     </div>
                   </form>
 
                   <div class="inline-row">
-                    <span class="hint">Filter by category:</span>
+                    <span class="hint">{t("Filter by category:")}</span>
                     <select
                       value={noteFilter}
                       onChange={(e) => setNoteFilter((e.target as HTMLSelectElement).value)}
                     >
-                      <option value="All">All Categories ({notes.length})</option>
-                      <option value="Communication">Communication</option>
-                      <option value="Sensory & Behavior">Sensory & Behavior</option>
-                      <option value="Medical & Health">Medical & Health</option>
-                      <option value="School & Therapy">School & Therapy</option>
+                      <option value="All">{t("All Categories ({0})", notes.length)}</option>
+                      <option value="Communication">{t("Communication")}</option>
+                      <option value="Sensory & Behavior">{t("Sensory & Behavior")}</option>
+                      <option value="Medical & Health">{t("Medical & Health")}</option>
+                      <option value="School & Therapy">{t("School & Therapy")}</option>
                     </select>
                   </div>
 
                   <div class="phrase-list" style={{ maxHeight: '240px' }}>
                     {notes.filter((n) => noteFilter === 'All' || n.category === noteFilter).length ===
                     0 ? (
-                      <p class="hint">No caregiver notes recorded yet.</p>
+                      <p class="hint">{t("No caregiver notes recorded yet.")}</p>
                     ) : (
                       notes
                         .filter((n) => noteFilter === 'All' || n.category === noteFilter)
@@ -1615,7 +1628,7 @@ export function ToolsModal() {
                           <div key={n.id} class="vocab-row">
                             <div class="vocab-info">
                               <div class="vocab-title">
-                                <span class="active-pill">{n.category}</span>
+                                <span class="active-pill">{t(n.category)}</span>
                                 <span class="vocab-meta">
                                   {new Date(n.createdAt).toLocaleString()}
                                 </span>
@@ -1627,7 +1640,7 @@ export function ToolsModal() {
                               class="sm-btn danger-text"
                               onClick={() => void handleDeleteNote(n.id)}
                             >
-                              Delete
+                              {t("Delete")}
                             </button>
                           </div>
                         ))

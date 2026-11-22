@@ -1,3 +1,4 @@
+import { t } from '../i18n/t';
 import { useState } from 'preact/hooks';
 import { installStarter, openVocab, panel, toast, vocab } from '../state';
 import { updateSettings } from '../settings';
@@ -20,7 +21,7 @@ export function PageSetModal({ isOnboarding = false }: PageSetModalProps) {
     (SUPPORTED_LANGUAGES.some((l) => l.code === currentLang) ? currentLang : 'en') as LangCode,
   );
   const uiPref = settings.value.uiLanguage;
-  const t = PAGESET_STRINGS[uiPref && uiPref !== 'auto' ? normalizeLangCode(uiPref) : selectedLocale];
+  const ps = PAGESET_STRINGS[uiPref && uiPref !== 'auto' ? normalizeLangCode(uiPref) : selectedLocale];
   const [filter, setFilter] = useState<'all' | 'bridgewords' | 'arasaac'>('all');
   const [installing, setInstalling] = useState(false);
 
@@ -45,7 +46,7 @@ export function PageSetModal({ isOnboarding = false }: PageSetModalProps) {
       const id = await installStarter(selectedLocale, selectedSize);
       await openVocab(id);
       updateSettings({ onboarded: true });
-      toast(t.loaded(starterName(selectedSize, selectedLocale), chosen.grid), 'success');
+      toast(ps.loaded(starterName(selectedSize, selectedLocale), chosen.grid), 'success');
       panel.value = null;
     } catch (e) {
       toast(e instanceof Error ? e.message : String(e), 'error');
@@ -60,18 +61,18 @@ export function PageSetModal({ isOnboarding = false }: PageSetModalProps) {
         class="modal-card pageset-modal"
         role="dialog"
         aria-modal="true"
-        aria-label={t.title}
+        aria-label={ps.title}
         onClick={(e) => e.stopPropagation()}
       >
         <div class="pageset-header">
-          <h1 class="pageset-title">{t.title}</h1>
+          <h1 class="pageset-title">{ps.title}</h1>
           <p class="pageset-subtitle">
-            {t.subtitle}
+            {ps.subtitle}
           </p>
         </div>
 
         <div class="pageset-toolbar">
-          <div class="pageset-segmented" role="tablist" aria-label="Page set category">
+          <div class="pageset-segmented" role="tablist" aria-label={t("Page set category")}>
             <button
               type="button"
               class={`pageset-seg-btn ${filter === 'all' ? 'active' : ''}`}
@@ -79,7 +80,7 @@ export function PageSetModal({ isOnboarding = false }: PageSetModalProps) {
               role="tab"
               aria-selected={filter === 'all'}
             >
-              {t.all}
+              {ps.all}
             </button>
             <button
               type="button"
@@ -88,7 +89,7 @@ export function PageSetModal({ isOnboarding = false }: PageSetModalProps) {
               role="tab"
               aria-selected={filter === 'bridgewords'}
             >
-              BridgeWords
+              {t("BridgeWords")}
             </button>
             <button
               type="button"
@@ -97,12 +98,12 @@ export function PageSetModal({ isOnboarding = false }: PageSetModalProps) {
               role="tab"
               aria-selected={filter === 'arasaac'}
             >
-              {t.strict}
+              {ps.strict}
             </button>
           </div>
 
           <label class="pageset-lang-label">
-            <span>{t.language}</span>
+            <span>{ps.language}</span>
             <select
               value={selectedLocale}
               onChange={(e) => setSelectedLocale((e.target as HTMLSelectElement).value as LangCode)}
@@ -137,7 +138,7 @@ export function PageSetModal({ isOnboarding = false }: PageSetModalProps) {
               >
                 <div class="pageset-card-main">
                   <h2 class="pageset-card-title">{starterName(p.size, selectedLocale)}</h2>
-                  <p class="pageset-card-desc">{t.desc[p.size]}</p>
+                  <p class="pageset-card-desc">{ps.desc[p.size]}</p>
                 </div>
                 <div class={`pageset-badge ${p.badge ? 'is-arasaac' : ''}`}>
                   {p.badge ? `${p.grid} • ${p.badge}` : p.grid}
@@ -154,7 +155,7 @@ export function PageSetModal({ isOnboarding = false }: PageSetModalProps) {
             onClick={handleBack}
             disabled={installing}
           >
-            {t.back}
+            {ps.back}
           </button>
           <button
             type="button"
@@ -162,7 +163,7 @@ export function PageSetModal({ isOnboarding = false }: PageSetModalProps) {
             onClick={() => void handleNext()}
             disabled={installing}
           >
-            {installing ? t.loading : t.next}
+            {installing ? ps.loading : ps.next}
           </button>
         </div>
       </div>

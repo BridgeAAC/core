@@ -1,3 +1,4 @@
+import { t } from '../i18n/t';
 import { useEffect, useState } from 'preact/hooks';
 import {
   clearHistory,
@@ -116,25 +117,25 @@ export function MessagesModal() {
     setCustomLabel('');
     setCustomSpeech('');
     setShowAddCustom(false);
-    toast('Added to Soundboard', 'success');
+    toast(t("Added to Soundboard"), 'success');
   }
 
   async function handleDeleteCustomItem(id: string) {
     const next = customItems.filter((i) => i.id !== id);
     setCustomItems(next);
     await kvSet('soundboard_custom', next);
-    toast('Removed soundboard button', 'info');
+    toast(t("Removed soundboard button"), 'info');
   }
 
   function addPhrase(e: Event) {
     e.preventDefault();
-    const t = newPhrase.trim();
-    if (!t) return;
-    const next = [t, ...saved.filter((m) => m !== t)];
+    const txt = newPhrase.trim();
+    if (!txt) return;
+    const next = [txt, ...saved.filter((m) => m !== txt)];
     savedMessages.value = next;
     void kvSet('savedMessages', next);
     setNewPhrase('');
-    toast('Saved phrase', 'success');
+    toast(t("Saved phrase"), 'success');
   }
 
   const lang = resolveActiveLang(vocab.value?.locale) as LangCode;
@@ -154,7 +155,7 @@ export function MessagesModal() {
         class="modal-card modal-lg"
         role="dialog"
         aria-modal="true"
-        aria-label="Customizable Phrases and Soundboard"
+        aria-label={t("Customizable Phrases and Soundboard")}
         onClick={(e) => e.stopPropagation()}
       >
         <div class="modal-header">
@@ -174,7 +175,7 @@ export function MessagesModal() {
               {u.saved} ({saved.length})
             </button>
           </div>
-          <button type="button" class="icon-close" onClick={close} aria-label="Close">
+          <button type="button" class="icon-close" onClick={close} aria-label={t("Close")}>
             ×
           </button>
         </div>
@@ -249,25 +250,25 @@ export function MessagesModal() {
 
               {showAddCustom && (
                 <form class="section-box" onSubmit={(e) => void handleAddSoundboardItem(e)}>
-                  <strong>New soundboard button</strong>
+                  <strong>{t("New soundboard button")}</strong>
                   <div class="inline-row" style={{ marginTop: '8px', flexWrap: 'wrap' }}>
                     <input
                       type="text"
-                      placeholder="Emoji (e.g. 🍕)"
+                      placeholder={t("Emoji (e.g. 🍕)")}
                       value={customEmoji}
                       onInput={(e) => setCustomEmoji((e.target as HTMLInputElement).value)}
                       style={{ maxWidth: '80px' }}
                     />
                     <input
                       type="text"
-                      placeholder="Button label (e.g. Pizza please)"
+                      placeholder={t("Button label (e.g. Pizza please)")}
                       value={customLabel}
                       onInput={(e) => setCustomLabel((e.target as HTMLInputElement).value)}
                       required
                     />
                     <input
                       type="text"
-                      placeholder="Spoken sentence (optional)"
+                      placeholder={t("Spoken sentence (optional)")}
                       value={customSpeech}
                       onInput={(e) => setCustomSpeech((e.target as HTMLInputElement).value)}
                     />
@@ -281,10 +282,10 @@ export function MessagesModal() {
                       <option value="needs">{cats.needs}</option>
                       <option value="feelings">{cats.feelings}</option>
                       <option value="quick">{cats.quick}</option>
-                      <option value="custom">Custom</option>
+                      <option value="custom">{t("Custom")}</option>
                     </select>
                     <button type="submit" class="btn primary sm">
-                      Save Button
+                      {t("Save Button")}
                     </button>
                   </div>
                 </form>
@@ -344,7 +345,7 @@ export function MessagesModal() {
                         style={{ background: 'rgba(255,255,255,0.75)', color: '#0f172a' }}
                         onClick={() => {
                           insertIntoMessage(item.speech);
-                          toast(`Added "${item.label}"`, 'info');
+                          toast(t("Added \"{0}\"", item.label), 'info');
                         }}
                       >
                         {u.toBar}
@@ -368,24 +369,24 @@ export function MessagesModal() {
             <div class="editor-grid">
               <div class="editor-col">
                 <div class="section-head">
-                  <strong>Saved phrases ({saved.length})</strong>
+                  <strong>{t("Saved phrases ({0})", saved.length)}</strong>
                 </div>
                 <form class="inline-row" onSubmit={addPhrase}>
                   <input
                     type="text"
-                    placeholder="Type a phrase to save..."
+                    placeholder={t("Type a phrase to save...")}
                     value={newPhrase}
                     onInput={(e) => setNewPhrase((e.target as HTMLInputElement).value)}
                   />
                   <button type="submit" class="btn secondary sm">
-                    Save
+                    {t("Save")}
                   </button>
                 </form>
 
                 <div class="phrase-list">
                   {saved.length === 0 ? (
                     <p class="hint">
-                      No saved phrases yet. Tap Save on the message bar or add one above.
+                      {t("No saved phrases yet. Tap Save on the message bar or add one above.")}
                     </p>
                   ) : (
                     saved.map((phrase) => (
@@ -397,7 +398,7 @@ export function MessagesModal() {
                             class="btn primary sm"
                             onClick={() => speakText(phrase)}
                           >
-                            Speak
+                            {t("Speak")}
                           </button>
                           <button
                             type="button"
@@ -407,14 +408,14 @@ export function MessagesModal() {
                               close();
                             }}
                           >
-                            Insert
+                            {t("Insert")}
                           </button>
                           <button
                             type="button"
                             class="sm-btn danger-text"
                             onClick={() => removeSavedMessage(phrase)}
                           >
-                            Remove
+                            {t("Remove")}
                           </button>
                         </div>
                       </div>
@@ -425,17 +426,17 @@ export function MessagesModal() {
 
               <div class="editor-col">
                 <div class="section-head">
-                  <strong>Recent ({hist.length})</strong>
+                  <strong>{t("Recent ({0})", hist.length)}</strong>
                   {hist.length > 0 && (
                     <button type="button" class="sm-btn" onClick={() => clearHistory()}>
-                      Clear
+                      {t("Clear")}
                     </button>
                   )}
                 </div>
 
                 <div class="phrase-list">
                   {hist.length === 0 ? (
-                    <p class="hint">Spoken messages will appear here.</p>
+                    <p class="hint">{t("Spoken messages will appear here.")}</p>
                   ) : (
                     hist.map((item) => (
                       <div key={item} class="vocab-row">
@@ -446,7 +447,7 @@ export function MessagesModal() {
                             class="btn primary sm"
                             onClick={() => speakText(item)}
                           >
-                            Speak
+                            {t("Speak")}
                           </button>
                           <button
                             type="button"
@@ -456,7 +457,7 @@ export function MessagesModal() {
                               close();
                             }}
                           >
-                            Use
+                            {t("Use")}
                           </button>
                         </div>
                       </div>

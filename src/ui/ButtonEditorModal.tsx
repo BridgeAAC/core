@@ -1,3 +1,4 @@
+import { t } from '../i18n/t';
 import { useState } from 'preact/hooks';
 import type { Action, Button, ImageRef } from '../model';
 import { clipboardButton, editTarget, movingButton, toast, undo, vocab } from '../state';
@@ -59,7 +60,7 @@ export function ButtonEditorModal() {
       }
     }
     saveButton(page!.id, draft);
-    toast(existing ? 'Button updated' : 'Button added', 'success');
+    toast(existing ? t("Button updated") : t("Button added"), 'success');
     close();
   }
 
@@ -145,7 +146,7 @@ export function ButtonEditorModal() {
       const resp = await fetch(
         `https://api.arasaac.org/v1/pictograms/${encodeURIComponent(arasaacLang)}/search/${encodeURIComponent(q)}`,
       );
-      if (!resp.ok) throw new Error('No symbols found');
+      if (!resp.ok) throw new Error(t("No symbols found"));
       const data = (await resp.json()) as ArasaacHit[];
       const hits = Array.isArray(data) ? data.slice(0, 24) : [];
       setArasaacResults(hits);
@@ -182,12 +183,12 @@ export function ButtonEditorModal() {
         class="modal-card modal-lg"
         role="dialog"
         aria-modal="true"
-        aria-label={existing ? 'Edit Button' : 'Create Button'}
+        aria-label={existing ? t("Edit Button") : t("Create Button")}
         onClick={(e) => e.stopPropagation()}
       >
         <div class="modal-header">
-          <h2>{existing ? `Edit Button (${draft.label || 'Untitled'})` : 'Add Button'}</h2>
-          <button type="button" class="icon-close" onClick={close} aria-label="Close">
+          <h2>{existing ? t("Edit Button ({0})", draft.label || 'Untitled') : t("Add Button")}</h2>
+          <button type="button" class="icon-close" onClick={close} aria-label={t("Close")}>
             ×
           </button>
         </div>
@@ -217,7 +218,7 @@ export function ButtonEditorModal() {
                       textDecoration: draft.style.underline ? 'underline' : undefined,
                     }}
                   >
-                    {draft.label || 'Button Label'}
+                    {draft.label || t("Button Label")}
                   </span>
                   {ensureButtonImage(draft) && (
                     <span class="btn-media">
@@ -228,18 +229,18 @@ export function ButtonEditorModal() {
               </div>
 
               <label class="field">
-                <span>Button Label</span>
+                <span>{t("Button Label")}</span>
                 <input
                   type="text"
                   value={draft.label}
                   onInput={(e) => setDraft({ ...draft, label: (e.target as HTMLInputElement).value })}
-                  placeholder="e.g. want, cookie, PEOPLE"
+                  placeholder={t("e.g. want, cookie, PEOPLE")}
                   autoFocus
                 />
               </label>
 
               <label class="field">
-                <span>Spoken / Inserted Text (optional, defaults to label)</span>
+                <span>{t("Spoken / Inserted Text (optional, defaults to label)")}</span>
                 <input
                   type="text"
                   value={draft.message ?? ''}
@@ -247,12 +248,12 @@ export function ButtonEditorModal() {
                     const val = (e.target as HTMLInputElement).value;
                     setDraft({ ...draft, message: val ? val : undefined });
                   }}
-                  placeholder={draft.label || 'Same as label'}
+                  placeholder={draft.label || t("Same as label")}
                 />
               </label>
 
               <label class="field">
-                <span>Phonetic Pronunciation (optional)</span>
+                <span>{t("Phonetic Pronunciation (optional)")}</span>
                 <input
                   type="text"
                   value={draft.pronunciation ?? ''}
@@ -260,35 +261,35 @@ export function ButtonEditorModal() {
                     const val = (e.target as HTMLInputElement).value;
                     setDraft({ ...draft, pronunciation: val ? val : undefined });
                   }}
-                  placeholder="Custom phonetic spelling"
+                  placeholder={t("Custom phonetic spelling")}
                 />
               </label>
 
               <label class="field">
-                <span>Button Action</span>
+                <span>{t("Button Action")}</span>
                 <select
                   value={currentActionKind(draft.actions)}
                   onChange={(e) => setPrimaryActionType((e.target as HTMLSelectElement).value)}
                 >
-                  <option value="insert">Add word to Message Window</option>
-                  <option value="insert_attach">Attach suffix/punctuation (no space before)</option>
-                  <option value="speak">Speak immediately (do not add to window)</option>
-                  <option value="navigate">Navigate to Page (Folder)</option>
-                  <option value="insert_and_navigate">Add word and Navigate to Page</option>
-                  <option value="speakWindow">Speak entire Message Window</option>
-                  <option value="back">Go Back to previous page</option>
-                  <option value="home">Go to Home page</option>
-                  <option value="clear">Clear Message Window</option>
-                  <option value="deleteWord">Delete Last Word</option>
-                  <option value="backspace">Backspace One Character</option>
-                  <option value="keyboard">Open On-Screen Keyboard</option>
+                  <option value="insert">{t("Add word to Message Window")}</option>
+                  <option value="insert_attach">{t("Attach suffix/punctuation (no space before)")}</option>
+                  <option value="speak">{t("Speak immediately (do not add to window)")}</option>
+                  <option value="navigate">{t("Navigate to Page (Folder)")}</option>
+                  <option value="insert_and_navigate">{t("Add word and Navigate to Page")}</option>
+                  <option value="speakWindow">{t("Speak entire Message Window")}</option>
+                  <option value="back">{t("Go Back to previous page")}</option>
+                  <option value="home">{t("Go to Home page")}</option>
+                  <option value="clear">{t("Clear Message Window")}</option>
+                  <option value="deleteWord">{t("Delete Last Word")}</option>
+                  <option value="backspace">{t("Backspace One Character")}</option>
+                  <option value="keyboard">{t("Open On-Screen Keyboard")}</option>
                 </select>
               </label>
 
               {navAction && (
                 <div class="sub-card">
                   <label class="field">
-                    <span>Target Page</span>
+                    <span>{t("Target Page")}</span>
                     <select
                       value={navAction.pageId}
                       onChange={(e) => {
@@ -311,7 +312,7 @@ export function ButtonEditorModal() {
                   <div class="inline-row">
                     <input
                       type="text"
-                      placeholder="Or create new page..."
+                      placeholder={t("Or create new page...")}
                       value={newPageName}
                       onInput={(e) => setNewPageName((e.target as HTMLInputElement).value)}
                       onKeyDown={(e) => {
@@ -334,10 +335,10 @@ export function ButtonEditorModal() {
                           ),
                         });
                         setNewPageName('');
-                        toast('Created new target page', 'success');
+                        toast(t("Created new target page"), 'success');
                       }}
                     >
-                      + Create & Link
+                      {t("+ Create & Link")}
                     </button>
                   </div>
                 </div>
@@ -347,7 +348,7 @@ export function ButtonEditorModal() {
             <div class="editor-col">
               <div class="section-box">
                 <div class="section-head">
-                  <strong>Picture</strong>
+                  <strong>{t("Picture")}</strong>
                   <div class="edit-actions">
                     <button
                       type="button"
@@ -359,14 +360,14 @@ export function ButtonEditorModal() {
                         })
                       }
                     >
-                      Auto Icon
+                      {t("Auto Icon")}
                     </button>
                     <button
                       type="button"
                       class="sm-btn"
                       onClick={() => setDraft({ ...draft, image: 'none:' })}
                     >
-                      Text Only
+                      {t("Text Only")}
                     </button>
                   </div>
                 </div>
@@ -377,7 +378,7 @@ export function ButtonEditorModal() {
                     class={`tab-btn ${picTab === 'emoji' ? 'active' : ''}`}
                     onClick={() => setPicTab('emoji')}
                   >
-                    Emoji
+                    {t("Emoji")}
                   </button>
                   <button
                     type="button"
@@ -387,14 +388,14 @@ export function ButtonEditorModal() {
                       if (!arasaacQuery && draft.label) setArasaacQuery(draft.label);
                     }}
                   >
-                    ARASAAC Symbols
+                    {t("ARASAAC Symbols")}
                   </button>
                   <button
                     type="button"
                     class={`tab-btn ${picTab === 'upload' ? 'active' : ''}`}
                     onClick={() => setPicTab('upload')}
                   >
-                    Upload Photo
+                    {t("Upload Photo")}
                   </button>
                 </div>
 
@@ -425,19 +426,19 @@ export function ButtonEditorModal() {
                     {!settings.value.onlineSymbolSearch ? (
                       <div class="section-box">
                         <p class="hint" style={{ margin: '0 0 8px', lineHeight: 1.5 }}>
-                          Symbol search looks words up on ARASAAC (api.arasaac.org), so whatever you type gets sent there. It's off until you turn it on.
+                          {t("Symbol search looks words up on ARASAAC (api.arasaac.org), so whatever you type gets sent there. It's off until you turn it on.")}
                         </p>
                         <button
                           type="button"
                           class="sm-btn"
                           onClick={() => updateSettings({ onlineSymbolSearch: true })}
                         >
-                          Turn on symbol search
+                          {t("Turn on symbol search")}
                         </button>
                       </div>
                     ) : (
                     <p class="hint" style={{ margin: '0 0 6px' }}>
-                      Searches go to ARASAAC.
+                      {t("Searches go to ARASAAC.")}
                     </p>
                     )}
                     <div class="inline-row">
@@ -451,7 +452,7 @@ export function ButtonEditorModal() {
                             void searchArasaac();
                           }
                         }}
-                        placeholder="Search ARASAAC symbols (e.g. eat, happy)..."
+                        placeholder={t("Search ARASAAC symbols (e.g. eat, happy)...")}
                       />
                       <button
                         type="button"
@@ -459,7 +460,7 @@ export function ButtonEditorModal() {
                         disabled={!settings.value.onlineSymbolSearch}
                         onClick={() => void searchArasaac()}
                       >
-                        {arasaacBusy ? '...' : 'Search'}
+                        {arasaacBusy ? '...' : t("Search")}
                       </button>
                     </div>
                     <div class="arasaac-grid">
@@ -496,14 +497,14 @@ export function ButtonEditorModal() {
                       }
                     />
                     <p class="hint">
-                      Stored on your device and included when exporting backups.
+                      {t("Stored on your device and included when exporting backups.")}
                     </p>
                   </div>
                 )}
               </div>
 
               <div class="section-box">
-                <strong>Color</strong>
+                <strong>{t("Color")}</strong>
                 <div class="wordclass-grid">
                   {Object.entries(WORD_CLASS).map(([k, sw]) => (
                     <button
@@ -532,7 +533,7 @@ export function ButtonEditorModal() {
                     type="color"
                     value={draft.style.bg || '#ffffff'}
                     onInput={(e) => updateStyle({ bg: (e.target as HTMLInputElement).value })}
-                    title="Custom background color"
+                    title={t("Custom background color")}
                   />
                 </div>
               </div>
@@ -546,7 +547,7 @@ export function ButtonEditorModal() {
                       updateStyle({ labelOnTop: (e.target as HTMLInputElement).checked })
                     }
                   />
-                  Label on top
+                  {t("Label on top")}
                 </label>
                 <label class="check-label">
                   <input
@@ -554,7 +555,7 @@ export function ButtonEditorModal() {
                     checked={draft.style.bold !== false}
                     onChange={(e) => updateStyle({ bold: (e.target as HTMLInputElement).checked })}
                   />
-                  Bold
+                  {t("Bold")}
                 </label>
                 <label class="check-label">
                   <input
@@ -567,11 +568,11 @@ export function ButtonEditorModal() {
                       })
                     }
                   />
-                  Hidden button
+                  {t("Hidden button")}
                 </label>
                 <div class="span-controls">
                   <label>
-                    Cols:
+                    {t("Cols:")}
                     <input
                       type="number"
                       min={1}
@@ -586,7 +587,7 @@ export function ButtonEditorModal() {
                     />
                   </label>
                   <label>
-                    Rows:
+                    {t("Rows:")}
                     <input
                       type="number"
                       min={1}
@@ -613,14 +614,14 @@ export function ButtonEditorModal() {
                   class="btn danger"
                   onClick={() => {
                     deleteButton(page.id, existing.id);
-                    toast(`Deleted "${existing.label || 'button'}"`, 'info', {
+                    toast(t("Deleted \"{0}\"", existing.label || 'button'), 'info', {
                       label: 'Undo',
                       run: () => undo(),
                     }, 6000);
                     close();
                   }}
                 >
-                  Delete
+                  {t("Delete")}
                 </button>
                 <button
                   type="button"
@@ -628,11 +629,11 @@ export function ButtonEditorModal() {
                   onClick={() => {
                     clipboardButton.value = structuredClone(draft);
                     movingButton.value = null;
-                    toast('Copied. Tap any empty space to paste it.', 'info');
+                    toast(t("Copied. Tap any empty space to paste it."), 'info');
                     close();
                   }}
                 >
-                  Copy
+                  {t("Copy")}
                 </button>
                 <button
                   type="button"
@@ -647,16 +648,16 @@ export function ButtonEditorModal() {
                     close();
                   }}
                 >
-                  Move
+                  {t("Move")}
                 </button>
               </div>
             )}
             <div class="footer-right">
               <button type="button" class="btn secondary" onClick={close}>
-                Cancel
+                {t("Cancel")}
               </button>
               <button type="submit" class="btn primary">
-                Save Button
+                {t("Save Button")}
               </button>
             </div>
           </div>

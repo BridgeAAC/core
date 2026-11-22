@@ -1,3 +1,4 @@
+import { t } from '../i18n/t';
 import type { SqlJsStatic } from 'sql.js';
 
 let sqlPromise: Promise<SqlJsStatic> | null = null;
@@ -13,7 +14,7 @@ function unwrapInit(mod: unknown): InitFn {
     m?.Module,
   ];
   for (const c of candidates) if (typeof c === 'function') return c as InitFn;
-  throw new Error('Could not load the SQLite engine (sql.js).');
+  throw new Error(t("Could not load the SQLite engine (sql.js)."));
 }
 
 async function load(): Promise<SqlJsStatic> {

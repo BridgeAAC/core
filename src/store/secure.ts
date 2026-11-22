@@ -1,3 +1,4 @@
+import { t } from '../i18n/t';
 export const PBKDF2_ITERATIONS = 310_000;
 const HASH_PREFIX = 'pbkdf2-sha256';
 
@@ -30,7 +31,7 @@ export function b64ToBytes(b64: string): Uint8Array {
 
 async function pbkdf2Bits(secret: string, salt: Uint8Array, iterations: number): Promise<Uint8Array> {
   const sc = subtle();
-  if (!sc) throw new Error('Web Crypto is unavailable in this browser.');
+  if (!sc) throw new Error(t("Web Crypto is unavailable in this browser."));
   const base = await sc.importKey('raw', new TextEncoder().encode(secret), 'PBKDF2', false, [
     'deriveBits',
   ]);
@@ -125,7 +126,7 @@ export async function deriveEncryptionKey(
   iter = PBKDF2_ITERATIONS,
 ): Promise<DerivedKey> {
   const sc = subtle();
-  if (!sc) throw new Error('Web Crypto is unavailable in this browser.');
+  if (!sc) throw new Error(t("Web Crypto is unavailable in this browser."));
   const base = await sc.importKey('raw', new TextEncoder().encode(passcode), 'PBKDF2', false, [
     'deriveKey',
   ]);
@@ -141,7 +142,7 @@ export async function deriveEncryptionKey(
 
 export async function encryptJson(value: unknown, dk: DerivedKey): Promise<EncryptedEnvelope> {
   const sc = subtle();
-  if (!sc) throw new Error('Web Crypto is unavailable in this browser.');
+  if (!sc) throw new Error(t("Web Crypto is unavailable in this browser."));
   const iv = randomBytes(12);
   const pt = new TextEncoder().encode(JSON.stringify(value));
   const ct = await sc.encrypt({ name: 'AES-GCM', iv: iv as BufferSource }, dk.key, pt);

@@ -29,7 +29,8 @@
     "store:assets": "node scripts/generate-store-assets.mjs",
     "wiki:sync": "node scripts/sync-wiki.mjs",
     "brand:assets": "node scripts/generate-brand-assets.mjs",
-    "social:assets": "npm run build && node scripts/generate-social-assets.mjs"
+    "social:assets": "npm run build && node scripts/generate-social-assets.mjs",
+    "i18n:check": "node scripts/i18n-catalog.mjs"
   },
   "dependencies": {
     "@capacitor-community/text-to-speech": "8.0.2",

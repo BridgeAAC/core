@@ -1,3 +1,4 @@
+import { t } from '../i18n/t';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import {
   boot,
@@ -74,23 +75,23 @@ function PinModal() {
         class="modal-card"
         role="dialog"
         aria-modal="true"
-        aria-label="Enter PIN"
+        aria-label={t("Enter PIN")}
         onClick={(e) => e.stopPropagation()}
       >
         <div class="modal-header">
-          <h2>Enter PIN</h2>
+          <h2>{t("Enter PIN")}</h2>
           <button
             type="button"
             class="icon-close"
             onClick={() => (pinRequest.value = null)}
-            aria-label="Close"
+            aria-label={t("Close")}
           >
             ×
           </button>
         </div>
         <form class="modal-body" onSubmit={(e) => void submit(e)}>
           <label class="field">
-            <span>Enter your PIN to unlock:</span>
+            <span>{t("Enter your PIN to unlock:")}</span>
             <input
               type="password"
               value={entered}
@@ -104,10 +105,10 @@ function PinModal() {
           {err && <p class="alert-box error">{err}</p>}
           <div class="modal-footer" style={{ marginTop: '12px' }}>
             <button type="button" class="btn secondary" onClick={() => (pinRequest.value = null)}>
-              Cancel
+              {t("Cancel")}
             </button>
             <button type="submit" class="btn primary" disabled={checking}>
-              {checking ? 'Checking…' : 'Unlock'}
+              {checking ? t("Checking…") : t("Unlock")}
             </button>
           </div>
         </form>
@@ -252,15 +253,15 @@ export function App() {
     }
     anyWin.__bridgeImportFromNative = async (name: string, path: string) => {
       if (!path) {
-        toast(`Couldn't read "${name}". If it's in iCloud, open it once in Files so it downloads, then try again.`, 'error', undefined, 9000);
+        toast(t("Couldn't read \"{0}\". If it's in iCloud, open it once in Files so it downloads, then try again.", name), 'error', undefined, 9000);
         return;
       }
       try {
         const res = await fetch(path, { cache: 'no-store' });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) throw new Error(t("HTTP {0}", res.status));
         await importBoardFileWithToasts({ name, bytes: new Uint8Array(await res.arrayBuffer()) });
       } catch {
-        toast(`Couldn't read "${name}". Try picking it again.`, 'error');
+        toast(t("Couldn't read \"{0}\". Try picking it again.", name), 'error');
       }
     };
     try {
@@ -298,7 +299,7 @@ export function App() {
   if (fatalError.value) {
     return (
       <div class="boot-screen error">
-        <h1>BridgeAAC Error</h1>
+        <h1>{t("BridgeAAC Error")}</h1>
         <p>{fatalError.value}</p>
       </div>
     );
@@ -308,7 +309,7 @@ export function App() {
     return (
       <div class="boot-screen">
         <div class="spinner" />
-        <p>Loading...</p>
+        <p>{t("Loading...")}</p>
       </div>
     );
   }

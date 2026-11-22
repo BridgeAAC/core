@@ -1,3 +1,4 @@
+import { t } from '../i18n/t';
 import { useMemo, useState } from 'preact/hooks';
 import type { Button, ID, Page, Vocabulary } from '../model';
 import {
@@ -99,7 +100,7 @@ export function PagesModal() {
         class="modal-card modal-lg"
         role="dialog"
         aria-modal="true"
-        aria-label="Find a Word and Page Browser"
+        aria-label={t("Find a Word and Page Browser")}
         onClick={(e) => e.stopPropagation()}
       >
         <div class="modal-header">
@@ -109,17 +110,17 @@ export function PagesModal() {
               class={`tab-btn ${tab === 'find' ? 'active' : ''}`}
               onClick={() => setTab('find')}
             >
-              Find a Word
+              {t("Find a Word")}
             </button>
             <button
               type="button"
               class={`tab-btn ${tab === 'pages' ? 'active' : ''}`}
               onClick={() => setTab('pages')}
             >
-              All Pages ({v.pages.length})
+              {t("All Pages ({0})", v.pages.length)}
             </button>
           </div>
-          <button type="button" class="icon-close" onClick={close} aria-label="Close">
+          <button type="button" class="icon-close" onClick={close} aria-label={t("Close")}>
             ×
           </button>
         </div>
@@ -128,24 +129,23 @@ export function PagesModal() {
           {tab === 'find' ? (
             <div>
               <label class="field">
-                <span>Search for a word to see the button sequence from Home:</span>
+                <span>{t("Search for a word to see the button sequence from Home:")}</span>
                 <input
                   type="search"
                   value={wordQuery}
                   onInput={(e) => setWordQuery((e.target as HTMLInputElement).value)}
-                  placeholder="Search word or phrase..."
+                  placeholder={t("Search word or phrase...")}
                   autoFocus
                 />
               </label>
 
               {wordQuery.trim() === '' ? (
                 <p class="hint" style={{ marginTop: '12px' }}>
-                  Enter a word above to search across {v.pages.length.toLocaleString()} pages in "
-                  {v.name}".
+                  {t("Enter a word above to search across {0} pages in \" {1}\".", v.pages.length.toLocaleString(), v.name)}
                 </p>
               ) : wordHits.length === 0 ? (
                 <p class="hint" style={{ marginTop: '12px' }}>
-                  No buttons matching "{wordQuery}" were found.
+                  {t("No buttons matching \"{0}\" were found.", wordQuery)}
                 </p>
               ) : (
                 <div class="find-results">
@@ -167,7 +167,7 @@ export function PagesModal() {
                           <div class="find-path">
                             {fullSteps ? (
                               <span>
-                                Home &gt;{' '}
+                                {t("Home >")}{' '}
                                 {fullSteps.map((lbl, idx) => (
                                   <span key={idx} class="path-pill">
                                     {idx > 0 ? ' > ' : ''}
@@ -176,7 +176,7 @@ export function PagesModal() {
                                 ))}
                               </span>
                             ) : (
-                              <span class="hint">Page "{page.name}"</span>
+                              <span class="hint">{t("Page \"{0}\"", page.name)}</span>
                             )}
                           </div>
                         </div>
@@ -185,9 +185,9 @@ export function PagesModal() {
                             type="button"
                             class="btn primary sm"
                             onClick={() => startGuide(page, button)}
-                            title="Go to Home and highlight each button step by step"
+                            title={t("Go to Home and highlight each button step by step")}
                           >
-                            Guide Me
+                            {t("Guide Me")}
                           </button>
                           <button
                             type="button"
@@ -197,7 +197,7 @@ export function PagesModal() {
                               close();
                             }}
                           >
-                            Open Page
+                            {t("Open Page")}
                           </button>
                         </div>
                       </div>
@@ -211,7 +211,7 @@ export function PagesModal() {
               <div class="inline-row" style={{ marginBottom: '10px' }}>
                 <input
                   type="search"
-                  placeholder="Filter pages by name..."
+                  placeholder={t("Filter pages by name...")}
                   value={pageQuery}
                   onInput={(e) => setPageQuery((e.target as HTMLInputElement).value)}
                 />
@@ -221,14 +221,14 @@ export function PagesModal() {
                     checked={showHiddenPages}
                     onChange={(e) => setShowHiddenPages((e.target as HTMLInputElement).checked)}
                   />
-                  Show template/hidden pages
+                  {t("Show template/hidden pages")}
                 </label>
               </div>
 
               <div class="inline-row" style={{ marginBottom: '12px' }}>
                 <input
                   type="text"
-                  placeholder="New page name..."
+                  placeholder={t("New page name...")}
                   value={newPageTitle}
                   onInput={(e) => setNewPageTitle((e.target as HTMLInputElement).value)}
                 />
@@ -242,11 +242,11 @@ export function PagesModal() {
                     });
                     setNewPageTitle('');
                     gotoPage(id);
-                    toast(`Created page "${name}"`, 'success');
+                    toast(t("Created page \"{0}\"", name), 'success');
                     close();
                   }}
                 >
-                  + Add Page
+                  {t("+ Add Page")}
                 </button>
               </div>
 
@@ -259,11 +259,11 @@ export function PagesModal() {
                       <div class="vocab-info">
                         <div class="vocab-title">
                           <strong>{p.name}</strong>
-                          {isHome && <span class="active-pill">Home</span>}
-                          {p.hidden && <span class="source-tag">Hidden</span>}
+                          {isHome && <span class="active-pill">{t("Home")}</span>}
+                          {p.hidden && <span class="source-tag">{t("Hidden")}</span>}
                         </div>
                         <div class="vocab-meta">
-                          {p.cols}×{p.rows} grid, {p.buttons.length} buttons
+                          {t("{0}×{1} grid, {2} buttons", p.cols, p.rows, p.buttons.length)}
                         </div>
                       </div>
                       <div class="vocab-actions">
@@ -275,7 +275,7 @@ export function PagesModal() {
                             close();
                           }}
                         >
-                          Open
+                          {t("Open")}
                         </button>
                         {!isHome && mode.value === 'edit' && (
                           <button
@@ -283,10 +283,10 @@ export function PagesModal() {
                             class="sm-btn"
                             onClick={() => {
                               setHomePage(p.id);
-                              toast(`Set "${p.name}" as Home page`, 'success');
+                              toast(t("Set \"{0}\" as Home page", p.name), 'success');
                             }}
                           >
-                            Set Home
+                            {t("Set Home")}
                           </button>
                         )}
                         {mode.value === 'edit' && (
@@ -296,10 +296,10 @@ export function PagesModal() {
                               class="sm-btn"
                               onClick={() => {
                                 const copyId = duplicatePage(p.id);
-                                if (copyId) toast(`Duplicated "${p.name}"`, 'success');
+                                if (copyId) toast(t("Duplicated \"{0}\"", p.name), 'success');
                               }}
                             >
-                              Duplicate
+                              {t("Duplicate")}
                             </button>
                             {v.pages.length > 1 && (
                               <button
@@ -307,10 +307,10 @@ export function PagesModal() {
                                 class="sm-btn danger-text"
                                 onClick={() => {
                                   deletePage(p.id);
-                                  toast(`Deleted page "${p.name}"`, 'info');
+                                  toast(t("Deleted page \"{0}\"", p.name), 'info');
                                 }}
                               >
-                                Delete
+                                {t("Delete")}
                               </button>
                             )}
                           </>
@@ -347,7 +347,7 @@ export function PageSettingsModal() {
     if (cols !== pg!.cols || rows !== pg!.rows) {
       resizePage(pg!.id, rows, cols);
     }
-    toast('Page settings updated', 'success');
+    toast(t("Page settings updated"), 'success');
     close();
   }
 
@@ -357,19 +357,19 @@ export function PageSettingsModal() {
         class="modal-card"
         role="dialog"
         aria-modal="true"
-        aria-label="Page Grid Settings"
+        aria-label={t("Page Grid Settings")}
         onClick={(e) => e.stopPropagation()}
       >
         <div class="modal-header">
-          <h2>Page settings</h2>
-          <button type="button" class="icon-close" onClick={close} aria-label="Close">
+          <h2>{t("Page settings")}</h2>
+          <button type="button" class="icon-close" onClick={close} aria-label={t("Close")}>
             ×
           </button>
         </div>
 
         <form class="modal-body" onSubmit={handleSave}>
           <label class="field">
-            <span>Page Name</span>
+            <span>{t("Page Name")}</span>
             <input
               type="text"
               value={name}
@@ -379,7 +379,7 @@ export function PageSettingsModal() {
 
           <div class="inline-row" style={{ marginTop: '12px' }}>
             <label class="field" style={{ flex: 1 }}>
-              <span>Columns (1-30)</span>
+              <span>{t("Columns (1-30)")}</span>
               <input
                 type="number"
                 min={1}
@@ -389,7 +389,7 @@ export function PageSettingsModal() {
               />
             </label>
             <label class="field" style={{ flex: 1 }}>
-              <span>Rows (1-30)</span>
+              <span>{t("Rows (1-30)")}</span>
               <input
                 type="number"
                 min={1}
@@ -401,7 +401,7 @@ export function PageSettingsModal() {
           </div>
 
           <label class="field" style={{ marginTop: '12px' }}>
-            <span>Page Background Color</span>
+            <span>{t("Page Background Color")}</span>
             <div class="inline-row">
               <input
                 type="color"
@@ -416,17 +416,17 @@ export function PageSettingsModal() {
                   close();
                 }}
               >
-                Reset to Default
+                {t("Reset to Default")}
               </button>
             </div>
           </label>
 
           <div class="modal-footer" style={{ marginTop: '16px' }}>
             <button type="button" class="btn secondary" onClick={close}>
-              Cancel
+              {t("Cancel")}
             </button>
             <button type="submit" class="btn primary">
-              Save
+              {t("Save")}
             </button>
           </div>
         </form>

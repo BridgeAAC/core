@@ -1,3 +1,4 @@
+import { t } from '../i18n/t';
 import { zipSync } from 'fflate';
 import type { Database } from 'sql.js';
 import {
@@ -94,7 +95,7 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
       entries = safeUnzip(data, (name) => name.endsWith('.c4v') || name.endsWith('.c4s'));
     } catch (e) {
       throw new Error(
-        `Could not read archive (${e instanceof Error ? e.message : 'corrupt ZIP file'}).`,
+        t("Could not read archive ({0}).", e instanceof Error ? e.message : 'corrupt ZIP file'),
       );
     }
     let sawDamagedC4v = false;
@@ -117,12 +118,12 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
     }
     if (!c4vBytes && sawDamagedC4v) {
       throw new Error(
-        'The vocabulary inside this file is damaged. Try exporting it again from the original app.',
+        t("The vocabulary inside this file is damaged. Try exporting it again from the original app."),
       );
     }
     if (!c4vBytes) {
       throw new Error(
-        "This file doesn't have a vocabulary inside it. Export it again from the original app, using the full backup option, and try that file.",
+        t("This file doesn't have a vocabulary inside it. Export it again from the original app, using the full backup option, and try that file."),
       );
     }
   } else if (isSqliteHeader(data)) {
@@ -130,13 +131,13 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
     c4vEntryName = opts.filename ?? 'Vocabulary.c4v';
   } else {
     throw new Error(
-      "This doesn't look like a .ce file. It may have been damaged while copying. Try sending it to the device again.",
+      t("This doesn't look like a .ce file. It may have been damaged while copying. Try sending it to the device again."),
     );
   }
 
   if (!isSqliteHeader(c4vBytes)) {
     throw new Error(
-      'The vocabulary inside this file is damaged. Try exporting it again from the original app.',
+      t("The vocabulary inside this file is damaged. Try exporting it again from the original app."),
     );
   }
 
@@ -148,13 +149,13 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
   try {
     db = new SQL.Database(c4vBytes);
   } catch (e) {
-    throw new Error(`Could not open SQLite database: ${e instanceof Error ? e.message : String(e)}`);
+    throw new Error(t("Could not open SQLite database: {0}", e instanceof Error ? e.message : String(e)));
   }
 
   try {
     const tables = tableSet(db);
     if (!tables.has('pages') || !tables.has('buttons')) {
-      throw new Error('This SQLite database is missing required tables (pages, buttons).');
+      throw new Error(t("This SQLite database is missing required tables (pages, buttons)."));
     }
 
     progress(0.25, 'Reading vocabulary metadata and styles…');
@@ -909,7 +910,7 @@ export async function importCe(data: Uint8Array, opts: ImportOptions = {}): Prom
     }
 
     if (pages.length === 0) {
-      throw new Error('No pages were found in this vocabulary archive.');
+      throw new Error(t("No pages were found in this vocabulary archive."));
     }
 
     let homePageId: ID =

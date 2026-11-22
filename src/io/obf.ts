@@ -1,3 +1,4 @@
+import { t } from '../i18n/t';
 import { zipSync } from 'fflate';
 import type {
   Action,
@@ -257,10 +258,10 @@ export async function importObf(
       typeof jsonTextOrObj === 'string' ? JSON.parse(jsonTextOrObj) : jsonTextOrObj
     ) as ObfBoard;
   } catch (e) {
-    throw new Error(`Invalid OBF JSON (${e instanceof Error ? e.message : 'parse error'}).`);
+    throw new Error(t("Invalid OBF JSON ({0}).", e instanceof Error ? e.message : 'parse error'));
   }
   if (!board || typeof board !== 'object' || (!Array.isArray(board.buttons) && !board.grid)) {
-    throw new Error('This file is not a valid Open Board Format (.obf) board.');
+    throw new Error(t("This file is not a valid Open Board Format (.obf) board."));
   }
 
   const assets: AssetBlob[] = [];
@@ -323,14 +324,14 @@ export async function importObf(
 
 export async function importObz(data: Uint8Array, opts: ImportOptions = {}): Promise<ImportResult> {
   if (!isZip(data)) {
-    throw new Error('Not a valid .obz ZIP archive.');
+    throw new Error(t("Not a valid .obz ZIP archive."));
   }
   const vocabId = opts.vocabId ?? `obz-${newId()}`;
   let entries: Record<string, Uint8Array>;
   try {
     entries = safeUnzip(data);
   } catch (e) {
-    throw new Error(`Could not unpack .obz archive (${e instanceof Error ? e.message : 'corrupt zip'}).`);
+    throw new Error(t("Could not unpack .obz archive ({0}).", e instanceof Error ? e.message : 'corrupt zip'));
   }
 
   const byNormPath = new Map<string, Uint8Array>();
@@ -363,7 +364,7 @@ export async function importObz(data: Uint8Array, opts: ImportOptions = {}): Pro
   }
 
   if (rawBoards.size === 0) {
-    throw new Error('No .obf boards were found inside this .obz archive.');
+    throw new Error(t("No .obf boards were found inside this .obz archive."));
   }
 
   if (manifest?.paths?.boards) {

@@ -89,3 +89,29 @@ describe('phrases soundboard', () => {
     }
   });
 });
+
+describe('interface translations', () => {
+  it('every t("...") string in the app has a translation in every language', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const walk = (d: string): string[] =>
+      fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)]));
+    const keys = new Set<string>();
+    for (const f of walk('src').filter((f) => /\.tsx?$/.test(f) && !f.includes('locales'))) {
+      const src = fs.readFileSync(f, 'utf8');
+      for (const m of src.matchAll(/\bt\(\s*("(?:[^"\\]|\\.)*")/g)) keys.add(JSON.parse(m[1]));
+      for (const m of src.matchAll(/\bt\(\s*'((?:[^'\\]|\\.)*)'/g)) keys.add(m[1].replace(/\\'/g, "'"));
+    }
+    expect(keys.size).toBeGreaterThan(600);
+    for (const lang of ['es', 'fr', 'de', 'pt', 'it', 'ar', 'zh', 'hi', 'tl']) {
+      const dict = (await import(`../src/locales/${lang}.ts`)).default as Record<string, string>;
+      const missing = [...keys].filter((k) => /\p{L}/u.test(k) && dict[k] === undefined);
+      expect(missing, lang).toEqual([]);
+      for (const k of keys) {
+        if (dict[k] === undefined) continue;
+        const ph = (s: string) => (s.match(/\{\d+\}/g) ?? []).sort().join();
+        expect(ph(dict[k]), `${lang}: ${k}`).toBe(ph(k));
+      }
+    }
+  });
+});

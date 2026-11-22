@@ -336,7 +336,7 @@ async function addStarter(re) {
   const v = await sel.locator('option').evaluateAll((os, src) => os.find((o) => new RegExp(src).test(o.textContent))?.value, re.source);
   await sel.selectOption(v);
   await wait(200);
-  await mbtn(/Add Starter Board/).tap();
+  await mbtn(/Add Starter Board|Agregar tablero inicial|إضافة لوحة بداية/).tap();
   await wait(800);
   if (await page.locator('.pageset-modal').count()) {
     const sel2 = page.locator('.pageset-modal select');

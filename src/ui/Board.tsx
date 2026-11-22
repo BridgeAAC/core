@@ -1,3 +1,4 @@
+import { t } from '../i18n/t';
 import { signal } from '@preact/signals';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Button } from '../model';
@@ -163,7 +164,7 @@ export function Board() {
   ]);
 
   if (!page) {
-    return <main class="board-empty">No page loaded.</main>;
+    return <main class="board-empty">{t("No page loaded.")}</main>;
   }
 
   function playClickBeep() {
@@ -323,12 +324,12 @@ export function Board() {
     const ok = transferButton(mv.pageId, mv.buttonId, page!.id, row, col);
     if (ok) {
       movingButton.value = null;
-      toast(`Moved "${mv.label}"`, 'success');
+      toast(t("Moved \"{0}\"", mv.label), 'success');
     } else {
       toast(
         mv.pageId === page!.id
-          ? "That spot doesn't fit this button. Try an empty space."
-          : 'Pick an empty space on this page.',
+          ? t("That spot doesn't fit this button. Try an empty space.")
+          : t("Pick an empty space on this page."),
         'error',
       );
     }
@@ -409,7 +410,7 @@ export function Board() {
     }
     if (!target) return;
     if (!moveButton(page!.id, b.id, target.row, target.col)) {
-      toast("That spot doesn't fit this button. Try an empty space.", 'error');
+      toast(t("That spot doesn't fit this button. Try an empty space."), 'error');
     }
   }
 
@@ -433,7 +434,7 @@ export function Board() {
       {guidedPath.value.length > 0 && (
         <div class="guided-banner" role="status">
           <span>
-            <strong>Find Word guide:</strong> Tap{' '}
+            <strong>{t("Find Word guide:")}</strong>{' '}{t("Tap")}{' '}
             {guidedPath.value.map((step, i) => (
               <span key={i} class={`guided-step ${i === 0 ? 'current' : ''}`}>
                 {i > 0 ? ' > ' : ''}"{step.label}"
@@ -441,7 +442,7 @@ export function Board() {
             ))}
           </span>
           <button type="button" class="sm-btn" onClick={() => (guidedPath.value = [])}>
-            Exit Guide
+            {t("Exit Guide")}
           </button>
         </div>
       )}
@@ -582,7 +583,7 @@ export function Board() {
                 borderColor,
                 fontFamily: st.fontFamily || undefined,
               }}
-              aria-label={resolved.label || resolved.message || 'Button'}
+              aria-label={resolved.label || resolved.message || t("Button")}
             >
               {hasNav && <span class="folder-corner" aria-hidden="true" />}
               <span
@@ -601,7 +602,7 @@ export function Board() {
                   <ButtonPicture image={resolved.image} alt={resolved.label} />
                 </span>
               )}
-              {isEdit && resolved.hidden && <span class="hidden-tag">Hidden</span>}
+              {isEdit && resolved.hidden && <span class="hidden-tag">{t("Hidden")}</span>}
             </button>
           );
         })}
@@ -625,8 +626,8 @@ export function Board() {
                     placeMoving(row, col);
                   } else if (clip) {
                     pasteButton(page.id, clip, row, col);
-                    toast(`Pasted "${clip.label}"`, 'success', {
-                      label: 'Done pasting',
+                    toast(t("Pasted \"{0}\"", clip.label), 'success', {
+                      label: t('Done pasting'),
                       run: () => (clipboardButton.value = null),
                     });
                   } else {
@@ -635,17 +636,17 @@ export function Board() {
                 }}
                 title={
                   moving
-                    ? `Put "${moving.label}" at row ${row + 1}, column ${col + 1}`
+                    ? t("Put \"{0}\" at row {1}, column {2}", moving.label, row + 1, col + 1)
                     : clip
-                      ? `Paste "${clip.label}" at row ${row + 1}, column ${col + 1}`
-                      : `Add a button at row ${row + 1}, column ${col + 1}`
+                      ? t("Paste \"{0}\" at row {1}, column {2}", clip.label, row + 1, col + 1)
+                      : t("Add a button at row {0}, column {1}", row + 1, col + 1)
                 }
                 aria-label={
                   moving
-                    ? `Put "${moving.label}" here`
+                    ? t("Put \"{0}\" here", moving.label)
                     : clip
-                      ? `Paste "${clip.label}" here`
-                      : `Add a button at row ${row + 1}, column ${col + 1}`
+                      ? t("Paste \"{0}\" here", clip.label)
+                      : t("Add a button at row {0}, column {1}", row + 1, col + 1)
                 }
               >
                 <span>{verb}</span>
@@ -666,13 +667,13 @@ export function Board() {
       </div>
 
       {cfg.access === 'scan' && !isEdit && (
-        <div class="switch-bar" role="region" aria-label="Switch scanning controls">
+        <div class="switch-bar" role="region" aria-label={t("Switch scanning controls")}>
           <button
             type="button"
             class="switch-pad select-pad"
             onClick={() => scannerRef.current?.select()}
           >
-            Switch 1: Select ({cfg.switchSelectKeys.join(', ')})
+            {t("Switch 1: Select ({0})", cfg.switchSelectKeys.join(', '))}
           </button>
           {cfg.scanMode === 'step' && (
             <button
@@ -680,7 +681,7 @@ export function Board() {
               class="switch-pad next-pad"
               onClick={() => scannerRef.current?.next()}
             >
-              Switch 2: Step Next ({cfg.switchNextKeys.join(', ')})
+              {t("Switch 2: Step Next ({0})", cfg.switchNextKeys.join(', '))}
             </button>
           )}
         </div>

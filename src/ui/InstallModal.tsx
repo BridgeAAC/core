@@ -1,3 +1,4 @@
+import { t } from '../i18n/t';
 import { useEffect, useState } from 'preact/hooks';
 import { precacheVocabularyAudio } from '../engine/speech';
 import { ttsCacheCount } from '../store/db';
@@ -95,7 +96,7 @@ export function InstallModal() {
       await deferredInstallPrompt.prompt();
       const choice = await deferredInstallPrompt.userChoice;
       if (choice?.outcome === 'accepted') {
-        toast('BridgeAAC installed.', 'success');
+        toast(t("BridgeAAC installed."), 'success');
         deferredInstallPrompt = null;
         setCanPromptInstall(false);
       }
@@ -116,10 +117,10 @@ export function InstallModal() {
       });
       const count = await ttsCacheCount();
       setCachedCount(count);
-      toast(`Saved ${res.cached} voice clips for offline use.`, 'success');
-      speakText('Offline voice audio is ready.');
+      toast(t("Saved {0} voice clips for offline use.", res.cached), 'success');
+      speakText(t("Offline voice audio is ready."));
     } catch {
-      toast("Couldn't save audio for every word. Try again.", 'error');
+      toast(t("Couldn't save audio for every word. Try again."), 'error');
     } finally {
       setCaching(null);
     }
@@ -131,12 +132,12 @@ export function InstallModal() {
         class="modal-card modal-lg"
         role="dialog"
         aria-modal="true"
-        aria-label="Install BridgeAAC"
+        aria-label={t("Install BridgeAAC")}
         onClick={(e) => e.stopPropagation()}
       >
         <div class="modal-header">
-          <h2>{storeApp ? 'Offline setup' : 'Install'}</h2>
-          <button type="button" class="icon-close" onClick={close} aria-label="Close">
+          <h2>{storeApp ? t("Offline setup") : t("Install")}</h2>
+          <button type="button" class="icon-close" onClick={close} aria-label={t("Close")}>
             ×
           </button>
         </div>
@@ -160,12 +161,12 @@ export function InstallModal() {
               }}
             >
               <div>
-                <strong>Offline setup</strong>
+                <strong>{t("Offline setup")}</strong>
                 <p class="hint" style={{ margin: '3px 0 0' }}>
                   {standalone
-                    ? 'Running as an installed app on this device.'
-                    : 'Add BridgeAAC to your home screen and save audio for offline use.'}{' '}
-                  ({cachedCount} phrases cached)
+                    ? t("Running as an installed app on this device.")
+                    : t("Add BridgeAAC to your home screen and save audio for offline use.")}{' '}
+                  {t("({0} phrases cached)", cachedCount)}
                 </p>
               </div>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -175,7 +176,7 @@ export function InstallModal() {
                     class="btn primary sm"
                     onClick={() => void triggerNativeInstallPrompt()}
                   >
-                    Install App
+                    {t("Install App")}
                   </button>
                 )}
                 <button
@@ -185,8 +186,8 @@ export function InstallModal() {
                   onClick={() => void makeOfflineReady()}
                 >
                   {caching
-                    ? `Saving Audio (${caching.done}/${caching.total})...`
-                    : 'Save Voices Offline'}
+                    ? t("Saving Audio ({0}/{1})...", caching.done, caching.total)
+                    : t("Save Voices Offline")}
                 </button>
                 <button
                   type="button"
@@ -195,7 +196,7 @@ export function InstallModal() {
                     panel.value = 'vocabs';
                   }}
                 >
-                  Import a board
+                  {t("Import a board")}
                 </button>
               </div>
             </div>
@@ -215,9 +216,9 @@ export function InstallModal() {
             }}
           >
             <div>
-              <strong>App Store &amp; Google Play Beta</strong>
+              <strong>{t("App Store & Google Play Beta")}</strong>
               <p class="hint" style={{ margin: '3px 0 0' }}>
-                Want to install BridgeAAC from Apple TestFlight or Google Play instead of the web?
+                {t("Want to install BridgeAAC from Apple TestFlight or Google Play instead of the web?")}
               </p>
             </div>
             <a
@@ -225,7 +226,7 @@ export function InstallModal() {
               href="/try"
               style={{ textDecoration: 'none' }}
             >
-              Get Store Apps (/try)
+              {t("Get Store Apps (/try)")}
             </a>
           </div>
 
@@ -235,89 +236,86 @@ export function InstallModal() {
               class={`tab-btn ${platformTab === 'ios' ? 'active' : ''}`}
               onClick={() => setPlatformTab('ios')}
             >
-              iPad & iPhone
+              {t("iPad & iPhone")}
             </button>
             <button
               type="button"
               class={`tab-btn ${platformTab === 'android' ? 'active' : ''}`}
               onClick={() => setPlatformTab('android')}
             >
-              Android
+              {t("Android")}
             </button>
             <button
               type="button"
               class={`tab-btn ${platformTab === 'windows' ? 'active' : ''}`}
               onClick={() => setPlatformTab('windows')}
             >
-              Windows
+              {t("Windows")}
             </button>
             <button
               type="button"
               class={`tab-btn ${platformTab === 'mac' ? 'active' : ''}`}
               onClick={() => setPlatformTab('mac')}
             >
-              macOS
+              {t("macOS")}
             </button>
             <button
               type="button"
               class={`tab-btn ${platformTab === 'linux' ? 'active' : ''}`}
               onClick={() => setPlatformTab('linux')}
             >
-              Linux & Chromebook
+              {t("Linux & Chromebook")}
             </button>
           </div>
 
           {platformTab === 'ios' && (
             <div class="settings-section">
               <div class="section-box">
-                <strong>iPad and iPhone</strong>
+                <strong>{t("iPad and iPhone")}</strong>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '8px 0 12px' }}>
                   <a
                     class="btn primary sm"
                     href="/try#ios"
                     style={{ textDecoration: 'none' }}
                   >
-                    Install via Apple TestFlight
+                    {t("Install via Apple TestFlight")}
                   </a>
                 </div>
                 <p class="hint" style={{ margin: '0 0 10px' }}>
-                  Or install directly from Safari without TestFlight:
+                  {t("Or install directly from Safari without TestFlight:")}
                 </p>
                 <ol style={{ margin: '0 0 10px 18px', lineHeight: 1.65 }}>
                   <li>
-                    Open <strong>https://bridgeaac.org</strong> in <strong>Safari</strong>.
+                    {t("Open")}{' '}<strong>{t("https://bridgeaac.org")}</strong> in <strong>{t("Safari")}</strong>.
                   </li>
                   <li>
-                    Tap the <strong>Share</strong> button in the Safari toolbar.
+                    {t("Tap the")}{' '}<strong>{t("Share")}</strong>{' '}{t("button in the Safari toolbar.")}
                   </li>
                   <li>
-                    Tap <strong>Add to Home Screen</strong>, then tap <strong>Add</strong>.
+                    {t("Tap")}{' '}<strong>{t("Add to Home Screen")}</strong>{t(", then tap")}{' '}<strong>{t("Add")}</strong>.
                   </li>
                   <li>
-                    Open <strong>BridgeAAC</strong> from your Home Screen. It runs full-screen and
-                    works offline.
+                    {t("Open")}{' '}<strong>{t("BridgeAAC")}</strong>{' '}{t("from your Home Screen. It runs full-screen and works offline.")}
                   </li>
                 </ol>
               </div>
 
               <div class="section-box">
-                <strong>Better iPad voices</strong>
+                <strong>{t("Better iPad voices")}</strong>
                 <p class="hint" style={{ margin: '4px 0 0' }}>
-                  To use Apple's higher quality offline voices on iPad, open{' '}
+                  {t("To use Apple's higher quality offline voices on iPad, open")}{' '}
                   <strong>
-                    Settings &gt; Accessibility &gt; Spoken Content &gt; Voices &gt; English
+                    {t("Settings > Accessibility > Spoken Content > Voices > English")}
                   </strong>{' '}
-                  and download an Enhanced or Premium voice, or download a Piper Neural voice in
-                  BridgeAAC Settings.
+                  {t("and download an Enhanced or Premium voice, or download a Piper Neural voice in BridgeAAC Settings.")}
                 </p>
               </div>
 
               <div class="section-box">
-                <strong>Locking the iPad to BridgeAAC</strong>
+                <strong>{t("Locking the iPad to BridgeAAC")}</strong>
                 <p class="hint" style={{ margin: '4px 0 0' }}>
-                  To keep the user inside BridgeAAC, turn on{' '}
-                  <strong>Settings &gt; Accessibility &gt; Guided Access</strong> in iPadOS, then
-                  triple-click the Top Button while BridgeAAC is open.
+                  {t("To keep the user inside BridgeAAC, turn on")}{' '}
+                  <strong>{t("Settings > Accessibility > Guided Access")}</strong>{' '}{t("in iPadOS, then triple-click the Top Button while BridgeAAC is open.")}
                 </p>
               </div>
             </div>
@@ -326,9 +324,9 @@ export function InstallModal() {
           {platformTab === 'android' && (
             <div class="settings-section">
               <div class="section-box">
-                <strong>Android</strong>
+                <strong>{t("Android")}</strong>
                 <p class="hint" style={{ margin: '4px 0 10px' }}>
-                  Grab the APK from the latest GitHub release, or install from Chrome:
+                  {t("Grab the APK from the latest GitHub release, or install from Chrome:")}
                 </p>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
                   <a
@@ -336,7 +334,7 @@ export function InstallModal() {
                     href="/try#android"
                     style={{ textDecoration: 'none' }}
                   >
-                    Join Google Play Beta
+                    {t("Join Google Play Beta")}
                   </a>
                   <a
                     class="btn secondary sm"
@@ -346,7 +344,7 @@ export function InstallModal() {
                     rel="noopener noreferrer"
                     style={{ textDecoration: 'none' }}
                   >
-                    ⬇ Download Android APK (BridgeAAC-android.apk)
+                    {t("⬇ Download Android APK (BridgeAAC-android.apk)")}
                   </a>
                   {canPromptInstall && (
                     <button
@@ -354,7 +352,7 @@ export function InstallModal() {
                       class="btn secondary sm"
                       onClick={() => void triggerNativeInstallPrompt()}
                     >
-                      Install Web App on This Device
+                      {t("Install Web App on This Device")}
                     </button>
                   )}
                   <a
@@ -364,18 +362,17 @@ export function InstallModal() {
                     rel="noopener noreferrer"
                     style={{ textDecoration: 'none' }}
                   >
-                    View Latest GitHub Release
+                    {t("View Latest GitHub Release")}
                   </a>
                 </div>
                 <ol style={{ margin: '4px 0 0 18px', lineHeight: 1.65 }}>
                   <li>
-                    <strong>APK Installer:</strong> Tap{' '}
-                    <strong>Download Android APK</strong> above and open{' '}
-                    <code>BridgeAAC-android.apk</code> on your Android tablet or phone.
+                    <strong>{t("APK Installer:")}</strong>{' '}{t("Tap")}{' '}
+                    <strong>{t("Download Android APK")}</strong>{' '}{t("above and open")}{' '}
+                    <code>{t("BridgeAAC-android.apk")}</code>{' '}{t("on your Android tablet or phone.")}
                   </li>
                   <li>
-                    <strong>From Chrome:</strong> Open <strong>https://bridgeaac.org</strong> in
-                    Chrome and tap <strong>Install App</strong> from the browser menu.
+                    <strong>{t("From Chrome:")}</strong>{' '}{t("Open")}{' '}<strong>{t("https://bridgeaac.org")}</strong>{' '}{t("in Chrome and tap")}{' '}<strong>{t("Install App")}</strong>{' '}{t("from the browser menu.")}
                   </li>
                 </ol>
               </div>
@@ -385,9 +382,9 @@ export function InstallModal() {
           {platformTab === 'windows' && (
             <div class="settings-section">
               <div class="section-box">
-                <strong>Windows</strong>
+                <strong>{t("Windows")}</strong>
                 <p class="hint" style={{ margin: '4px 0 10px' }}>
-                  From the latest GitHub release:
+                  {t("From the latest GitHub release:")}
                 </p>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
                   <a
@@ -398,7 +395,7 @@ export function InstallModal() {
                     rel="noopener noreferrer"
                     style={{ textDecoration: 'none' }}
                   >
-                    ⬇ Download Windows Installer (.exe)
+                    {t("⬇ Download Windows Installer (.exe)")}
                   </a>
                   <a
                     class="btn secondary sm"
@@ -408,7 +405,7 @@ export function InstallModal() {
                     rel="noopener noreferrer"
                     style={{ textDecoration: 'none' }}
                   >
-                    ⬇ Download Portable (.exe)
+                    {t("⬇ Download Portable (.exe)")}
                   </a>
                   {canPromptInstall && (
                     <button
@@ -416,7 +413,7 @@ export function InstallModal() {
                       class="btn secondary sm"
                       onClick={() => void triggerNativeInstallPrompt()}
                     >
-                      Install via Browser
+                      {t("Install via Browser")}
                     </button>
                   )}
                   <a
@@ -426,17 +423,16 @@ export function InstallModal() {
                     rel="noopener noreferrer"
                     style={{ textDecoration: 'none' }}
                   >
-                    View Latest GitHub Release
+                    {t("View Latest GitHub Release")}
                   </a>
                 </div>
                 <ol style={{ margin: '4px 0 0 18px', lineHeight: 1.65 }}>
                   <li>
-                    <strong>Windows Installer (.exe):</strong> Runs offline and associates{' '}
-                    <code>.ce</code>, <code>.obz</code>, and <code>.bridge</code> vocabulary files
-                    with BridgeAAC.
+                    <strong>{t("Windows Installer (.exe):")}</strong>{' '}{t("Runs offline and associates")}{' '}
+                    <code>.ce</code>, <code>.obz</code>{t(", and")}{' '}<code>{t(".bridge")}</code>{' '}{t("vocabulary files with BridgeAAC.")}
                   </li>
                   <li>
-                    <strong>Windows Portable (.exe):</strong> No install needed, handy on school or clinic computers.
+                    <strong>{t("Windows Portable (.exe):")}</strong>{' '}{t("No install needed, handy on school or clinic computers.")}
                   </li>
                 </ol>
               </div>
@@ -446,9 +442,9 @@ export function InstallModal() {
           {platformTab === 'mac' && (
             <div class="settings-section">
               <div class="section-box">
-                <strong>Mac</strong>
+                <strong>{t("Mac")}</strong>
                 <p class="hint" style={{ margin: '4px 0 10px' }}>
-                  From the latest GitHub release:
+                  {t("From the latest GitHub release:")}
                 </p>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
                   <a
@@ -459,7 +455,7 @@ export function InstallModal() {
                     rel="noopener noreferrer"
                     style={{ textDecoration: 'none' }}
                   >
-                    ⬇ Download macOS Installer (.dmg)
+                    {t("⬇ Download macOS Installer (.dmg)")}
                   </a>
                   <a
                     class="btn secondary sm"
@@ -469,7 +465,7 @@ export function InstallModal() {
                     rel="noopener noreferrer"
                     style={{ textDecoration: 'none' }}
                   >
-                    ⬇ Download macOS Archive (.zip)
+                    {t("⬇ Download macOS Archive (.zip)")}
                   </a>
                   <a
                     class="btn secondary sm"
@@ -478,18 +474,17 @@ export function InstallModal() {
                     rel="noopener noreferrer"
                     style={{ textDecoration: 'none' }}
                   >
-                    View Latest GitHub Release
+                    {t("View Latest GitHub Release")}
                   </a>
                 </div>
                 <ol style={{ margin: '4px 0 0 18px', lineHeight: 1.65 }}>
                   <li>
-                    <strong>macOS Disk Image (.dmg):</strong> Open{' '}
-                    <code>BridgeAAC-macOS.dmg</code> and drag <strong>BridgeAAC</strong> to your
-                    Applications folder.
+                    <strong>{t("macOS Disk Image (.dmg):")}</strong>{' '}{t("Open")}{' '}
+                    <code>{t("BridgeAAC-macOS.dmg")}</code>{' '}{t("and drag")}{' '}<strong>{t("BridgeAAC")}</strong>{' '}{t("to your Applications folder.")}
                   </li>
                   <li>
-                    <strong>Safari / Chrome Web App:</strong> In Safari on macOS Sonoma+, click{' '}
-                    <strong>File &gt; Add to Dock</strong>.
+                    <strong>{t("Safari / Chrome Web App:")}</strong>{' '}{t("In Safari on macOS Sonoma+, click")}{' '}
+                    <strong>{t("File > Add to Dock")}</strong>.
                   </li>
                 </ol>
               </div>
@@ -499,9 +494,9 @@ export function InstallModal() {
           {platformTab === 'linux' && (
             <div class="settings-section">
               <div class="section-box">
-                <strong>Linux</strong>
+                <strong>{t("Linux")}</strong>
                 <p class="hint" style={{ margin: '4px 0 10px' }}>
-                  From the latest GitHub release:
+                  {t("From the latest GitHub release:")}
                 </p>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
                   <a
@@ -512,7 +507,7 @@ export function InstallModal() {
                     rel="noopener noreferrer"
                     style={{ textDecoration: 'none' }}
                   >
-                    ⬇ Download Linux AppImage
+                    {t("⬇ Download Linux AppImage")}
                   </a>
                   <a
                     class="btn secondary sm"
@@ -522,7 +517,7 @@ export function InstallModal() {
                     rel="noopener noreferrer"
                     style={{ textDecoration: 'none' }}
                   >
-                    ⬇ Download Ubuntu / Debian (.deb)
+                    {t("⬇ Download Ubuntu / Debian (.deb)")}
                   </a>
                   {canPromptInstall && (
                     <button
@@ -530,7 +525,7 @@ export function InstallModal() {
                       class="btn secondary sm"
                       onClick={() => void triggerNativeInstallPrompt()}
                     >
-                      Install Web App
+                      {t("Install Web App")}
                     </button>
                   )}
                   <a
@@ -540,16 +535,16 @@ export function InstallModal() {
                     rel="noopener noreferrer"
                     style={{ textDecoration: 'none' }}
                   >
-                    View Latest GitHub Release
+                    {t("View Latest GitHub Release")}
                   </a>
                 </div>
                 <ol style={{ margin: '4px 0 0 18px', lineHeight: 1.65 }}>
                   <li>
-                    <strong>AppImage / Debian Package:</strong> Has its own offline voice, so speech works without <code>speech-dispatcher</code>.
+                    <strong>{t("AppImage / Debian Package:")}</strong>{' '}{t("Has its own offline voice, so speech works without")}{' '}<code>{t("speech-dispatcher")}</code>.
                   </li>
                   <li>
-                    <strong>Chromebook / Chromium:</strong> Open <strong>https://bridgeaac.org</strong>{' '}
-                    and click <strong>Install</strong> in the address bar.
+                    <strong>{t("Chromebook / Chromium:")}</strong>{' '}{t("Open")}{' '}<strong>{t("https://bridgeaac.org")}</strong>{' '}
+                    {t("and click")}{' '}<strong>{t("Install")}</strong>{' '}{t("in the address bar.")}
                   </li>
                 </ol>
               </div>
@@ -572,14 +567,14 @@ export function InstallModal() {
                 marginBottom: '8px',
               }}
             >
-              <strong>All downloads on GitHub</strong>
+              <strong>{t("All downloads on GitHub")}</strong>
               <a
                 href={RELEASES_PAGE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ fontSize: '0.82rem', fontWeight: 600 }}
               >
-                All Release Notes & Checksums ↗
+                {t("All Release Notes & Checksums ↗")}
               </a>
             </div>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
@@ -590,7 +585,7 @@ export function InstallModal() {
                 rel="noopener noreferrer"
                 style={{ textDecoration: 'none' }}
               >
-                🤖 Android (.apk)
+                {t("🤖 Android (.apk)")}
               </a>
               <a
                 class="btn secondary sm"
@@ -599,7 +594,7 @@ export function InstallModal() {
                 rel="noopener noreferrer"
                 style={{ textDecoration: 'none' }}
               >
-                🪟 Windows Setup (.exe)
+                {t("🪟 Windows Setup (.exe)")}
               </a>
               <a
                 class="btn secondary sm"
@@ -608,7 +603,7 @@ export function InstallModal() {
                 rel="noopener noreferrer"
                 style={{ textDecoration: 'none' }}
               >
-                🪟 Windows Portable (.exe)
+                {t("🪟 Windows Portable (.exe)")}
               </a>
               <a
                 class="btn secondary sm"
@@ -617,7 +612,7 @@ export function InstallModal() {
                 rel="noopener noreferrer"
                 style={{ textDecoration: 'none' }}
               >
-                🍎 macOS (.dmg)
+                {t("🍎 macOS (.dmg)")}
               </a>
               <a
                 class="btn secondary sm"
@@ -626,7 +621,7 @@ export function InstallModal() {
                 rel="noopener noreferrer"
                 style={{ textDecoration: 'none' }}
               >
-                🐧 Linux (.AppImage)
+                {t("🐧 Linux (.AppImage)")}
               </a>
               <a
                 class="btn secondary sm"
@@ -635,7 +630,7 @@ export function InstallModal() {
                 rel="noopener noreferrer"
                 style={{ textDecoration: 'none' }}
               >
-                🐧 Ubuntu / Debian (.deb)
+                {t("🐧 Ubuntu / Debian (.deb)")}
               </a>
             </div>
 
@@ -656,9 +651,9 @@ export function InstallModal() {
               }}
             >
               <div>
-                <strong style={{ fontSize: '0.88rem' }}>Need help?</strong>
+                <strong style={{ fontSize: '0.88rem' }}>{t("Need help?")}</strong>
                 <p class="hint" style={{ margin: '2px 0 0', fontSize: '0.8rem' }}>
-                  Found a bug, stuck on setup, or need a board laid out a certain way? Email and I'll help.
+                  {t("Found a bug, stuck on setup, or need a board laid out a certain way? Email and I'll help.")}
                 </p>
               </div>
               <a
@@ -666,7 +661,7 @@ export function InstallModal() {
                 class="btn primary sm"
                 style={{ textDecoration: 'none' }}
               >
-                support@bridgeaac.org
+                {t("support@bridgeaac.org")}
               </a>
             </div>
           </div>
@@ -679,10 +674,10 @@ export function InstallModal() {
                 panel.value = 'settings';
               }}
             >
-              Voice Settings
+              {t("Voice Settings")}
             </button>
             <button type="button" class="btn primary" onClick={close}>
-              Done
+              {t("Done")}
             </button>
           </div>
         </div>

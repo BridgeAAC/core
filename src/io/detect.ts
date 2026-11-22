@@ -1,3 +1,4 @@
+import { t } from '../i18n/t';
 import { unzipSync } from 'fflate';
 import type { ImportOptions, ImportResult } from '../model';
 import { importBridge } from './bridge';
@@ -11,7 +12,7 @@ function hasSqliteMagic(d: Uint8Array): boolean {
 }
 
 const SUPPORTED =
-  'Supported files: .ce, .wf, .c4v, Open Board (.obf, .obz) and BridgeAAC backups (.bridge).';
+  () => t('Supported files: .ce, .wf, .c4v, Open Board (.obf, .obz) and BridgeAAC backups (.bridge).');
 
 const INNER_BOARD = /\.(ce|wf|c4v|obz|obf|bridge)$/;
 
@@ -27,7 +28,7 @@ function listZip(bytes: Uint8Array, fileName: string): string[] {
     });
   } catch {
     throw new Error(
-      `"${fileName}" couldn't be opened. It may not have finished copying. Try sending it to the device again.`,
+      t("\"{0}\" couldn't be opened. It may not have finished copying. Try sending it to the device again.", fileName),
     );
   }
   return names;
@@ -43,7 +44,7 @@ export async function importAnyFile(
   const bytes = file.bytes;
 
   if (!bytes || bytes.byteLength === 0) {
-    throw new Error(`"${file.name}" is empty. If it's stored in iCloud, open it once in Files so it downloads, then try again.`);
+    throw new Error(t("\"{0}\" is empty. If it's stored in iCloud, open it once in Files so it downloads, then try again.", file.name));
   }
 
   if (hasSqliteMagic(bytes)) {
@@ -69,10 +70,10 @@ export async function importAnyFile(
     if (inner.length > 1) {
       const list = inner.map((n) => n.split('/').pop()).slice(0, 4).join(', ');
       throw new Error(
-        `"${file.name}" has more than one board inside (${list}). Unzip it and import them one at a time.`,
+        t("\"{0}\" has more than one board inside ({1}). Unzip it and import them one at a time.", file.name, list),
       );
     }
-    throw new Error(`"${file.name}" is a zip file, but there's no board inside it. ${SUPPORTED}`);
+    throw new Error(t("\"{0}\" is a zip file, but there's no board inside it. {1}", file.name, SUPPORTED()));
   }
 
   if (lower.endsWith('.ce') || lower.endsWith('.wf') || lower.endsWith('.c4v')) {
@@ -86,7 +87,7 @@ export async function importAnyFile(
     try {
       parsed = JSON.parse(text) as Record<string, unknown>;
     } catch {
-      throw new Error(`"${file.name}" couldn't be read. ${SUPPORTED}`);
+      throw new Error(t("\"{0}\" couldn't be read. {1}", file.name, SUPPORTED()));
     }
     if (
       (typeof parsed.format === 'string' && parsed.format.startsWith('open-board')) ||
@@ -97,5 +98,5 @@ export async function importAnyFile(
     }
   }
 
-  throw new Error(`"${file.name}" isn't a board file BridgeAAC can open. ${SUPPORTED}`);
+  throw new Error(t("\"{0}\" isn't a board file BridgeAAC can open. {1}", file.name, SUPPORTED()));
 }

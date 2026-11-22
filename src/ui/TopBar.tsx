@@ -1,3 +1,4 @@
+import { t } from '../i18n/t';
 import { computed } from '@preact/signals';
 import { useEffect, useState } from 'preact/hooks';
 import {
@@ -58,7 +59,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
   const words = splitWords(msg);
   const msgScale = settings.value.messageFontScale || 1;
   const isSpeaking = speaking.value;
-  const t = ui(resolveActiveLang(v?.locale));
+  const u = ui(resolveActiveLang(v?.locale));
   const [standalone, setStandalone] = useState<boolean>(isRunningStandalone);
 
   useEffect(() => {
@@ -79,42 +80,42 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
 
   return (
     <header class="topbar">
-      <div class="nav-row" role="toolbar" aria-label="Navigation">
+      <div class="nav-row" role="toolbar" aria-label={t("Navigation")}>
         <div class="nav-group">
-          <button type="button" class="nav-btn home-btn" onClick={() => goHome()} title={t.home} aria-label={t.home}>
+          <button type="button" class="nav-btn home-btn" onClick={() => goHome()} title={u.home} aria-label={u.home}>
             <Icon name="home" size={20} />
-            <span class="nav-label">{t.home}</span>
+            <span class="nav-label">{u.home}</span>
           </button>
           <button
             type="button"
             class={`nav-btn back-btn ${canGoBack.value ? 'can-go-back' : ''}`}
             onClick={() => goBack()}
             disabled={!canGoBack.value}
-            title={t.back}
-            aria-label={t.back}
+            title={u.back}
+            aria-label={u.back}
           >
             <Icon name="back" size={20} />
-            <span class="nav-label">{t.back}</span>
+            <span class="nav-label">{u.back}</span>
           </button>
           <button
             type="button"
             class="nav-btn page-pill"
             onClick={() => (panel.value = 'pages')}
-            title="Jump to a page or find where a word lives"
-            aria-label={`Page: ${pg?.name ?? 'none'}. Open pages and word finder`}
+            title={t("Jump to a page or find where a word lives")}
+            aria-label={t("Page: {0}. Open pages and word finder", pg?.name ?? 'none')}
           >
             <Icon name="search" size={20} />
-            <span class="page-pill-name">{pg?.name ?? t.pages}</span>
-            <span class="page-pill-find nav-label">{t.findWord}</span>
+            <span class="page-pill-name">{pg?.name ?? u.pages}</span>
+            <span class="page-pill-find nav-label">{u.findWord}</span>
           </button>
           {form.value !== FORM_DEFAULT && (
             <button
               type="button"
               class="nav-btn badge-btn"
               onClick={() => (form.value = FORM_DEFAULT)}
-              title="A word-ending modifier is active. Tap to turn it off."
+              title={t("A word-ending modifier is active. Tap to turn it off.")}
             >
-              Word form {form.value}
+              {t("Word form {0}", form.value)}
               <Icon name="clear" size={18} />
             </button>
           )}
@@ -125,95 +126,95 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             type="button"
             class="nav-btn vocab-btn"
             onClick={onQuickImport}
-            title="Switch, import, or export vocabularies"
-            aria-label={v?.name ?? t.vocabularies}
+            title={t("Switch, import, or export vocabularies")}
+            aria-label={v?.name ?? u.vocabularies}
           >
             <Icon name="books" size={20} />
-            <span class="nav-label vocab-name">{v?.name ?? t.vocabularies}</span>
+            <span class="nav-label vocab-name">{v?.name ?? u.vocabularies}</span>
           </button>
           <button
             type="button"
             class="nav-btn"
             onClick={() => (keyboardOpen.value = true)}
-            title="Type with the keyboard"
-            aria-label={t.keyboard}
+            title={t("Type with the keyboard")}
+            aria-label={u.keyboard}
           >
             <Icon name="keyboard" size={20} />
-            <span class="nav-label">{t.keyboard}</span>
+            <span class="nav-label">{u.keyboard}</span>
           </button>
           <button
             type="button"
             class="nav-btn"
             onClick={() => (panel.value = 'messages')}
-            title="Soundboard, saved phrases, and recent messages"
-            aria-label={t.phrases}
+            title={t("Soundboard, saved phrases, and recent messages")}
+            aria-label={u.phrases}
           >
             <Icon name="chat" size={20} />
-            <span class="nav-label">{t.phrases}</span>
+            <span class="nav-label">{u.phrases}</span>
           </button>
           <button
             type="button"
             class="nav-btn"
             onClick={() => (panel.value = 'tools')}
-            title="Planner, moods, games, about me and notes"
-            aria-label="Planner, moods, games, about me and notes"
+            title={t("Planner, moods, games, about me and notes")}
+            aria-label={t("Planner, moods, games, about me and notes")}
           >
             <Icon name="star" size={20} />
-            <span class="nav-label">{t.tools || 'Tools'}</span>
+            <span class="nav-label">{u.tools || t("Tools")}</span>
           </button>
           <button
             type="button"
             class={`nav-btn ${isEdit ? 'active-edit' : ''}`}
             onClick={() => (isEdit ? exitEditMode() : enterEditMode())}
-            title={isEdit ? 'Finish editing' : 'Edit buttons and pages'}
-            aria-label={isEdit ? t.done : t.edit}
+            title={isEdit ? t("Finish editing") : t("Edit buttons and pages")}
+            aria-label={isEdit ? u.done : u.edit}
           >
             <Icon name={isEdit ? 'check' : 'pencil'} size={20} />
-            <span class="nav-label">{isEdit ? t.done : t.edit}</span>
+            <span class="nav-label">{isEdit ? u.done : u.edit}</span>
           </button>
           {!standalone && (
             <button
               type="button"
               class="nav-btn nav-install"
               onClick={() => (panel.value = 'help')}
-              title="Install the app and set up offline voices"
-              aria-label={t.install}
+              title={t("Install the app and set up offline voices")}
+              aria-label={u.install}
             >
               <Icon name="download" size={20} />
-              <span class="nav-label">{t.install}</span>
+              <span class="nav-label">{u.install}</span>
             </button>
           )}
           <button
             type="button"
             class="nav-btn"
             onClick={() => requireUnlock(() => (panel.value = 'settings'))}
-            title="Settings"
-            aria-label={t.settings}
+            title={t("Settings")}
+            aria-label={u.settings}
           >
             <Icon name="gear" size={20} />
-            <span class="nav-label">{t.settings}</span>
+            <span class="nav-label">{u.settings}</span>
           </button>
         </div>
       </div>
 
       {isEdit && (
-        <div class="edit-toolbar" role="region" aria-label="Editing tools">
+        <div class="edit-toolbar" role="region" aria-label={t("Editing tools")}>
           {movingButton.value ? (
             <span class="edit-badge edit-status" role="status">
-              Tap where "{movingButton.value.label}" should go.
+              {t("Tap where \"{0}\" should go.", movingButton.value.label)}
               <button type="button" class="sm-btn" onClick={() => (movingButton.value = null)}>
-                Cancel
+                {t("Cancel")}
               </button>
             </span>
           ) : clipboardButton.value ? (
             <span class="edit-badge edit-status" role="status">
-              Tap an empty space to paste "{clipboardButton.value.label || 'button'}".
+              {t("Tap an empty space to paste \"")}{clipboardButton.value.label || 'button'}".
               <button type="button" class="sm-btn" onClick={() => (clipboardButton.value = null)}>
-                Done
+                {t("Done")}
               </button>
             </span>
           ) : (
-            <span class="edit-badge">{t.editingBanner}</span>
+            <span class="edit-badge">{u.editingBanner}</span>
           )}
           <div class="edit-actions">
             <button
@@ -222,7 +223,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
               disabled={undoDepth.value === 0}
               onClick={() => undo()}
             >
-              <Icon name="undo" size={16} /> {t.undo}
+              <Icon name="undo" size={16} /> {u.undo}
             </button>
             <button
               type="button"
@@ -230,18 +231,18 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
               disabled={redoDepth.value === 0}
               onClick={() => redo()}
             >
-              <Icon name="redo" size={16} /> {t.redo}
+              <Icon name="redo" size={16} /> {u.redo}
             </button>
             <button
               type="button"
               class="sm-btn"
               onClick={() => (panel.value = 'pageSettings')}
-              title="Grid size, page name and background"
+              title={t("Grid size, page name and background")}
             >
               <Icon name="grid" size={16} /> {pg?.cols} × {pg?.rows}
             </button>
             <button type="button" class="sm-btn" onClick={() => (panel.value = 'pages')}>
-              <Icon name="pages" size={16} /> {t.pages}
+              <Icon name="pages" size={16} /> {u.pages}
             </button>
           </div>
         </div>
@@ -256,7 +257,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
           }}
           role="button"
           tabIndex={0}
-          aria-label={msg ? `Message: ${msg}. Activate to speak.` : 'Message window, empty'}
+          aria-label={msg ? t("Message: {0}. Activate to speak.", msg) : t("Message window, empty")}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
@@ -265,7 +266,7 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
           }}
         >
           {words.length === 0 ? (
-            <span class="message-placeholder">{t.messagePlaceholder}</span>
+            <span class="message-placeholder">{u.messagePlaceholder}</span>
           ) : (
             words.map((w, idx) => {
               const highlighted = range != null && w.start < range.end && w.end > range.start;
@@ -284,56 +285,56 @@ export function TopBar({ onQuickImport }: { onQuickImport: () => void }) {
             class={`msg-btn speak-btn ${isSpeaking ? 'speaking' : ''}`}
             onClick={() => speakMessage()}
             disabled={!isSpeaking && !msg.trim()}
-            aria-label={isSpeaking ? 'Stop speaking' : 'Speak message'}
+            aria-label={isSpeaking ? t("Stop speaking") : t("Speak message")}
           >
             <Icon name={isSpeaking ? 'stop' : 'speak'} size={28} />
-            <span class="msg-btn-label">{isSpeaking ? t.stop : t.speak}</span>
+            <span class="msg-btn-label">{isSpeaking ? u.stop : u.speak}</span>
           </button>
           <button
             type="button"
             class="msg-btn"
             onClick={() => deleteWordFromMessage()}
             disabled={!msg}
-            aria-label="Delete last word"
+            aria-label={t("Delete last word")}
           >
             <Icon name="delWord" size={20} />
-            <span class="msg-btn-label">{t.word}</span>
+            <span class="msg-btn-label">{u.word}</span>
           </button>
           <button
             type="button"
             class="msg-btn"
             onClick={() => (message.value = backspace(message.value))}
             disabled={!msg}
-            aria-label="Delete last letter"
+            aria-label={t("Delete last letter")}
           >
             <Icon name="backspace" size={20} />
-            <span class="msg-btn-label">{t.letter}</span>
+            <span class="msg-btn-label">{u.letter}</span>
           </button>
           <button
             type="button"
             class="msg-btn danger-subtle"
             onClick={() => clearMessage()}
             disabled={!msg && form.value === FORM_DEFAULT}
-            aria-label="Clear message"
+            aria-label={t("Clear message")}
           >
             <Icon name="clear" size={20} />
-            <span class="msg-btn-label">{t.clear}</span>
+            <span class="msg-btn-label">{u.clear}</span>
           </button>
           <button
             type="button"
             class="msg-btn"
             onClick={() => saveCurrentMessage()}
             disabled={!msg.trim()}
-            aria-label="Save message to phrases"
+            aria-label={t("Save message to phrases")}
           >
             <Icon name="star" size={20} />
-            <span class="msg-btn-label">{t.save}</span>
+            <span class="msg-btn-label">{u.save}</span>
           </button>
         </div>
       </div>
 
       {suggestions.value.length > 0 && (
-        <div class="prediction-strip" role="group" aria-label="Word suggestions">
+        <div class="prediction-strip" role="group" aria-label={t("Word suggestions")}>
           {suggestions.value.map((w) => (
             <button key={w} type="button" class="pred-chip" onClick={() => applySuggestion(w)}>
               {w}

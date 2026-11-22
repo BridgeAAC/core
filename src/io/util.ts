@@ -1,3 +1,4 @@
+import { t } from '../i18n/t';
 import { gunzipSync, inflateSync, unzipSync, unzlibSync } from 'fflate';
 
 const MAX_ZIP_ENTRIES = 50_000;
@@ -12,11 +13,11 @@ export function safeUnzip(
   let total = 0;
   return unzipSync(data, {
     filter: (file) => {
-      if (++count > MAX_ZIP_ENTRIES) throw new Error('archive has too many files');
+      if (++count > MAX_ZIP_ENTRIES) throw new Error(t("archive has too many files"));
       if (keep && !keep(file.name.toLowerCase())) return false;
-      if (file.originalSize > MAX_ZIP_ENTRY_BYTES) throw new Error(`${file.name} is too large`);
+      if (file.originalSize > MAX_ZIP_ENTRY_BYTES) throw new Error(t("{0} is too large", file.name));
       total += file.originalSize;
-      if (total > MAX_ZIP_TOTAL_BYTES) throw new Error('archive is too large once unpacked');
+      if (total > MAX_ZIP_TOTAL_BYTES) throw new Error(t("archive is too large once unpacked"));
       return true;
     },
   });
