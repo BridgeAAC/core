@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Try BridgeAAC</title>
+<meta name="description" content="Get BridgeAAC on iPad, iPhone, Android, Mac, Windows, Linux, or Chromebook." />
+<meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://bridgeaac.org/try/" />
+<link rel="icon" type="image/svg+xml" href="/icon.svg" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<style>
+  :root {
+    --bg: #ffffff;
+    --soft: #f5f5f7;
+    --fg: #111827;
+    --body: #374151;
+    --dim: #6b7280;
+    --line: #e5e7eb;
+    --accent: #0071e3;
+    --accent-hover: #0077ed;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0b0d12;
+      --soft: #151922;
+      --fg: #f9fafb;
+      --body: #d1d5db;
+      --dim: #9ca3af;
+      --line: #232834;
+      --accent: #2997ff;
+      --accent-hover: #47a6ff;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--body);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 0 20px; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 24px 0;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    color: var(--fg); text-decoration: none; font-weight: 600; font-size: 1.05rem;
+  }
+  .brand img { border-radius: 8px; }
+  .nav { display: flex; align-items: center; gap: 18px; font-size: 0.94rem; }
+  .nav a { color: var(--dim); text-decoration: none; }
+  .nav a:hover { color: var(--fg); }
+
+  h1 {
+    font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--fg); font-size: clamp(2rem, 5vw, 2.75rem);
+    letter-spacing: -0.03em; line-height: 1.1; margin: 28px 0 10px;
+  }
+  .lead { margin: 0 0 28px; color: var(--dim); font-size: 1.08rem; }
+
+  .tabs {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+    padding: 4px; background: var(--soft); border-radius: 12px;
+    border: 1px solid var(--line); margin-bottom: 28px;
+  }
+  @media (max-width: 560px) {
+    .tabs { grid-template-columns: repeat(2, 1fr); }
+  }
+  .tab {
+    appearance: none; border: 0; background: transparent; color: var(--dim);
+    font: 600 0.92rem/1.2 inherit; padding: 10px 8px; border-radius: 9px;
+    cursor: pointer; text-align: center; white-space: nowrap;
+  }
+  .tab:hover { color: var(--fg); }
+  .tab[aria-selected="true"] {
+    background: var(--bg); color: var(--fg);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 0 1px var(--line);
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .panel h2 {
+    color: var(--fg); font-size: 1.3rem; letter-spacing: -0.02em;
+    margin: 0 0 6px;
+  }
+  .panel-sub { margin: 0 0 22px; color: var(--dim); }
+
+  .notice {
+    padding: 14px 16px; border-radius: 12px; background: var(--soft);
+    border: 1px solid var(--line); font-size: 0.94rem; margin: 0 0 22px;
+  }
+  .notice strong { color: var(--fg); }
+
+  ol.steps {
+    margin: 0; padding: 0; list-style: none; display: grid; gap: 18px;
+  }
+  ol.steps li {
+    display: grid; grid-template-columns: 28px 1fr; gap: 12px; align-items: start;
+  }
+  .num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--soft); border: 1px solid var(--line); color: var(--fg);
+    font-size: 0.85rem; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; margin-top: 1px;
+  }
+  .step-title { color: var(--fg); font-weight: 600; margin: 0 0 3px; }
+  .step-desc { margin: 0; color: var(--dim); font-size: 0.94rem; }
+  .actions { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .btn {
+    display: inline-block; padding: 9px 16px; border-radius: 9px;
+    font-weight: 600; font-size: 0.92rem; text-decoration: none;
+    background: var(--accent); color: #fff;
+  }
+  .btn:hover { background: var(--accent-hover); }
+  .btn.ghost {
+    background: transparent; color: var(--fg); border: 1px solid var(--line);
+  }
+  .btn.ghost:hover { border-color: var(--fg); }
+  .btn.disabled {
+    opacity: 0.5; pointer-events: none;
+  }
+
+  .join-form {
+    margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .join-input {
+    flex: 1 1 220px; min-width: 0; padding: 9px 13px; border-radius: 9px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--fg);
+    font: 0.95rem/1.3 inherit;
+  }
+  .join-input:focus {
+    outline: none; border-color: var(--accent);
+  }
+  .join-hp {
+    position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none;
+  }
+  .join-status {
+    margin: 10px 0 0; font-size: 0.9rem; color: var(--dim); min-height: 1.3em;
+  }
+  .join-status.ok { color: #15803d; font-weight: 500; }
+  .join-status.err { color: #dc2626; font-weight: 500; }
+  @media (prefers-color-scheme: dark) {
+    .join-status.ok { color: #4ade80; }
+    .join-status.err { color: #f87171; }
+  }
+
+  .divider { border: 0; border-top: 1px solid var(--line); margin: 28px 0; }
+  .alt { font-size: 0.94rem; color: var(--dim); margin: 0; }
+  .alt a { color: var(--accent); text-decoration: none; font-weight: 500; }
+  .alt a:hover { text-decoration: underline; }
+
+  .dl-list { display: grid; gap: 12px; }
+  .dl-row {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--line);
+  }
+  .dl-row strong { color: var(--fg); display: block; }
+  .dl-row span { font-size: 0.88rem; color: var(--dim); }
+
+  .kofi {
+    margin-top: 32px; padding: 16px 18px; border-radius: 12px;
+    background: var(--soft); border: 1px solid var(--line);
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px;
+  }
+  .kofi p { margin: 0; font-size: 0.92rem; color: var(--dim); flex: 1 1 360px; }
+  .kofi strong { color: var(--fg); }
+
+  footer {
+    margin-top: 48px; padding: 20px 0 40px; border-top: 1px solid var(--line);
+    font-size: 0.9rem; color: var(--dim);
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px;
+  }
+  footer a { color: var(--dim); text-decoration: none; }
+  footer a:hover { color: var(--fg); }
+  footer .links { display: flex; gap: 16px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" href="/"><img src="/icon.svg" alt="" width="30" height="30" />BridgeAAC</a>
+    <nav class="nav">
+      <a href="/about/">About</a>
+      <a href="https://ko-fi.com/kashcotton" target="_blank" rel="noopener">Ko-fi</a>
+      <a href="/">Open app</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Try BridgeAAC</h1>
+    <p class="lead">Free, offline AAC communication app. Choose your device below.</p>
+
+    <div class="tabs" role="tablist" aria-label="Device">
+      <button type="button" class="tab" role="tab" id="tab-ios" data-target="ios" aria-selected="false">iPad &amp; iPhone</button>
+      <button type="button" class="tab" role="tab" id="tab-android" data-target="android" aria-selected="false">Android</button>
+      <button type="button" class="tab" role="tab" id="tab-desktop" data-target="desktop" aria-selected="false">Desktop</button>
+      <button type="button" class="tab" role="tab" id="tab-web" data-target="web" aria-selected="false">Web</button>
+    </div>
+
+    <section class="panel" id="panel-ios" role="tabpanel" aria-labelledby="tab-ios">
+      <h2>iPad &amp; iPhone</h2>
+      <p class="panel-sub">Join the Apple TestFlight beta while the App Store version is in review.</p>
+      <ol class="steps">
+        <li>
+          <div class="num">1</div>
+          <div>
+            <p class="step-title">Install TestFlight</p>
+            <p class="step-desc">Download Apple's free TestFlight app on your iPad or iPhone.</p>
+            <div class="actions">
+              <a class="btn ghost" href="https://apps.apple.com/app/testflight/id899247664" target="_blank" rel="noopener">Get TestFlight</a>
+            </div>
+          </div>
+        </li>
+        <li>
+          <div class="num">2</div>
+          <div>
+            <p class="step-title">Join the BridgeAAC beta</p>
+            <p class="step-desc" id="iosNote">Open the public TestFlight link on your device to install automatically.</p>
+            <div class="actions">
+              <a class="btn" id="iosTestflightBtn" href="#" target="_blank" rel="noopener">Join TestFlight</a>
+            </div>
+          </div>
+        </li>
+      </ol>
+      <hr class="divider" />
+      <p class="alt">Or skip TestFlight: open <a href="/">bridgeaac.org</a> in Safari, tap Share, then Add to Home Screen.</p>
+    </section>
+
+    <section class="panel" id="panel-android" role="tabpanel" aria-labelledby="tab-android">
+      <h2>Android</h2>
+      <p class="panel-sub">Join the Google Play closed beta.</p>
+      <div class="notice">
+        <strong>We need 12 Android testers before Google lets us publish.</strong> Join the group and stay opted in for 14 days so BridgeAAC can go live on the Play Store for everyone.
+      </div>
+      <ol class="steps">
+        <li>
+          <div class="num">1</div>
+          <div>
+            <p class="step-title">Enter your Google Play email</p>
+            <p class="step-desc">Use the Gmail address signed into Google Play on your Android phone or tablet. You'll be added automatically — no emails, no group page.</p>
+            <form class="join-form" id="androidJoinForm">
+              <input class="join-input" id="androidEmail" type="email" autocomplete="email" placeholder="you@gmail.com" required />
+              <input class="join-hp" id="androidWebsite" name="website" type="text" tabindex="-1" autocomplete="off" />
+              <button class="btn" id="androidSubmitBtn" type="submit">Join Android Beta</button>
+            </form>
+            <p class="join-status" id="androidStatus" role="status" aria-live="polite"></p>
+          </div>
+        </li>
+        <li>
+          <div class="num">2</div>
+          <div>
+            <p class="step-title">Opt in on Google Play</p>
+            <p class="step-desc">Once added above, open the link below, tap <strong>Become a tester</strong>, and install BridgeAAC from Google Play.</p>
+            <div class="actions">
+              <a class="btn ghost" id="androidOptInBtn" href="#" target="_blank" rel="noopener">Opt in on Google Play</a>
+            </div>
+          </div>
+        </li>
+      </ol>
+      <hr class="divider" />
+      <p class="alt">Need a direct file instead? <a href="https://github.com/BridgeAAC/core/releases/latest/download/BridgeAAC-android.apk" target="_blank" rel="noopener">Download the APK</a> or <a href="/">open it in Chrome</a>.</p>
+    </section>
+
+    <section class="panel" id="panel-desktop" role="tabpanel" aria-labelledby="tab-desktop">
+      <h2>Mac, Windows &amp; Linux</h2>
+      <p class="panel-sub">Download the offline desktop app from GitHub Releases.</p>
+      <div class="dl-list">
+        <div class="dl-row">
+          <div><strong>Windows</strong><span>Installer or portable .exe</span></div>
+          <div class="actions" style="margin-top:0">
+            <a class="btn" href="https://github.com/BridgeAAC/core/releases/latest/download/BridgeAAC-Windows-Setup.exe" target="_blank" rel="noopener">Setup .exe</a>
+            <a class="btn ghost" href="https://github.com/BridgeAAC/core/releases/latest/download/BridgeAAC-Windows-Portable.exe" target="_blank" rel="noopener">Portable</a>
+          </div>
+        </div>
+        <div class="dl-row">
+          <div><strong>macOS</strong><span>Disk image or zip</span></div>
+          <div class="actions" style="margin-top:0">
+            <a class="btn" href="https://github.com/BridgeAAC/core/releases/latest/download/BridgeAAC-macOS.dmg" target="_blank" rel="noopener">Download .dmg</a>
+            <a class="btn ghost" href="https://github.com/BridgeAAC/core/releases/latest/download/BridgeAAC-macOS.zip" target="_blank" rel="noopener">.zip</a>
+          </div>
+        </div>
+        <div class="dl-row">
+          <div><strong>Linux</strong><span>AppImage or Debian/Ubuntu</span></div>
+          <div class="actions" style="margin-top:0">
+            <a class="btn" href="https://github.com/BridgeAAC/core/releases/latest/download/BridgeAAC-Linux.AppImage" target="_blank" rel="noopener">.AppImage</a>
+            <a class="btn ghost" href="https://github.com/BridgeAAC/core/releases/latest/download/BridgeAAC-Linux.deb" target="_blank" rel="noopener">.deb</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-web" role="tabpanel" aria-labelledby="tab-web">
+      <h2>Chromebook &amp; Web</h2>
+      <p class="panel-sub">Runs in Chrome, Safari, Edge, or Firefox and works offline once installed.</p>
+      <div class="actions">
+        <a class="btn" href="/">Open BridgeAAC</a>
+      </div>
+    </section>
+
+    <section class="kofi" aria-label="Support BridgeAAC">
+      <p><strong>BridgeAAC will always be free.</strong> Publishing to the App Store and Google Play takes a MacBook and paid developer accounts — if you'd like to help cover those costs, any tip helps.</p>
+      <a class="btn ghost" href="https://ko-fi.com/kashcotton" target="_blank" rel="noopener">Support on Ko-fi</a>
+    </section>
+  </main>
+
+  <footer>
+    <span>Always free. <a href="https://ko-fi.com/kashcotton" target="_blank" rel="noopener">Support on Ko-fi</a></span>
+    <div class="links">
+      <a href="/privacy">Privacy</a>
+      <a href="https://github.com/BridgeAAC/core" target="_blank" rel="noopener">GitHub</a>
+      <a href="mailto:support@bridgeaac.org">support@bridgeaac.org</a>
+    </div>
+  </footer>
+</div>
+<script src="/try/try.js" defer></script>
+</body>
+</html>

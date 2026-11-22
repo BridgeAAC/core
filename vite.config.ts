@@ -53,6 +53,21 @@ function bridgeTtsPlugin(): Plugin {
     }
   };
 
+  const staticPages = (req: any, _res: any, next: () => void) => {
+    const raw: string = req.url ?? '';
+    const qIdx = raw.indexOf('?');
+    const pathname = qIdx >= 0 ? raw.slice(0, qIdx) : raw;
+    const query = qIdx >= 0 ? raw.slice(qIdx) : '';
+    if (pathname === '/try' || pathname === '/try/') {
+      req.url = '/try/index.html' + query;
+    } else if (pathname === '/about' || pathname === '/about/') {
+      req.url = '/about/index.html' + query;
+    } else if (pathname === '/privacy' || pathname === '/privacy/') {
+      req.url = '/privacy.html' + query;
+    }
+    next();
+  };
+
   return {
     name: 'bridge-tts-proxy',
     async buildStart() {
@@ -62,9 +77,11 @@ function bridgeTtsPlugin(): Plugin {
       } catch {}
     },
     configureServer(server) {
+      server.middlewares.use(staticPages);
       server.middlewares.use(handler);
     },
     configurePreviewServer(server) {
+      server.middlewares.use(staticPages);
       server.middlewares.use(handler);
     },
   };
@@ -123,8 +140,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,wasm,woff2,json}'],
         maximumFileSizeToCacheInBytes: 30 * 1024 * 1024,
         navigateFallback: 'index.html',
-        navigateFallbackDenylist: [/^\/api\//, /^\/about/, /\.[a-zA-Z0-9]+$/],
-        globIgnores: ['about/**', 'images/**', 'og-image.jpg', '404.html', '.well-known/**'],
+        navigateFallbackDenylist: [/^\/api\//, /^\/about/, /^\/try/, /\.[a-zA-Z0-9]+$/],
+        globIgnores: ['about/**', 'try/**', 'images/**', 'og-image.jpg', '404.html', '.well-known/**'],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => /(^|\.)arasaac\.org$/.test(url.hostname),

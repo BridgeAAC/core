@@ -203,6 +203,32 @@ export function InstallModal() {
 
           {!storeApp && (
             <>
+          <div
+            class="section-box"
+            style={{
+              marginBottom: '14px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: '12px',
+              flexWrap: 'wrap',
+            }}
+          >
+            <div>
+              <strong>App Store &amp; Google Play Beta</strong>
+              <p class="hint" style={{ margin: '3px 0 0' }}>
+                Want to install BridgeAAC from Apple TestFlight or Google Play instead of the web?
+              </p>
+            </div>
+            <a
+              class="btn primary sm"
+              href="/try"
+              style={{ textDecoration: 'none' }}
+            >
+              Get Store Apps (/try)
+            </a>
+          </div>
+
           <div class="tab-strip" style={{ marginBottom: '14px' }}>
             <button
               type="button"
@@ -245,8 +271,17 @@ export function InstallModal() {
             <div class="settings-section">
               <div class="section-box">
                 <strong>iPad and iPhone</strong>
-                <p class="hint" style={{ margin: '6px 0 10px' }}>
-                  No App Store needed. In Safari:
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '8px 0 12px' }}>
+                  <a
+                    class="btn primary sm"
+                    href="/try#ios"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    Install via Apple TestFlight
+                  </a>
+                </div>
+                <p class="hint" style={{ margin: '0 0 10px' }}>
+                  Or install directly from Safari without TestFlight:
                 </p>
                 <ol style={{ margin: '0 0 10px 18px', lineHeight: 1.65 }}>
                   <li>
@@ -298,6 +333,13 @@ export function InstallModal() {
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
                   <a
                     class="btn primary sm"
+                    href="/try#android"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    Join Google Play Beta
+                  </a>
+                  <a
+                    class="btn secondary sm"
                     href={LATEST_RELEASE_DOWNLOADS.androidApk}
                     download="BridgeAAC-android.apk"
                     target="_blank"
