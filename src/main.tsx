@@ -1,6 +1,7 @@
 import { render } from 'preact';
 import { App } from './ui/App';
 import { boardLocale, loadLanguage, uiLang } from './i18n/t';
+import { initSync } from './sync/runtime';
 import './styles.css';
 
 async function start() {
@@ -14,6 +15,7 @@ async function start() {
     render(<App />, root);
     document.getElementById('intro')?.remove();
   }
+  void initSync().catch(() => undefined);
 }
 
 void start();

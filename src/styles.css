@@ -2320,3 +2320,20 @@ a.btn {
     flex: 1;
   }
 }
+
+.district-details {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 14px;
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.district-details dt {
+  opacity: 0.75;
+}
+
+.district-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

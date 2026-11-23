@@ -46,6 +46,7 @@ const BOARD_LANGUAGE_CHANGED: Record<LangCode, string> = {
 };
 import { isStoreApp } from './InstallModal';
 import { saveFile } from '../io/save';
+import { DistrictSection } from './DistrictSection';
 
 export function SettingsModal() {
   const s = settings.value;
@@ -1276,6 +1277,8 @@ export function SettingsModal() {
                   <strong>{t("encryption")}</strong>{t(". Someone with full access to this browser could still get around it, so keep a screen lock on the device too.")}
                 </p>
               </div>
+
+              <DistrictSection />
 
               <div class="section-box">
                 <strong>{t("Online features")}</strong>
