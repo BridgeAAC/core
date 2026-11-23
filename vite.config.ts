@@ -1,9 +1,11 @@
 import { defineConfig } from 'vitest/config';
+import { readFileSync } from 'node:fs';
 import type { Plugin } from 'vite';
 import preact from '@preact/preset-vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 const base = process.env.BASE_PATH ?? './';
+const appVersion: string = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version;
 
 function bridgeTtsPlugin(): Plugin {
   const handler = async (req: any, res: any, next: () => void) => {
@@ -90,6 +92,7 @@ function bridgeTtsPlugin(): Plugin {
 export default defineConfig({
   base,
   define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
     'import.meta.env.VITE_GITHUB_REPO': JSON.stringify(
       process.env.VITE_GITHUB_REPO || process.env.GITHUB_REPOSITORY || 'bridgeaac/core',
     ),
